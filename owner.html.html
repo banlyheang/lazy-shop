@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Dashboard - L@ZY SHOP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: white;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        .header {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .logo-area { display: flex; align-items: center; gap: 15px; }
+        .store-logo {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: linear-gradient(135deg, #ec4899, #6366f1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+        }
+        .owner-badge {
+            background: #ec4899;
+            padding: 5px 15px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .back-link {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 40px;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+        }
+        .stat-value { font-size: 2rem; font-weight: 800; color: #ec4899; }
+        .stat-label { color: #94a3b8; margin-top: 8px; }
+        
+        .card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+        .card h2, .card h3 { margin-bottom: 20px; color: #ec4899; }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        .btn-success { background: #10b981; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-primary { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn:hover { transform: translateY(-2px); }
+        
+        .danger-zone { border: 1px solid #ef4444; background: rgba(239,68,68,0.1); }
+        
+        input {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 14px;
+            color: white;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        label { display: block; margin-bottom: 8px; color: #94a3b8; }
+        
+        .admin-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #10b981;
+            padding: 15px 25px;
+            border-radius: 50px;
+            animation: slideIn 0.3s;
+            z-index: 2000;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-area">
+                <div class="store-logo">👑</div>
+                <div><h1>Owner Backend</h1><p><span class="owner-badge">Owner Only - Full Control</span></p></div>
+            </div>
+            <div><a href="index.html" class="back-link">← Back to Shop</a> <a href="admin.html" class="back-link">Admin Panel</a></div>
+        </div>
+
+        <!-- Login Section -->
+        <div id="loginCard" class="card" style="max-width:400px; margin:50px auto; text-align:center;">
+            <h2>👑 Owner Login</h2>
+            <p style="margin:15px 0; color:#94a3b8;">Enter Owner ID: <strong>568280939</strong></p>
+            <input type="password" id="ownerPassword" placeholder="Owner ID">
+            <button class="btn btn-primary" onclick="ownerLogin()" style="width:100%;">Login</button>
+            <div id="loginError" style="color:#ef4444; margin-top:15px;"></div>
+        </div>
+
+        <!-- Owner Panel -->
+        <div id="ownerPanel" style="display:none;">
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-value" id="totalRevenue">$0</div><div class="stat-label">Total Revenue</div></div>
+                <div class="stat-card"><div class="stat-value" id="totalOrders">0</div><div class="stat-label">Total Orders</div></div>
+                <div class="stat-card"><div class="stat-value" id="totalCustomers">0</div><div class="stat-label">Customers</div></div>
+                <div class="stat-card"><div class="stat-value" id="dbSize">0 KB</div><div class="stat-label">Database Size</div></div>
+            </div>
+
+            <!-- Database Backup -->
+            <div class="card">
+                <h2>💾 Database Management</h2>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <button class="btn btn-success" onclick="backupDatabase()">📥 Download Full Backup</button>
+                    <button class="btn btn-primary" onclick="exportJSON()">📄 Export as JSON</button>
+                    <button class="btn btn-warning" onclick="openRestoreModal()">📤 Restore from Backup</button>
+                </div>
+                <div style="margin-top: 20px; background:rgba(0,0,0,0.3); border-radius:16px; padding:15px;">
+                    <h3>📋 Database Contents</h3>
+                    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:10px;">
+                        <div><strong>Products:</strong> <span id="previewProducts">0</span></div>
+                        <div><strong>Orders:</strong> <span id="previewOrders">0</span></div>
+                        <div><strong>Users:</strong> <span id="previewUsers">0</span></div>
+                        <div><strong>Admins:</strong> <span id="previewAdmins">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Management -->
+            <div class="card">
+                <h3>👑 Admin Account Management</h3>
+                <div id="adminsList"></div>
+                <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                    <h4>➕ Create New Admin</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px;">
+                        <div><label>Username</label><input type="text" id="newAdminUsername" placeholder="admin_username"></div>
+                        <div><label>Password</label><input type="text" id="newAdminPassword" placeholder="password"></div>
+                        <div><label>Name</label><input type="text" id="newAdminName" placeholder="Full name"></div>
+                        <div><button class="btn btn-success" onclick="addAdmin()" style="margin-top:24px;">Add</button></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="card danger-zone">
+                <h3 style="color:#ef4444;">⚠️ Danger Zone (Irreversible Actions)</h3>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <button class="btn btn-danger" onclick="factoryReset()">🏭 Factory Reset (Demo Data)</button>
+                    <button class="btn btn-danger" onclick="deleteAllOrders()">🗑️ Delete All Orders</button>
+                    <button class="btn btn-danger" onclick="deleteAllProducts()">🗑️ Delete All Products</button>
+                    <button class="btn btn-danger" onclick="clearAllData()">⚠️ Clear ALL Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Restore Modal -->
+    <div id="restoreModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); justify-content:center; align-items:center; z-index:1000;">
+        <div style="background:#1e293b; border-radius:28px; padding:32px; max-width:500px; width:90%;">
+            <span onclick="closeRestoreModal()" style="float:right; font-size:1.5rem; cursor:pointer;">&times;</span>
+            <h2>📤 Restore Database</h2>
+            <p style="margin:15px 0;">Select a backup file (.json) to restore</p>
+            <input type="file" id="restoreFile" accept=".json">
+            <button class="btn btn-warning" onclick="restoreFromFile()" style="margin-top:15px;">Restore</button>
+            <button class="btn btn-danger" onclick="closeRestoreModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        let products = [], orders = [], users = [];
+        let adminAccounts = [
+            { username: "admin1", password: "admin123", name: "Admin" },
+            { username: "lixing", password: "lixing26", name: "Lixing" }
+        ];
+        const OWNER_ID = "568280939";
+
+        function init() {
+            loadData();
+            updateStats();
+            renderAdmins();
+        }
+
+        function loadData() {
+            let p = localStorage.getItem('lazy_products'); if(p) products = JSON.parse(p);
+            let o = localStorage.getItem('lazy_orders'); if(o) orders = JSON.parse(o);
+            let u = localStorage.getItem('lazy_users'); if(u) users = JSON.parse(u);
+            let a = localStorage.getItem('admin_accounts'); if(a) adminAccounts = JSON.parse(a);
+        }
+
+        function saveAll() {
+            localStorage.setItem('lazy_products', JSON.stringify(products));
+            localStorage.setItem('lazy_orders', JSON.stringify(orders));
+            localStorage.setItem('lazy_users', JSON.stringify(users));
+            localStorage.setItem('admin_accounts', JSON.stringify(adminAccounts));
+        }
+
+        function ownerLogin() {
+            let id = document.getElementById('ownerPassword').value;
+            if(id === OWNER_ID) {
+                document.getElementById('loginCard').style.display = 'none';
+                document.getElementById('ownerPanel').style.display = 'block';
+                updateStats();
+                renderAdmins();
+                showToast('Owner access granted!');
+            } else {
+                document.getElementById('loginError').innerHTML = 'Invalid Owner ID!';
+            }
+        }
+
+        function updateStats() {
+            let revenue = orders.filter(o => o.payment_status === 'paid').reduce((s,o) => s + o.total_amount, 0);
+            document.getElementById('totalRevenue').innerHTML = `$${revenue.toFixed(2)}`;
+            document.getElementById('totalOrders').innerHTML = orders.length;
+            document.getElementById('totalCustomers').innerHTML = users.length;
+            let dbSize = JSON.stringify(localStorage).length;
+            document.getElementById('dbSize').innerHTML = (dbSize / 1024).toFixed(2) + ' KB';
+            document.getElementById('previewProducts').innerHTML = products.length;
+            document.getElementById('previewOrders').innerHTML = orders.length;
+            document.getElementById('previewUsers').innerHTML = users.length;
+            document.getElementById('previewAdmins').innerHTML = adminAccounts.length;
+        }
+
+        function renderAdmins() {
+            let container = document.getElementById('adminsList');
+            container.innerHTML = adminAccounts.map(a => `
+                <div class="admin-item">
+                    <div><strong>${a.username}</strong><br><small>${a.name}</small></div>
+                    <button class="btn btn-danger" onclick="removeAdmin('${a.username}')">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function addAdmin() {
+            let username = document.getElementById('newAdminUsername').value.trim();
+            let password = document.getElementById('newAdminPassword').value.trim();
+            let name = document.getElementById('newAdminName').value.trim();
+            if(!username || !password) { showToast('Enter username and password!', 'error'); return; }
+            if(adminAccounts.find(a => a.username === username)) { showToast('Username exists!', 'error'); return; }
+            adminAccounts.push({ username, password, name: name || 'Admin' });
+            saveAll();
+            renderAdmins();
+            showToast(`Admin ${username} added!`);
+            document.getElementById('newAdminUsername').value = '';
+            document.getElementById('newAdminPassword').value = '';
+            document.getElementById('newAdminName').value = '';
+        }
+
+        function removeAdmin(username) {
+            if(confirm(`Remove admin "${username}"?`)) {
+                adminAccounts = adminAccounts.filter(a => a.username !== username);
+                saveAll();
+                renderAdmins();
+                showToast('Admin removed');
+            }
+        }
+
+        function backupDatabase() {
+            let backup = {
+                timestamp: new Date().toISOString(),
+                data: {
+                    lazy_products: localStorage.getItem('lazy_products'),
+                    lazy_orders: localStorage.getItem('lazy_orders'),
+                    lazy_users: localStorage.getItem('lazy_users'),
+                    admin_accounts: localStorage.getItem('admin_accounts')
+                }
+            };
+            let blob = new Blob([JSON.stringify(backup, null, 2)], {type: 'application/json'});
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `lazy_shop_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+            a.click();
+            showToast('Backup created!');
+        }
+
+        function exportJSON() {
+            let exportData = {};
+            for(let i = 0; i < localStorage.length; i++) {
+                let key = localStorage.key(i);
+                exportData[key] = localStorage.getItem(key);
+            }
+            let blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `lazy_shop_export_${new Date().toISOString().slice(0,19)}.json`;
+            a.click();
+            showToast('Data exported!');
+        }
+
+        function openRestoreModal() {
+            document.getElementById('restoreModal').style.display = 'flex';
+        }
+
+        function closeRestoreModal() {
+            document.getElementById('restoreModal').style.display = 'none';
+        }
+
+        function restoreFromFile() {
+            let file = document.getElementById('restoreFile').files[0];
+            if(!file) { showToast('Select a backup file!', 'error'); return; }
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let backup = JSON.parse(e.target.result);
+                    if(backup.data) {
+                        for(let key in backup.data) {
+                            if(backup.data[key]) localStorage.setItem(key, backup.data[key]);
+                        }
+                    } else {
+                        for(let key in backup) {
+                            localStorage.setItem(key, backup[key]);
+                        }
+                    }
+                    showToast('Restored! Reloading...');
+                    setTimeout(() => location.reload(), 1500);
+                } catch(err) {
+                    showToast('Invalid backup file!', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function factoryReset() {
+            if(confirm('⚠️ FACTORY RESET: This will restore demo data. Are you sure?')) {
+                localStorage.clear();
+                let demoProducts = [
+                    { id: 1, name: "Premium T-Shirt", price: 25.99, stock: 50, sales: 45, image: "👕" },
+                    { id: 2, name: "Wireless Headphones", price: 49.99, stock: 30, sales: 38, image: "🎧" },
+                    { id: 3, name: "Smart Watch", price: 89.99, stock: 20, sales: 25, image: "⌚" },
+                    { id: 4, name: "Leather Backpack", price: 39.99, stock: 40, sales: 32, image: "🎒" },
+                    { id: 5, name: "Sunglasses", price: 19.99, stock: 60, sales: 55, image: "🕶️" }
+                ];
+                localStorage.setItem('lazy_products', JSON.stringify(demoProducts));
+                localStorage.setItem('lazy_orders', JSON.stringify([]));
+                localStorage.setItem('lazy_users', JSON.stringify([]));
+                localStorage.setItem('admin_accounts', JSON.stringify([
+                    { username: "admin1", password: "admin123", name: "Admin" },
+                    { username: "lixing", password: "lixing26", name: "Lixing" }
+                ]));
+                showToast('Factory reset complete! Reloading...');
+                setTimeout(() => location.reload(), 1500);
+            }
+        }
+
+        function deleteAllOrders() {
+            if(confirm('Delete ALL orders? This cannot be undone!')) {
+                localStorage.setItem('lazy_orders', JSON.stringify([]));
+                showToast('All orders deleted');
+                updateStats();
+            }
+        }
+
+        function deleteAllProducts() {
+            if(confirm('Delete ALL products? This cannot be undone!')) {
+                localStorage.setItem('lazy_products', JSON.stringify([]));
+                showToast('All products deleted');
+                updateStats();
+            }
+        }
+
+        function clearAllData() {
+            if(confirm('⚠️ WARNING: This will delete EVERYTHING! Create a backup first?')) {
+                localStorage.clear();
+                showToast('All data cleared! Reloading...');
+                setTimeout(() => location.reload(), 1500);
+            }
+        }
+
+        function showToast(msg, type = 'success') {
+            let toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        init();
+    </script>
+</body>
+</html>

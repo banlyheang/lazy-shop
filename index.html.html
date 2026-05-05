@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>L@ZY SHOP - Official Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: white;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        /* Header */
+        .header {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .logo-area { display: flex; align-items: center; gap: 15px; }
+        .store-logo {
+            width: 55px; height: 55px; border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem;
+        }
+        .store-info h1 { font-size: 1.5rem; font-weight: 700; }
+        .store-info p { color: #94a3b8; font-size: 0.8rem; }
+        
+        .admin-links {
+            display: flex;
+            gap: 12px;
+        }
+        .admin-link {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 40px;
+            color: white;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .admin-link:hover {
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            transform: translateY(-2px);
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .tab-btn {
+            background: rgba(255,255,255,0.08);
+            border: none;
+            padding: 12px 28px;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab-btn:hover, .tab-btn.active {
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+        }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Products */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        .product-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .product-card:hover {
+            transform: translateY(-8px);
+            border-color: #6366f1;
+        }
+        .product-image { font-size: 4rem; margin-bottom: 15px; }
+        .product-price { font-size: 1.6rem; font-weight: 700; color: #10b981; margin: 10px 0; }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        .btn-primary { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-outline { background: transparent; border: 1px solid #6366f1; color: #6366f1; }
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        
+        /* Cart */
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* QR */
+        .qr-display {
+            text-align: center;
+            padding: 24px;
+            background: white;
+            border-radius: 20px;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #1e293b;
+            border-radius: 28px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+        }
+        .close {
+            float: right;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        input, textarea {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 14px;
+            color: white;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        label { display: block; margin-bottom: 8px; color: #94a3b8; }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #1e293b;
+            padding: 15px 25px;
+            border-radius: 50px;
+            animation: slideIn 0.3s;
+            z-index: 2000;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            .tab-btn { padding: 8px 18px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-area">
+                <div class="store-logo" id="storeLogo">🛍️</div>
+                <div class="store-info">
+                    <h1 id="storeName">L@ZY SHOP</h1>
+                    <p id="storeSlogan">✨ Premium Quality | Fast Delivery</p>
+                </div>
+            </div>
+            <div class="admin-links">
+                <a href="admin.html" class="admin-link">🔐 Admin Login</a>
+                <a href="owner.html" class="admin-link">👑 Owner Login</a>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('shop')">🛒 Products</button>
+            <button class="tab-btn" onclick="switchTab('cart')">🛍️ Cart (<span id="cartCount">0</span>)</button>
+            <button class="tab-btn" onclick="switchTab('orders')">📦 My Orders</button>
+            <button class="tab-btn" onclick="switchTab('track')">🚚 Track Order</button>
+            <button class="tab-btn" onclick="switchTab('qrpay')">💳 Payment</button>
+        </div>
+
+        <div id="shop-tab" class="tab-content active"><div class="products-grid" id="productsGrid"></div></div>
+        
+        <div id="cart-tab" class="tab-content">
+            <div class="card" style="background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;">
+                <h2 style="margin-bottom:20px;">🛍️ Your Cart</h2>
+                <div id="cartItems"></div>
+                <div id="cartTotal" style="text-align:right; font-size:1.3rem; margin-top:20px;"></div>
+                <button class="btn btn-success" onclick="checkout()" style="width:100%; padding:16px; margin-top:20px;">✅ Checkout</button>
+            </div>
+        </div>
+        
+        <div id="orders-tab" class="tab-content"><div class="card" style="background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;"><h2>📦 Order History</h2><div id="userOrdersList"></div></div></div>
+        
+        <div id="track-tab" class="tab-content">
+            <div class="card" style="background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;">
+                <h2>🚚 Track Order</h2>
+                <label>Order Number</label><input type="text" id="trackOrderNumber" placeholder="e.g., ORD1234567890">
+                <label>Phone Number</label><input type="text" id="trackPhoneNumber" placeholder="Your registered phone">
+                <button class="btn btn-primary" onclick="trackOrder()">🔍 Track</button>
+                <div id="trackResult" style="margin-top:20px;"></div>
+            </div>
+        </div>
+        
+        <div id="qrpay-tab" class="tab-content">
+            <div class="card" style="background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;">
+                <h2>💳 Scan to Pay</h2>
+                <div class="qr-display"><img id="paymentQRImage" src="" style="display:none;"><div id="qrPlaceholder" style="font-size:60px;">💳</div></div>
+                <div style="text-align:center; margin-top:20px;">
+                    <p><strong>🏦 ABA Bank</strong></p>
+                    <p><strong>📱 001059172</strong></p>
+                    <p><strong>👤 Ban Lyheang</strong></p>
+                    <button class="btn btn-primary" onclick="copyPaymentInfo()" style="margin-top:15px;">📋 Copy Account</button>
+                    <button class="btn btn-info" onclick="openTelegram()" style="margin-left:10px; background:#0088cc;">📱 Telegram Support</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="loginModal" class="modal"><div class="modal-content"><span class="close" onclick="closeLoginModal()">&times;</span><h2>📞 Customer Login</h2><label>Phone Number</label><input type="tel" id="loginPhone"><label>Full Name</label><input type="text" id="loginName"><button class="btn btn-success" onclick="loginUser()" style="width:100%; margin-top:10px;">Login / Register</button></div></div>
+    <div id="receiptModal" class="modal"><div class="modal-content"><span class="close" onclick="closeReceiptModal()">&times;</span><h2>🧾 Receipt</h2><div id="receiptContent"></div><button class="btn btn-primary" onclick="downloadReceipt()">Download PDF</button></div></div>
+
+    <script>
+        let products = [
+            { id: 1, name: "Premium T-Shirt", price: 25.99, stock: 50, sales: 45, image: "👕" },
+            { id: 2, name: "Wireless Headphones", price: 49.99, stock: 30, sales: 38, image: "🎧" },
+            { id: 3, name: "Smart Watch", price: 89.99, stock: 5, sales: 25, image: "⌚" },
+            { id: 4, name: "Leather Backpack", price: 39.99, stock: 40, sales: 32, image: "🎒" },
+            { id: 5, name: "Sunglasses", price: 19.99, stock: 60, sales: 55, image: "🕶️" }
+        ];
+        let orders = [], users = [], cart = [], currentUser = null;
+        let qrSettings = { qrImage: "", bankName: "ABA Bank", accountNumber: "001059172", accountName: "Ban Lyheang" };
+
+        function init() {
+            loadData();
+            renderProducts();
+            updateCart();
+            renderOrders();
+            updateCartBadge();
+            checkSession();
+            loadQR();
+        }
+
+        function loadData() {
+            let p = localStorage.getItem('lazy_products'); if(p) products = JSON.parse(p);
+            let o = localStorage.getItem('lazy_orders'); if(o) orders = JSON.parse(o);
+            let u = localStorage.getItem('lazy_users'); if(u) users = JSON.parse(u);
+            let c = localStorage.getItem('lazy_cart'); if(c) cart = JSON.parse(c);
+            let q = localStorage.getItem('qr_settings'); if(q) qrSettings = JSON.parse(q);
+        }
+        function saveAll() {
+            localStorage.setItem('lazy_products', JSON.stringify(products));
+            localStorage.setItem('lazy_orders', JSON.stringify(orders));
+            localStorage.setItem('lazy_users', JSON.stringify(users));
+            localStorage.setItem('lazy_cart', JSON.stringify(cart));
+            localStorage.setItem('qr_settings', JSON.stringify(qrSettings));
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`${tab}-tab`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function renderProducts() {
+            document.getElementById('productsGrid').innerHTML = products.map(p => `
+                <div class="product-card">
+                    <div class="product-image">${p.image}</div>
+                    <h3>${p.name}</h3>
+                    <div class="product-price">$${p.price}</div>
+                    <div style="color:#94a3b8;">⭐ ${p.sales} sold | 📦 ${p.stock} left</div>
+                    <button class="btn btn-primary" onclick="addToCart(${p.id})">🛒 Add to Cart</button>
+                    <button class="btn btn-success" onclick="buyNow(${p.id})">💳 Buy Now</button>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(id) {
+            let p = products.find(p => p.id === id);
+            if(!p || p.stock <= 0) { showToast('Out of stock!', 'error'); return; }
+            let existing = cart.find(i => i.id === id);
+            if(existing) existing.quantity++;
+            else cart.push({...p, quantity: 1});
+            saveAll(); updateCart(); updateCartBadge();
+            showToast(`✅ ${p.name} added!`);
+        }
+
+        function buyNow(id) { addToCart(id); switchTab('cart'); }
+
+        function updateCart() {
+            let container = document.getElementById('cartItems');
+            if(!cart.length) {
+                container.innerHTML = '<div style="text-align:center; padding:60px;">🛒 Your cart is empty</div>';
+                document.getElementById('cartTotal').innerHTML = '';
+                return;
+            }
+            let total = cart.reduce((s,i) => s + (i.price * i.quantity), 0);
+            container.innerHTML = cart.map(i => `
+                <div class="cart-item">
+                    <div><strong>${i.name}</strong><br>$${i.price} x ${i.quantity}</div>
+                    <div><strong>$${(i.price * i.quantity).toFixed(2)}</strong><br>
+                        <button class="btn btn-outline" onclick="updateQty(${i.id}, ${i.quantity-1})">-</button>
+                        <button class="btn btn-outline" onclick="updateQty(${i.id}, ${i.quantity+1})">+</button>
+                        <button class="btn btn-danger" onclick="removeFromCart(${i.id})">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('cartTotal').innerHTML = `<strong>Total: $${total.toFixed(2)}</strong>`;
+        }
+
+        function updateQty(id, qty) {
+            if(qty <= 0) { removeFromCart(id); return; }
+            let item = cart.find(i => i.id === id);
+            if(item) item.quantity = qty;
+            saveAll(); updateCart(); updateCartBadge();
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(i => i.id !== id);
+            saveAll(); updateCart(); updateCartBadge();
+        }
+
+        function updateCartBadge() {
+            document.getElementById('cartCount').innerHTML = cart.reduce((s,i) => s + i.quantity, 0);
+        }
+
+        function checkout() {
+            if(!currentUser) { showToast('Please login first!', 'warning'); openLoginModal(); return; }
+            if(!cart.length) { showToast('Cart empty!', 'error'); return; }
+            let total = cart.reduce((s,i) => s + (i.price * i.quantity), 0);
+            let orderNumber = `ORD${Date.now()}${Math.floor(Math.random()*1000)}`;
+            orders.unshift({
+                id: orders.length+1, order_number: orderNumber,
+                customer_name: currentUser.name, customer_phone: currentUser.phone,
+                total_amount: total, payment_status: "pending", order_status: "pending",
+                created_at: new Date().toISOString(), items: [...cart],
+                updates: [{date: new Date().toISOString(), message: "Order placed"}]
+            });
+            cart = []; saveAll(); updateCart(); updateCartBadge(); renderOrders();
+            showToast(`✅ Order placed! #${orderNumber}`);
+            showPayment(orderNumber, total);
+        }
+
+        function showPayment(orderNumber, amount) {
+            let qrHtml = qrSettings.qrImage ? `<img src="${qrSettings.qrImage}" style="max-width:180px;">` : '<div style="font-size:60px;">💳</div>';
+            document.getElementById('receiptContent').innerHTML = `
+                <div style="text-align:center;">
+                    <h3>💳 Payment</h3>
+                    <p>Order: ${orderNumber}</p>
+                    <p>Amount: $${amount.toFixed(2)}</p>
+                    <div style="background:#1e293b; padding:20px; border-radius:20px;">${qrHtml}<p>${qrSettings.bankName}<br>${qrSettings.accountNumber}<br>${qrSettings.accountName}</p></div>
+                    <button class="btn btn-success" onclick="markPaid('${orderNumber}')">✅ I Have Paid</button>
+                </div>
+            `;
+            document.getElementById('receiptModal').style.display = 'flex';
+        }
+
+        function markPaid(orderNumber) {
+            let order = orders.find(o => o.order_number === orderNumber);
+            if(order) {
+                order.payment_status = "paid";
+                order.order_status = "processing";
+                order.updates.unshift({date: new Date().toISOString(), message: "Payment confirmed"});
+                saveAll(); renderOrders();
+                showToast('✅ Payment confirmed!');
+            }
+            closeReceiptModal();
+        }
+
+        function openLoginModal() { document.getElementById('loginModal').style.display = 'flex'; }
+        function closeLoginModal() { document.getElementById('loginModal').style.display = 'none'; }
+
+        function loginUser() {
+            let phone = document.getElementById('loginPhone').value.trim();
+            let name = document.getElementById('loginName').value.trim();
+            if(!phone) { showToast('Enter phone!', 'error'); return; }
+            let user = users.find(u => u.phone === phone);
+            if(!user) { user = {phone, name: name || "Customer"}; users.push(user); saveAll(); }
+            currentUser = user;
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            closeLoginModal();
+            renderOrders();
+            showToast(`✨ Welcome ${user.name}!`);
+        }
+
+        function checkSession() {
+            let saved = localStorage.getItem('currentUser');
+            if(saved) currentUser = JSON.parse(saved);
+        }
+
+        function renderOrders() {
+            if(!currentUser) { document.getElementById('userOrdersList').innerHTML = '<p style="text-align:center; padding:40px;">Login to view orders</p>'; return; }
+            let userOrders = orders.filter(o => o.customer_phone === currentUser.phone);
+            if(!userOrders.length) { document.getElementById('userOrdersList').innerHTML = '<p style="text-align:center; padding:40px;">No orders yet</p>'; return; }
+            document.getElementById('userOrdersList').innerHTML = userOrders.map(o => `
+                <div style="background:rgba(255,255,255,0.05); border-radius:16px; padding:16px; margin-bottom:12px;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <div><strong>${o.order_number}</strong><br>$${o.total_amount}<br>${new Date(o.created_at).toLocaleDateString()}</div>
+                        <div><span style="background:${o.payment_status==='paid'?'#10b981':'#f59e0b'}; padding:4px 12px; border-radius:20px;">${o.order_status}</span><br>
+                        <button class="btn btn-info" onclick="viewReceipt('${o.order_number}')" style="margin-top:8px;">🧾 Receipt</button>
+                        <button class="btn btn-success" onclick="trackSpecific('${o.order_number}')" style="margin-top:8px;">🚚 Track</button></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function trackOrder() {
+            let orderNum = document.getElementById('trackOrderNumber').value.trim();
+            let phone = document.getElementById('trackPhoneNumber').value.trim();
+            let order = orders.find(o => o.order_number === orderNum && o.customer_phone === phone);
+            let resultDiv = document.getElementById('trackResult');
+            if(!order) { resultDiv.innerHTML = '<div style="color:#ef4444;">❌ Order not found!</div>'; return; }
+            resultDiv.innerHTML = `<div><strong>${order.order_number}</strong><br>Status: ${order.order_status}<br>Total: $${order.total_amount}<br><button class="btn btn-info" onclick="viewReceipt('${order.order_number}')">View Receipt</button></div>`;
+        }
+
+        function trackSpecific(orderNumber) {
+            switchTab('track');
+            document.getElementById('trackOrderNumber').value = orderNumber;
+            let order = orders.find(o => o.order_number === orderNumber);
+            if(order) document.getElementById('trackPhoneNumber').value = order.customer_phone;
+            trackOrder();
+        }
+
+        function viewReceipt(orderNumber) {
+            let order = orders.find(o => o.order_number === orderNumber);
+            if(!order) return;
+            document.getElementById('receiptContent').innerHTML = `
+                <div style="text-align:center;"><div style="font-size:3rem;">🛍️</div><h2>L@ZY SHOP</h2><hr>
+                <p><strong>Order:</strong> ${order.order_number}</p><p><strong>Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
+                <p><strong>Customer:</strong> ${order.customer_name}</p><hr>
+                ${order.items.map(i => `<p>${i.name} x${i.quantity} = $${(i.price*i.quantity).toFixed(2)}</p>`).join('')}<hr>
+                <h3>Total: $${order.total_amount.toFixed(2)}</h3><p>Thank you!</p></div>
+            `;
+            document.getElementById('receiptModal').style.display = 'flex';
+        }
+
+        function downloadReceipt() {
+            let w = window.open('', '_blank');
+            w.document.write(`<html><head><title>Receipt</title><style>body{font-family:Inter; padding:40px;}</style></head><body>${document.getElementById('receiptContent').innerHTML}<script>window.print();<\/script></body></html>`);
+            w.document.close();
+        }
+
+        function closeReceiptModal() { document.getElementById('receiptModal').style.display = 'none'; }
+
+        function loadQR() { let q = localStorage.getItem('qr_settings'); if(q) qrSettings = JSON.parse(q); updateQR(); }
+        function updateQR() {
+            let img = document.getElementById('paymentQRImage');
+            if(qrSettings.qrImage) { img.src = qrSettings.qrImage; img.style.display = 'block'; document.getElementById('qrPlaceholder').style.display = 'none'; }
+        }
+        function copyPaymentInfo() { navigator.clipboard.writeText(`${qrSettings.bankName}\n${qrSettings.accountNumber}\n${qrSettings.accountName}`); showToast('Copied!'); }
+        function openTelegram() { window.open('https://t.me/lixing26', '_blank'); }
+
+        function showToast(msg, type = 'success') {
+            let toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = type === 'error' ? '#ef4444' : '#10b981';
+            toast.innerHTML = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
