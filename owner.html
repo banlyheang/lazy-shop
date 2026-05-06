@@ -65,10 +65,13 @@
             <h2>🔐 Admin Login</h2>
             <div style="background: rgba(99,102,241,0.2); padding: 10px; border-radius: 16px; margin-bottom: 20px;">
                 <p style="font-size: 0.8rem; color: #94a3b8;">Login Credentials (Work on ANY device):</p>
-                <!-- Default admins will appear here dynamically -->
                 <p><strong style="color: #10b981;">admin1</strong> / <strong style="color: #f59e0b;">admin123</strong></p>
                 <p><strong style="color: #10b981;">lixing</strong> / <strong style="color: #f59e0b;">lixing26</strong></p>
-                <!-- Add your custom admins below -->
+                <p><strong style="color: #10b981;">sarah</strong> / <strong style="color: #f59e0b;">sarah123</strong></p>
+                <p><strong style="color: #10b981;">john</strong> / <strong style="color: #f59e0b;">john123</strong></p>
+                <p><strong style="color: #10b981;">mike</strong> / <strong style="color: #f59e0b;">mike456</strong></p>
+                <p><strong style="color: #10b981;">lisa</strong> / <strong style="color: #f59e0b;">lisa789</strong></p>
+                <p><strong style="color: #10b981;">david</strong> / <strong style="color: #f59e0b;">david321</strong></p>
             </div>
             <input type="text" id="adminUsername" placeholder="Username">
             <input type="password" id="adminPassword" placeholder="Password">
@@ -111,15 +114,15 @@
         const TELEGRAM_WORKER_URL = "https://telegram-alert.banlyheang849.workers.dev";
         
         // ==================== HARDCODED ADMINS (Works on ALL Devices) ====================
-        // ⬇️⬇️⬇️ ADD YOUR ADMINS BELOW ⬇️⬇️⬇️
-        // Just copy this pattern for each admin:
-        // { username: "YOUR_USERNAME", password: "YOUR_PASSWORD", name: "Full Name", telegram: "" },
-        
+        // Add your admins here - they will work on ANY device!
         const HARDCODED_ADMINS = [
             { username: "admin1", password: "admin123", name: "Admin", telegram: "" },
             { username: "lixing", password: "lixing26", name: "Lixing", telegram: "568280939" },
-            // ⬇️ ADD YOUR CUSTOM ADMINS HERE (remove the // to activate):
-            // { username: "yourusername", password: "yourpassword", name: "Your Name", telegram: "" },
+            { username: "sarah", password: "sarah123", name: "Sarah Manager", telegram: "" },
+            { username: "john", password: "john123", name: "John Staff", telegram: "" },
+            { username: "mike", password: "mike456", name: "Mike Supervisor", telegram: "" },
+            { username: "lisa", password: "lisa789", name: "Lisa Support", telegram: "" },
+            { username: "david", password: "david321", name: "David Admin", telegram: "" }
         ];
         
         let adminAccounts = [...HARDCODED_ADMINS];
