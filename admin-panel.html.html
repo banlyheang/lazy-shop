@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>L@ZY SHOP - Admin Panel</title>
+    <title>Admin Dashboard - L@ZY SHOP</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -25,6 +25,9 @@
             align-items: center;
             flex-wrap: wrap;
         }
+        .admin-badge { background: #f59e0b; padding: 5px 15px; border-radius: 30px; font-size: 0.8rem; }
+        .back-link { background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 40px; color: white; text-decoration: none; }
+        .owner-link { background: #9C27B0; padding: 10px 20px; border-radius: 40px; color: white; text-decoration: none; }
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -100,18 +103,18 @@
             animation: slideIn 0.3s;
             z-index: 2000;
         }
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div><h1>🔐 Admin Dashboard</h1><p style="color:#f59e0b;">Manage Products & Orders</p></div>
-            <div><a href="index.html" style="background:rgba(255,255,255,0.1); padding:10px 20px; border-radius:40px; color:white; text-decoration:none;">← Back to Shop</a></div>
+            <div><h1>🔐 Admin Dashboard</h1><p><span class="admin-badge">Administrator Access</span></p></div>
+            <div>
+                <a href="index.html" class="back-link">← Back to Shop</a>
+                <a href="owner.html" class="owner-link">👑 Owner Panel</a>
+            </div>
         </div>
 
         <div id="loginCard" style="max-width:400px; margin:50px auto; background:rgba(255,255,255,0.05); border-radius:28px; padding:32px; text-align:center;">
@@ -149,8 +152,7 @@
 
     <script>
         // ==================== TELEGRAM ALERT CONFIGURATION ====================
-        // 🔴 YOUR CORRECT CLOUDFLARE WORKER URL - FIXED!
-        const TELEGRAM_WORKER = 'https://telegram-alert.banlyheang849.workers.dev';
+        const TELEGRAM_WORKER = 'https://telegram-alert.banlyheang849.workers.dev/';
         
         async function sendTelegramAlert(message) {
             try {
@@ -159,44 +161,24 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: message })
                 });
-                if (response.ok) {
-                    console.log('✅ Telegram alert sent!');
-                    showToast('📱 Telegram alert sent to Owner!', 'success');
-                    return true;
-                }
-            } catch (e) {
-                console.log('❌ Telegram alert failed:', e);
-            }
-            return false;
+                if (response.ok) console.log('✅ Telegram alert sent!');
+                return response.ok;
+            } catch (e) { return false; }
         }
 
         async function generateReceiptWithAlert(orderId) {
             const order = orders.find(o => o.id === orderId);
             if (!order) { showToast('Order not found!', 'error'); return; }
             
-            const receiptHtml = `<div style="text-align:center;"><div style="font-size:2rem;">🛍️</div><h2>L@ZY SHOP</h2><p>Receipt</p><hr><p><strong>Order:</strong> ${order.order_number}</p><p><strong>Customer:</strong> ${order.customer_name}</p><p><strong>Amount:</strong> $${order.total_amount}</p><p><strong>Status:</strong> ${order.order_status}</p><hr><p>Thank you!</p></div>`;
+            const receiptHtml = `<div style="text-align:center;"><div style="font-size:2rem;">🛍️</div><h2>L@ZY SHOP</h2><p>Receipt</p><hr><p><strong>Order:</strong> ${order.order_number}</p><p><strong>Customer:</strong> ${order.customer_name}</p><p><strong>Amount:</strong> $${order.total_amount}</p><hr><p>Thank you!</p></div>`;
             const win = window.open();
             win.document.write(`<html><head><title>Receipt_${order.order_number}</title><style>body{font-family:Arial;padding:40px;}</style></head><body>${receiptHtml}<script>window.print();<\/script></body></html>`);
             win.document.close();
             
-            // 🔔 SEND TELEGRAM ALERT
-            await sendTelegramAlert(
-                `🧾 **RECEIPT GENERATED**\n\n` +
-                `━━━━━━━━━━━━━━━━━━━━━━\n` +
-                `📄 Order: ${order.order_number}\n` +
-                `👤 Customer: ${order.customer_name}\n` +
-                `📞 Phone: ${order.customer_phone || 'N/A'}\n` +
-                `💰 Amount: $${order.total_amount}\n` +
-                `📅 Time: ${new Date().toLocaleString()}\n` +
-                `━━━━━━━━━━━━━━━━━━━━━━\n` +
-                `🔔 Generated by: ${currentAdmin?.name || 'Admin'}\n` +
-                `✅ Receipt downloaded successfully!`
-            );
-            
-            showToast('✅ Receipt generated! Telegram alert sent to Owner.');
+            await sendTelegramAlert(`🧾 **RECEIPT GENERATED**\n━━━━━━━━━━━━━━━━━━━━━━\n📄 Order: ${order.order_number}\n👤 Customer: ${order.customer_name}\n💰 Amount: $${order.total_amount}\n📅 Time: ${new Date().toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━━━\n✅ Receipt downloaded!`);
+            showToast('✅ Receipt generated! Telegram alert sent.');
         }
 
-        // ==================== DATA ====================
         let products = [
             { id: 1, name: "Premium T-Shirt", price: 25.99, stock: 50, sales: 45, image: "👕" },
             { id: 2, name: "Wireless Headphones", price: 49.99, stock: 30, sales: 38, image: "🎧" },
@@ -205,34 +187,26 @@
             { id: 5, name: "Sunglasses", price: 19.99, stock: 60, sales: 55, image: "🕶️" }
         ];
         let orders = [], users = [];
-        let adminAccounts = [
-            { username: "admin1", password: "admin123", name: "Admin" },
-            { username: "lixing", password: "lixing26", name: "Lixing" }
-        ];
-        let currentAdmin = null;
-        let currentOrder = null;
+        let adminAccounts = [{ username: "admin1", password: "admin123", name: "Admin" }, { username: "lixing", password: "lixing26", name: "Lixing" }];
+        let currentAdmin = null, currentOrder = null;
 
         function init() { loadData(); renderStats(); renderProducts(); renderOrders(); }
         function loadData() { let p=localStorage.getItem('lazy_products'); if(p) products=JSON.parse(p); let o=localStorage.getItem('lazy_orders'); if(o) orders=JSON.parse(o); let u=localStorage.getItem('lazy_users'); if(u) users=JSON.parse(u); }
         function saveAll() { localStorage.setItem('lazy_products',JSON.stringify(products)); localStorage.setItem('lazy_orders',JSON.stringify(orders)); localStorage.setItem('lazy_users',JSON.stringify(users)); }
-
         function adminLogin() { let u=document.getElementById('adminUsername').value; let p=document.getElementById('adminPassword').value; let a=adminAccounts.find(a=>a.username===u&&a.password===p); if(a){ currentAdmin=a; document.getElementById('loginCard').style.display='none'; document.getElementById('adminPanel').style.display='block'; renderStats(); renderProducts(); renderOrders(); showToast(`Welcome ${a.name}!`); } else { document.getElementById('loginError').innerHTML='Invalid credentials!'; } }
         function renderStats() { let revenue=orders.filter(o=>o.payment_status==='paid').reduce((s,o)=>s+o.total_amount,0); document.getElementById('totalRevenue').innerHTML=`$${revenue.toFixed(2)}`; document.getElementById('totalOrders').innerHTML=orders.length; document.getElementById('totalProducts').innerHTML=products.length; document.getElementById('totalCustomers').innerHTML=users.length; }
         function showSection(s) { document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById(`${s}Section`).classList.add('active'); event.target.classList.add('active'); if(s==='products') renderProducts(); if(s==='orders') renderOrders(); }
-
         function renderProducts() { document.getElementById('productsGrid').innerHTML=products.map(p=>`<div class="product-card"><div class="product-image">${p.image}</div><h3>${p.name}</h3><div>$${p.price}</div><div>📦 Stock: ${p.stock===-1?'Unlimited':p.stock}</div><div>📈 Sold: ${p.sales||0}</div><button class="btn btn-warning" onclick="editProduct(${p.id})">Edit</button><button class="btn btn-danger" onclick="deleteProduct(${p.id})">Delete</button></div>`).join(''); }
         function openProductModal(p=null){ document.getElementById('modalTitle').innerHTML=p?'Edit Product':'Add Product'; document.getElementById('productId').value=p?.id||''; document.getElementById('productName').value=p?.name||''; document.getElementById('productPrice').value=p?.price||''; document.getElementById('productStock').value=p?.stock||''; document.getElementById('productImage').value=p?.image||'🛍️'; document.getElementById('productDesc').value=p?.description||''; document.getElementById('deleteBtn').style.display=p?'inline-block':'none'; document.getElementById('productModal').style.display='flex'; }
         function editProduct(id){ let p=products.find(p=>p.id===id); if(p) openProductModal(p); }
         function deleteProduct(){ let id=parseInt(document.getElementById('productId').value); if(confirm('Delete?')){ products=products.filter(p=>p.id!==id); saveAll(); renderProducts(); renderStats(); closeProductModal(); showToast('Deleted'); } }
         function saveProduct(){ let id=parseInt(document.getElementById('productId').value); let name=document.getElementById('productName').value.trim(); let price=parseFloat(document.getElementById('productPrice').value); let stock=parseInt(document.getElementById('productStock').value); let image=document.getElementById('productImage').value.trim()||'🛍️'; let desc=document.getElementById('productDesc').value.trim(); if(!name||isNaN(price)){ showToast('Fill fields!','error'); return; } if(id){ let idx=products.findIndex(p=>p.id===id); if(idx!==-1) products[idx]={...products[idx],name,price,stock,image,description:desc}; showToast('Product updated!'); } else { let newId=Math.max(...products.map(p=>p.id),0)+1; products.push({id:newId,name,price,stock,image,description:desc,sales:0}); showToast('Product added!'); } saveAll(); renderProducts(); renderStats(); closeProductModal(); }
         function closeProductModal(){ document.getElementById('productModal').style.display='none'; }
-
         function renderOrders(){ let tbody=document.getElementById('ordersBody'); tbody.innerHTML=orders.map(o=>`<tr><td>${o.order_number}</td><td>${o.customer_name}</td><td>$${o.total_amount}</td><td style="color:${o.order_status==='delivered'?'#10b981':'#f59e0b'}">${o.order_status}</td><td><button class="btn btn-primary" onclick="generateReceiptWithAlert(${o.id})">🧾 Receipt</button><button class="btn btn-warning" onclick="openOrderModal(${o.id})">✏️ Update</button></td></tr>`).join(''); }
         function filterOrders(){ let s=document.getElementById('orderSearch').value.toLowerCase(); let filtered=orders.filter(o=>o.order_number.toLowerCase().includes(s)||o.customer_name.toLowerCase().includes(s)); document.getElementById('ordersBody').innerHTML=filtered.map(o=>`<tr><td>${o.order_number}</td><td>${o.customer_name}</td><td>$${o.total_amount}</td><td>${o.order_status}</td><td><button class="btn btn-primary" onclick="generateReceiptWithAlert(${o.id})">🧾 Receipt</button><button class="btn btn-warning" onclick="openOrderModal(${o.id})">✏️ Update</button></td></tr>`).join(''); }
         function openOrderModal(id){ currentOrder=orders.find(o=>o.id===id); if(currentOrder){ document.getElementById('orderInfo').innerHTML=`<p><strong>${currentOrder.order_number}</strong><br>${currentOrder.customer_name}</p>`; document.getElementById('orderStatus').value=currentOrder.order_status; document.getElementById('orderModal').style.display='flex'; } }
         function updateOrder(){ if(currentOrder){ currentOrder.order_status=document.getElementById('orderStatus').value; let msg=document.getElementById('orderMessage').value||`Status updated to ${currentOrder.order_status}`; if(!currentOrder.updates) currentOrder.updates=[]; currentOrder.updates.unshift({date:new Date().toISOString(),message:msg}); saveAll(); renderOrders(); renderStats(); closeOrderModal(); showToast('Order updated!'); } }
         function closeOrderModal(){ document.getElementById('orderModal').style.display='none'; }
-
         function showToast(msg){ let t=document.createElement('div'); t.className='toast'; t.innerHTML=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
         init();
     </script>
