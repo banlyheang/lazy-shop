@@ -65,8 +65,10 @@
             <h2>🔐 Admin Login</h2>
             <div style="background: rgba(99,102,241,0.2); padding: 10px; border-radius: 16px; margin-bottom: 20px;">
                 <p style="font-size: 0.8rem; color: #94a3b8;">Login Credentials (Work on ANY device):</p>
+                <!-- Default admins will appear here dynamically -->
                 <p><strong style="color: #10b981;">admin1</strong> / <strong style="color: #f59e0b;">admin123</strong></p>
                 <p><strong style="color: #10b981;">lixing</strong> / <strong style="color: #f59e0b;">lixing26</strong></p>
+                <!-- Add your custom admins below -->
             </div>
             <input type="text" id="adminUsername" placeholder="Username">
             <input type="password" id="adminPassword" placeholder="Password">
@@ -106,19 +108,24 @@
     <div id="changePasswordModal" class="modal"><div class="modal-content"><span class="close" onclick="closeChangePasswordModal()">&times;</span><h2 style="color: #f59e0b;">🔑 Change Password</h2><label>Current Password</label><input type="password" id="currentPassword" placeholder="Enter current password"><label>New Password</label><input type="password" id="newPassword" placeholder="Enter new password"><label>Confirm New Password</label><input type="password" id="confirmPassword" placeholder="Confirm new password"><button class="btn btn-primary" onclick="changeAdminPassword()" style="width:100%;">Update Password</button><div id="passwordChangeResult" style="margin-top:15px; text-align:center;"></div></div></div>
 
     <script>
-        // Telegram Worker URL
         const TELEGRAM_WORKER_URL = "https://telegram-alert.banlyheang849.workers.dev";
         
-        let adminAccounts = [];
+        // ==================== HARDCODED ADMINS (Works on ALL Devices) ====================
+        // ⬇️⬇️⬇️ ADD YOUR ADMINS BELOW ⬇️⬇️⬇️
+        // Just copy this pattern for each admin:
+        // { username: "YOUR_USERNAME", password: "YOUR_PASSWORD", name: "Full Name", telegram: "" },
+        
+        const HARDCODED_ADMINS = [
+            { username: "admin1", password: "admin123", name: "Admin", telegram: "" },
+            { username: "lixing", password: "lixing26", name: "Lixing", telegram: "568280939" },
+            // ⬇️ ADD YOUR CUSTOM ADMINS HERE (remove the // to activate):
+            // { username: "yourusername", password: "yourpassword", name: "Your Name", telegram: "" },
+        ];
+        
+        let adminAccounts = [...HARDCODED_ADMINS];
         let products = [], orders = [], users = [];
         let currentAdmin = null, currentOrder = null;
         let telegramSettings = { botToken: "", chatId: "" };
-
-        // DEFAULT ADMINS - These work on ANY device!
-        const DEFAULT_ADMINS = [
-            { username: "admin1", password: "admin123", name: "Admin", telegram: "" },
-            { username: "lixing", password: "lixing26", name: "Lixing", telegram: "568280939" }
-        ];
 
         function loadData() {
             let p = localStorage.getItem('lazy_products'); 
@@ -136,58 +143,42 @@
             let tg = localStorage.getItem('lazy_telegram_settings'); if(tg) telegramSettings = JSON.parse(tg);
             
             if (a) {
-                adminAccounts = JSON.parse(a);
-                for (const defaultAdmin of DEFAULT_ADMINS) {
-                    if (!adminAccounts.find(adm => adm.username === defaultAdmin.username)) {
-                        adminAccounts.push(defaultAdmin);
+                let savedAdmins = JSON.parse(a);
+                adminAccounts = [...HARDCODED_ADMINS];
+                for (const savedAdmin of savedAdmins) {
+                    if (!adminAccounts.find(adm => adm.username === savedAdmin.username)) {
+                        adminAccounts.push(savedAdmin);
                     }
                 }
             } else {
-                adminAccounts = [...DEFAULT_ADMINS];
+                adminAccounts = [...HARDCODED_ADMINS];
             }
             saveAll();
         }
         
         function saveAll() {
+            let localOnlyAdmins = adminAccounts.filter(adm => !HARDCODED_ADMINS.find(h => h.username === adm.username));
             localStorage.setItem('lazy_products', JSON.stringify(products));
             localStorage.setItem('lazy_orders', JSON.stringify(orders));
             localStorage.setItem('lazy_users', JSON.stringify(users));
-            localStorage.setItem('lazy_admin_accounts', JSON.stringify(adminAccounts));
+            localStorage.setItem('lazy_admin_accounts', JSON.stringify(localOnlyAdmins));
             localStorage.setItem('lazy_telegram_settings', JSON.stringify(telegramSettings));
         }
 
-        // ==================== Telegram Alert via Worker ====================
         async function sendTelegramAlert(message, targetChatId = null) {
             const botToken = telegramSettings.botToken;
             const chatId = targetChatId || telegramSettings.chatId;
-            
-            if(!botToken || !chatId) {
-                console.warn("Telegram credentials missing");
-                return false;
-            }
-            
+            if(!botToken || !chatId) return false;
             try {
-                const response = await fetch(TELEGRAM_WORKER_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        botToken: botToken,
-                        chatId: chatId,
-                        message: message
-                    })
-                });
+                const response = await fetch(TELEGRAM_WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ botToken, chatId, message }) });
                 const result = await response.json();
-                return result.success;
-            } catch(error) {
-                console.error("Failed to send Telegram alert:", error);
-                return false;
-            }
+                return result.success === true;
+            } catch(e) { return false; }
         }
         
         async function sendAdminActionAlert(action, details) {
-            let msg = `🛡️ *ADMIN ACTION*\nAdmin: ${currentAdmin?.name || currentAdmin?.username}\nAction: ${action}\nDetails: ${details}\nTime: ${new Date().toLocaleString()}`;
+            let msg = `🛡️ *ADMIN ACTION*\nAdmin: ${currentAdmin?.name || currentAdmin?.username}\nAction: ${action}\nDetails: ${details}`;
             await sendTelegramAlert(msg);
-            // Also send to owner (568280939)
             if (telegramSettings.chatId && telegramSettings.chatId !== "568280939") {
                 await sendTelegramAlert(msg, "568280939");
             }
@@ -203,12 +194,12 @@
                 document.getElementById('adminPanel').style.display = 'block';
                 document.getElementById('adminNameDisplay').innerHTML = a.name || a.username;
                 renderStats(); renderProducts(); renderOrders();
-                showToast(`✅ Welcome ${a.name || a.username}!`, "success");
-                sendAdminActionAlert("LOGIN", `Admin ${a.username} logged in`);
+                showToast("Welcome " + (a.name || a.username) + "!", "success");
+                sendAdminActionAlert("LOGIN", "Admin " + a.username + " logged in");
                 localStorage.setItem('admin_logged_in', 'true');
                 localStorage.setItem('current_admin', JSON.stringify({ username: a.username, name: a.name }));
             } else {
-                document.getElementById('loginError').innerHTML = '❌ Invalid credentials! Use: admin1 / admin123 or lixing / lixing26';
+                document.getElementById('loginError').innerHTML = '❌ Invalid credentials!';
             }
         }
         
@@ -218,8 +209,6 @@
             localStorage.removeItem('current_admin');
             document.getElementById('loginCard').style.display = 'block';
             document.getElementById('adminPanel').style.display = 'none';
-            document.getElementById('adminUsername').value = '';
-            document.getElementById('adminPassword').value = '';
             showToast("Logged out", "success");
         }
         
@@ -247,13 +236,13 @@
             saveAll();
             currentAdmin.password = newPwd;
             document.getElementById('passwordChangeResult').innerHTML = '<span style="color:#10b981;">✅ Password changed!</span>';
-            await sendAdminActionAlert("PASSWORD CHANGED", `Admin ${currentAdmin.username} changed password`);
+            await sendAdminActionAlert("PASSWORD CHANGED", "Admin " + currentAdmin.username + " changed password");
             setTimeout(() => { closeChangePasswordModal(); showToast("Password updated!", "success"); }, 1500);
         }
 
         function renderStats() {
             let revenue = orders.filter(o => o.payment_status === 'paid').reduce((s,o) => s + (o.total_amount || 0), 0);
-            document.getElementById('totalRevenue').innerHTML = `$${revenue.toFixed(2)}`;
+            document.getElementById('totalRevenue').innerHTML = "$" + revenue.toFixed(2);
             document.getElementById('totalOrders').innerHTML = orders.length;
             document.getElementById('totalProducts').innerHTML = products.length;
             document.getElementById('totalCustomers').innerHTML = users.length;
@@ -262,14 +251,14 @@
         function showSection(s) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`${s}Section`).classList.add('active');
+            document.getElementById(s + "Section").classList.add('active');
             event.target.classList.add('active');
             if(s === 'products') renderProducts();
             if(s === 'orders') renderOrders();
         }
         
         function renderProducts() {
-            document.getElementById('productsGrid').innerHTML = products.map(p => `<div class="product-card"><div class="product-image">${p.image || '📦'}</div><h3>${p.name}</h3><div>$${p.price}</div><div>📦 Stock: ${p.stock === -1 ? 'Unlimited' : p.stock}</div><div>📈 Sold: ${p.sales || 0}</div><button class="btn btn-warning" onclick="editProduct(${p.id})">Edit</button><button class="btn btn-danger" onclick="deleteProductById(${p.id})">Delete</button></div>`).join('');
+            document.getElementById('productsGrid').innerHTML = products.map(p => '<div class="product-card"><div class="product-image">' + (p.image || '📦') + '</div><h3>' + p.name + '</h3><div>$' + p.price + '</div><div>📦 Stock: ' + (p.stock === -1 ? 'Unlimited' : p.stock) + '</div><div>📈 Sold: ' + (p.sales || 0) + '</div><button class="btn btn-warning" onclick="editProduct(' + p.id + ')">Edit</button><button class="btn btn-danger" onclick="deleteProductById(' + p.id + ')">Delete</button></div>').join('');
         }
         
         function openAddProductModal(p=null){
@@ -292,7 +281,7 @@
                 products = products.filter(p => p.id !== id);
                 saveAll(); renderProducts(); renderStats(); closeProductModal();
                 showToast('Deleted');
-                await sendAdminActionAlert("PRODUCT DELETED", `Product ID ${id} (${pName}) deleted`);
+                await sendAdminActionAlert("PRODUCT DELETED", "Product ID " + id + " (" + pName + ") deleted");
             }
         }
         
@@ -310,12 +299,12 @@
                 let idx = products.findIndex(p => p.id === id);
                 if(idx !== -1) products[idx] = {...products[idx], name, price, stock, image, description: desc};
                 showToast('Product updated!');
-                await sendAdminActionAlert("PRODUCT UPDATED", `Product ${name} (ID ${id}) updated`);
+                await sendAdminActionAlert("PRODUCT UPDATED", "Product " + name + " (ID " + id + ") updated");
             } else {
                 let newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
                 products.push({id:newId, name, price, stock, image, description: desc, sales:0});
                 showToast('Product added!');
-                await sendAdminActionAlert("PRODUCT ADDED", `New product: ${name} ($${price}) added`);
+                await sendAdminActionAlert("PRODUCT ADDED", "New product: " + name + " ($" + price + ") added");
             }
             saveAll(); renderProducts(); renderStats(); closeProductModal();
         }
@@ -323,13 +312,13 @@
         function closeProductModal(){ document.getElementById('productModal').style.display = 'none'; }
         
         function renderOrders(){
-            document.getElementById('ordersBody').innerHTML = orders.map(o => `<tr><td><strong>${o.order_number}</strong></td><td>${o.customer_name}</td><td>$${(o.total_amount || 0).toFixed(2)}</td><td style="color:${o.order_status === 'delivered' ? '#10b981' : '#f59e0b'}">${o.order_status}</td><td><button class="btn btn-primary" onclick="openOrderModal(${o.id})">Update</button></td></tr>`).join('');
+            document.getElementById('ordersBody').innerHTML = orders.map(o => `<tr><td><strong>${o.order_number}</strong></td><td>${o.customer_name}</td><td>$${(o.total_amount || 0).toFixed(2)}</td><td style="color:${o.order_status === 'delivered' ? '#10b981' : '#f59e0b'}">${o.order_status}</td><td><button class="btn btn-primary" onclick="openOrderModal(${o.id})">Update</button></td>`).join('');
         }
         
         function filterOrders(){
             let s = document.getElementById('orderSearch').value.toLowerCase();
             let filtered = orders.filter(o => o.order_number.toLowerCase().includes(s) || o.customer_name.toLowerCase().includes(s));
-            document.getElementById('ordersBody').innerHTML = filtered.map(o => `<tr><td><strong>${o.order_number}</strong></td><td>${o.customer_name}</td><td>$${(o.total_amount || 0).toFixed(2)}</td><td style="color:${o.order_status === 'delivered' ? '#10b981' : '#f59e0b'}">${o.order_status}</td><td><button class="btn btn-primary" onclick="openOrderModal(${o.id})">Update</button></td></tr>`).join('');
+            document.getElementById('ordersBody').innerHTML = filtered.map(o => `<tr><td><strong>${o.order_number}</strong></td><td>${o.customer_name}</td><td>$${(o.total_amount || 0).toFixed(2)}</td><td style="color:${o.order_status === 'delivered' ? '#10b981' : '#f59e0b'}">${o.order_status}</td><td><button class="btn btn-primary" onclick="openOrderModal(${o.id})">Update</button></td>`).join('');
         }
         
         function openOrderModal(id){
@@ -345,18 +334,18 @@
             if(currentOrder){
                 let oldStatus = currentOrder.order_status;
                 let newStatus = document.getElementById('orderStatus').value;
-                let msg = document.getElementById('orderMessage').value || `Status updated to ${newStatus}`;
+                let msg = document.getElementById('orderMessage').value || "Status updated to " + newStatus;
                 currentOrder.order_status = newStatus;
                 if(!currentOrder.updates) currentOrder.updates = [];
                 currentOrder.updates.unshift({date: new Date().toISOString(), message: msg});
                 saveAll(); renderOrders(); renderStats(); closeOrderModal(); showToast('Order updated!');
-                await sendAdminActionAlert("ORDER UPDATED", `Order ${currentOrder.order_number}: ${oldStatus} → ${newStatus}\nCustomer: ${currentOrder.customer_name}`);
+                await sendAdminActionAlert("ORDER UPDATED", "Order " + currentOrder.order_number + ": " + oldStatus + " → " + newStatus + "\nCustomer: " + currentOrder.customer_name);
             }
         }
         
         function closeOrderModal(){ document.getElementById('orderModal').style.display = 'none'; }
         
-        function showToast(msg, type='success'){ let t = document.createElement('div'); t.className = `toast ${type === 'error' ? 'error' : type === 'warning' ? 'warning' : ''}`; t.innerHTML = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
+        function showToast(msg, type='success'){ let t = document.createElement('div'); t.className = 'toast ' + (type === 'error' ? 'error' : type === 'warning' ? 'warning' : ''); t.innerHTML = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
         
         function checkSession() {
             const savedSession = localStorage.getItem('admin_logged_in');
