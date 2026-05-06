@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>L@ZY SHOP - Complete E-Commerce</title>
+    <title>L@ZY SHOP - Official Store</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -38,24 +38,8 @@
         .store-info h1 { font-size: 1.5rem; font-weight: 700; }
         .store-info p { color: #94a3b8; font-size: 0.8rem; }
         
-        .user-panel {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            background: rgba(255,255,255,0.08);
-            padding: 8px 20px;
-            border-radius: 50px;
-        }
+        .user-panel { display: flex; gap: 12px; align-items: center; background: rgba(255,255,255,0.08); padding: 8px 20px; border-radius: 50px; }
         .user-name { font-size: 0.9rem; font-weight: 500; }
-        .btn-icon {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 5px;
-        }
-        
         .admin-link {
             background: rgba(255,255,255,0.1);
             padding: 10px 20px;
@@ -67,31 +51,6 @@
             transition: all 0.3s;
         }
         .admin-link:hover { background: linear-gradient(135deg, #6366f1, #ec4899); transform: translateY(-2px); }
-        
-        /* Search & Filter Bar */
-        .search-bar {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-        }
-        .search-bar input {
-            flex: 1;
-            padding: 14px 20px;
-            border-radius: 50px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            font-size: 1rem;
-        }
-        .search-bar select {
-            padding: 14px 20px;
-            border-radius: 50px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            cursor: pointer;
-        }
         
         .tabs {
             display: flex;
@@ -124,46 +83,14 @@
             background: rgba(255,255,255,0.05);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 20px;
+            padding: 24px;
             text-align: center;
             transition: all 0.3s;
             border: 1px solid rgba(255,255,255,0.1);
-            position: relative;
         }
         .product-card:hover { transform: translateY(-8px); border-color: #6366f1; }
-        .wishlist-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            font-size: 1.3rem;
-            cursor: pointer;
-            color: #ff4757;
-        }
-        .product-image {
-            width: 150px;
-            height: 150px;
-            margin: 0 auto 15px;
-            border-radius: 15px;
-            overflow: hidden;
-            background: rgba(255,255,255,0.05);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .product-image img { width: 100%; height: 100%; object-fit: cover; }
-        .product-image .product-emoji { font-size: 4rem; }
+        .product-image { font-size: 4rem; margin-bottom: 15px; }
         .product-price { font-size: 1.6rem; font-weight: 700; color: #10b981; margin: 10px 0; }
-        .product-rating { color: #FFD700; margin: 5px 0; }
-        .product-category {
-            display: inline-block;
-            background: rgba(99,102,241,0.2);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            margin-bottom: 8px;
-        }
         
         .btn {
             padding: 10px 20px;
@@ -177,8 +104,6 @@
         .btn-primary { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; }
         .btn-success { background: #10b981; color: white; }
         .btn-outline { background: transparent; border: 1px solid #6366f1; color: #6366f1; }
-        .btn-warning { background: #f59e0b; color: white; }
-        .btn-danger { background: #ef4444; color: white; }
         .btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
         
         .cart-item {
@@ -189,17 +114,14 @@
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
         
-        .reviews-list {
-            max-height: 300px;
-            overflow-y: auto;
+        .qr-display {
+            text-align: center;
+            padding: 24px;
+            background: white;
+            border-radius: 20px;
+            max-width: 280px;
+            margin: 0 auto;
         }
-        .review-item {
-            background: rgba(255,255,255,0.05);
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 10px;
-        }
-        .rating-stars i { color: #FFD700; margin-right: 2px; }
         
         .modal {
             display: none;
@@ -220,16 +142,13 @@
             padding: 32px;
             max-width: 500px;
             width: 90%;
-            max-height: 85vh;
-            overflow-y: auto;
         }
         .close { float: right; font-size: 1.5rem; cursor: pointer; }
-        
-        input, select, textarea {
+        input, textarea {
             background: rgba(255,255,255,0.1);
             border: 1px solid rgba(255,255,255,0.2);
             border-radius: 16px;
-            padding: 12px;
+            padding: 14px;
             color: white;
             width: 100%;
             margin-bottom: 15px;
@@ -271,7 +190,6 @@
             .container { padding: 15px; }
             .tab-btn { padding: 8px 18px; font-size: 0.8rem; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .search-bar { flex-direction: column; }
         }
     </style>
 </head>
@@ -282,11 +200,10 @@
                 <div class="store-logo" id="storeLogo">🛍️</div>
                 <div class="store-info">
                     <h1 id="storeName">L@ZY SHOP</h1>
-                    <p id="storeSlogan">✨ Premium Quality | Fast Delivery | 24/7 Support</p>
+                    <p id="storeSlogan">✨ Premium Quality | Fast Delivery</p>
                 </div>
             </div>
             <div class="user-panel">
-                <button class="btn-icon" onclick="toggleWishlistPage()" title="Wishlist">❤️ <span id="wishlistCount">0</span></button>
                 <div class="user-name" id="userNameDisplay">👤 Guest</div>
                 <button class="btn btn-primary" id="loginBtn" onclick="openLoginModal()">Sign In</button>
                 <button class="btn btn-danger" id="logoutBtn" style="display:none;" onclick="logout()">Sign Out</button>
@@ -294,7 +211,6 @@
             </div>
         </div>
 
-        <!-- Stats Bar -->
         <div class="stats-grid" id="statsBar">
             <div class="stat-card"><div class="stat-value" id="statOrders">0</div><div class="stat-label">Orders</div></div>
             <div class="stat-card"><div class="stat-value" id="statProducts">0</div><div class="stat-label">Products</div></div>
@@ -302,428 +218,66 @@
             <div class="stat-card"><div class="stat-value" id="statRevenue">$0</div><div class="stat-label">Revenue</div></div>
         </div>
 
-        <!-- Search & Filter Bar -->
-        <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="🔍 Search products by name..." onkeyup="filterProducts()">
-            <select id="categoryFilter" onchange="filterProducts()">
-                <option value="all">All Categories</option>
-                <option value="Electronics">📱 Electronics</option>
-                <option value="Clothing">👕 Clothing</option>
-                <option value="Accessories">🕶️ Accessories</option>
-            </select>
-            <select id="sortFilter" onchange="filterProducts()">
-                <option value="default">Sort by: Default</option>
-                <option value="price_asc">Price: Low to High</option>
-                <option value="price_desc">Price: High to Low</option>
-                <option value="rating">Rating: Highest</option>
-                <option value="sales">Best Selling</option>
-            </select>
-        </div>
-
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('shop')">🛒 SHOP</button>
             <button class="tab-btn" onclick="switchTab('cart')">🛍️ CART (<span id="cartCount">0</span>)</button>
-            <button class="tab-btn" onclick="switchTab('wishlist')">❤️ WISHLIST (<span id="wishlistCountTab">0</span>)</button>
             <button class="tab-btn" onclick="switchTab('orders')">📦 MY ORDERS</button>
             <button class="tab-btn" onclick="switchTab('track')">🚚 TRACK</button>
-            <button class="tab-btn" onclick="switchTab('reviews')">⭐ REVIEWS</button>
+            <button class="tab-btn" onclick="switchTab('qrpay')">💳 PAYMENT</button>
         </div>
 
         <div id="shop-tab" class="tab-content active"><div class="products-grid" id="productsGrid"></div></div>
-        <div id="cart-tab" class="tab-content"><div class="card" style="background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;"><h2>🛍️ Your Cart</h2><div id="cartItems"></div><div id="cartTotal"></div><div id="shippingCost"></div><div><label>Promo Code</label><div style="display:flex; gap:10px;"><input type="text" id="promoCode" placeholder="Enter promo code"><button class="btn btn-warning" onclick="applyPromoCode()">Apply</button></div><div id="promoMessage"></div></div><button class="btn btn-success" onclick="checkout()" style="width:100%; padding:16px; margin-top:20px;">✅ PROCEED TO CHECKOUT</button></div></div>
-        <div id="wishlist-tab" class="tab-content"><div class="card" style="background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;"><h2>❤️ My Wishlist</h2><div id="wishlistItems"></div></div></div>
-        <div id="orders-tab" class="tab-content"><div class="card" style="background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;"><h2>📦 My Orders</h2><div id="userOrdersList"></div></div></div>
-        <div id="track-tab" class="tab-content"><div class="card" style="background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;"><h2>🚚 Track Order</h2><label>Order Number</label><input type="text" id="trackOrderNumber"><label>Phone Number</label><input type="text" id="trackPhoneNumber"><button class="btn btn-primary" onclick="trackOrder()">🔍 Track</button><div id="trackResult"></div></div></div>
-        <div id="reviews-tab" class="tab-content"><div class="card" style="background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;"><h2>⭐ Customer Reviews</h2><div id="reviewsList" class="reviews-list"></div><button class="btn btn-primary" onclick="openReviewModal()" style="margin-top:15px;">✍️ Write a Review</button></div></div>
+        <div id="cart-tab" class="tab-content"><div class="card" style="background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;"><h2>🛍️ Your Cart</h2><div id="cartItems"></div><div id="cartTotal"></div><button class="btn btn-success" onclick="checkout()" style="width:100%; padding:16px; margin-top:20px;">✅ CHECKOUT</button></div></div>
+        <div id="orders-tab" class="tab-content"><div class="card" style="background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;"><h2>📦 Order History</h2><div id="userOrdersList"></div></div></div>
+        <div id="track-tab" class="tab-content"><div class="card" style="background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;"><h2>🚚 Track Order</h2><label>Order Number</label><input type="text" id="trackOrderNumber" placeholder="e.g., ORD1234567890"><label>Phone Number</label><input type="text" id="trackPhoneNumber" placeholder="Your registered phone"><button class="btn btn-primary" onclick="trackOrder()">🔍 Track</button><div id="trackResult" style="margin-top:20px;"></div></div></div>
+        <div id="qrpay-tab" class="tab-content"><div class="card" style="background:rgba(255,255,255,0.05); border-radius:24px; padding:28px;"><h2>💳 Scan to Pay</h2><div class="qr-display"><img id="paymentQRImage" src="" style="display:none;"><div id="qrPlaceholder" style="font-size:60px;">💳</div></div><div style="text-align:center; margin-top:20px;"><p><strong>🏦 ABA Bank</strong></p><p><strong>📱 001059172</strong></p><p><strong>👤 Ban Lyheang</strong></p><button class="btn btn-primary" onclick="copyPaymentInfo()">📋 Copy Account</button><button class="btn btn-info" onclick="openTelegram()" style="margin-left:10px; background:#0088cc;">📱 Telegram Support</button></div></div></div>
     </div>
 
-    <!-- Login Modal -->
-    <div id="loginModal" class="modal"><div class="modal-content"><span class="close" onclick="closeLoginModal()">&times;</span><h2>📞 Login / Register</h2><label>Email</label><input type="email" id="loginEmail" placeholder="your@email.com"><label>Password</label><input type="password" id="loginPassword" placeholder="Password"><label>Full Name</label><input type="text" id="loginName" placeholder="Your name"><button class="btn btn-success" onclick="loginUser()" style="width:100%; margin-top:10px;">Login / Register</button><hr style="margin:15px 0;"><p style="text-align:center; font-size:12px;">Or continue with phone:</p><input type="tel" id="loginPhone" placeholder="Phone number"><button class="btn btn-outline" onclick="loginWithPhone()" style="width:100%;">Continue with Phone</button></div></div>
-    
-    <!-- Review Modal -->
-    <div id="reviewModal" class="modal"><div class="modal-content"><span class="close" onclick="closeReviewModal()">&times;</span><h2>⭐ Write a Review</h2><label>Product</label><select id="reviewProductId"></select><label>Rating</label><div class="rating-stars" id="ratingStars"><i class="far fa-star" data-rating="1"></i><i class="far fa-star" data-rating="2"></i><i class="far fa-star" data-rating="3"></i><i class="far fa-star" data-rating="4"></i><i class="far fa-star" data-rating="5"></i></div><label>Review</label><textarea id="reviewText" rows="3" placeholder="Share your experience..."></textarea><button class="btn btn-success" onclick="submitReview()">Submit Review</button></div></div>
-    
-    <!-- Payment Modal -->
-    <div id="paymentModal" class="modal"><div class="modal-content"><span class="close" onclick="closePaymentModal()">&times;</span><h2>💳 Payment Methods</h2><div style="display:flex; gap:15px; flex-direction:column;"><button class="btn btn-primary" onclick="payWithABAPay()"><i class="fas fa-university"></i> ABA PAY</button><button class="btn btn-info" onclick="payWithKHQR()"><i class="fas fa-qrcode"></i> KHQR</button><button class="btn btn-success" onclick="payWithCard()"><i class="fas fa-credit-card"></i> Credit Card</button><button class="btn btn-warning" onclick="payWithCash()"><i class="fas fa-money-bill"></i> Cash on Delivery</button></div><div id="paymentResult"></div></div></div>
-    
-    <!-- Receipt Modal -->
-    <div id="receiptModal" class="modal"><div class="modal-content"><span class="close" onclick="closeReceiptModal()">&times;</span><h2>🧾 Receipt</h2><div id="receiptContent"></div><button class="btn btn-primary" onclick="downloadReceipt()">Download PDF</button><button class="btn btn-info" onclick="sendReceiptEmail()">Send to Email</button></div></div>
+    <div id="loginModal" class="modal"><div class="modal-content"><span class="close" onclick="closeLoginModal()">&times;</span><h2>📞 Customer Login</h2><label>Phone Number</label><input type="tel" id="loginPhone"><label>Full Name</label><input type="text" id="loginName"><button class="btn btn-success" onclick="loginUser()" style="width:100%; margin-top:10px;">Login / Register</button></div></div>
+    <div id="receiptModal" class="modal"><div class="modal-content"><span class="close" onclick="closeReceiptModal()">&times;</span><h2>🧾 Receipt</h2><div id="receiptContent"></div><button class="btn btn-primary" onclick="downloadReceipt()">Download PDF</button></div></div>
 
     <script>
-        // ==================== DATA ====================
         let products = [
-            { id: 1, name: "Premium T-Shirt", price: 25.99, stock: 50, sales: 45, image: "👕", category: "Clothing", rating: 4.5, reviews: [] },
-            { id: 2, name: "Wireless Headphones", price: 49.99, stock: 30, sales: 38, image: "🎧", category: "Electronics", rating: 4.8, reviews: [] },
-            { id: 3, name: "Smart Watch", price: 89.99, stock: 20, sales: 25, image: "⌚", category: "Electronics", rating: 4.6, reviews: [] },
-            { id: 4, name: "Leather Backpack", price: 39.99, stock: 40, sales: 32, image: "🎒", category: "Accessories", rating: 4.3, reviews: [] },
-            { id: 5, name: "Sunglasses", price: 19.99, stock: 60, sales: 55, image: "🕶️", category: "Accessories", rating: 4.4, reviews: [] }
+            { id: 1, name: "Premium T-Shirt", price: 25.99, stock: 50, sales: 45, image: "👕" },
+            { id: 2, name: "Wireless Headphones", price: 49.99, stock: 30, sales: 38, image: "🎧" },
+            { id: 3, name: "Smart Watch", price: 89.99, stock: 20, sales: 25, image: "⌚" },
+            { id: 4, name: "Leather Backpack", price: 39.99, stock: 40, sales: 32, image: "🎒" },
+            { id: 5, name: "Sunglasses", price: 19.99, stock: 60, sales: 55, image: "🕶️" }
         ];
-        
-        let orders = [], users = [], cart = [], wishlist = [], reviews = [];
-        let currentUser = null;
-        let appliedPromo = null;
-        let selectedRating = 0;
-        
-        const promoCodes = {
-            "WELCOME10": { discount: 10, type: "percent", description: "10% off" },
-            "SAVE20": { discount: 20, type: "percent", description: "20% off" },
-            "FREESHIP": { discount: 3.99, type: "fixed", description: "Free shipping" }
-        };
+        let orders = [], users = [], cart = [], currentUser = null;
+        let qrSettings = { qrImage: "", bankName: "ABA Bank", accountNumber: "001059172", accountName: "Ban Lyheang" };
 
-        // ==================== INIT ====================
-        function init() {
-            loadData();
-            renderProducts();
-            updateCart();
-            renderUserOrders();
-            updateCartBadge();
-            updateWishlistBadge();
-            renderReviews();
-            updateStats();
-            checkUserSession();
-        }
+        function init() { loadData(); renderProducts(); updateCart(); renderUserOrders(); updateCartBadge(); loadQR(); updateStats(); checkUserSession(); }
+        function loadData() { let p=localStorage.getItem('lazy_products'); if(p) products=JSON.parse(p); let o=localStorage.getItem('lazy_orders'); if(o) orders=JSON.parse(o); let u=localStorage.getItem('lazy_users'); if(u) users=JSON.parse(u); let c=localStorage.getItem('lazy_cart'); if(c) cart=JSON.parse(c); let q=localStorage.getItem('qr_settings'); if(q) qrSettings=JSON.parse(q); }
+        function saveAll() { localStorage.setItem('lazy_products',JSON.stringify(products)); localStorage.setItem('lazy_orders',JSON.stringify(orders)); localStorage.setItem('lazy_users',JSON.stringify(users)); localStorage.setItem('lazy_cart',JSON.stringify(cart)); localStorage.setItem('qr_settings',JSON.stringify(qrSettings)); }
+        function updateStats() { document.getElementById('statOrders').innerHTML=orders.filter(o=>o.payment_status==='paid').length; document.getElementById('statProducts').innerHTML=products.length; document.getElementById('statCustomers').innerHTML=users.length; let revenue=orders.filter(o=>o.payment_status==='paid').reduce((s,o)=>s+o.total_amount,0); document.getElementById('statRevenue').innerHTML=`$${revenue.toFixed(2)}`; }
 
-        function loadData() {
-            let p = localStorage.getItem('lazy_products'); if(p) products = JSON.parse(p);
-            let o = localStorage.getItem('lazy_orders'); if(o) orders = JSON.parse(o);
-            let u = localStorage.getItem('lazy_users'); if(u) users = JSON.parse(u);
-            let c = localStorage.getItem('lazy_cart'); if(c) cart = JSON.parse(c);
-            let w = localStorage.getItem('lazy_wishlist'); if(w) wishlist = JSON.parse(w);
-            let r = localStorage.getItem('lazy_reviews'); if(r) reviews = JSON.parse(r);
-        }
-
-        function saveAll() {
-            localStorage.setItem('lazy_products', JSON.stringify(products));
-            localStorage.setItem('lazy_orders', JSON.stringify(orders));
-            localStorage.setItem('lazy_users', JSON.stringify(users));
-            localStorage.setItem('lazy_cart', JSON.stringify(cart));
-            localStorage.setItem('lazy_wishlist', JSON.stringify(wishlist));
-            localStorage.setItem('lazy_reviews', JSON.stringify(reviews));
-        }
-
-        function updateStats() {
-            document.getElementById('statOrders').innerHTML = orders.filter(o => o.payment_status === 'paid').length;
-            document.getElementById('statProducts').innerHTML = products.length;
-            document.getElementById('statCustomers').innerHTML = users.length;
-            let revenue = orders.filter(o => o.payment_status === 'paid').reduce((s, o) => s + o.total_amount, 0);
-            document.getElementById('statRevenue').innerHTML = `$${revenue.toFixed(2)}`;
-        }
-
-        // ==================== SEARCH & FILTER ====================
-        function filterProducts() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const category = document.getElementById('categoryFilter').value;
-            const sort = document.getElementById('sortFilter').value;
-            
-            let filtered = products.filter(p => {
-                const matchSearch = p.name.toLowerCase().includes(searchTerm);
-                const matchCategory = category === 'all' || p.category === category;
-                return matchSearch && matchCategory;
-            });
-            
-            if (sort === 'price_asc') filtered.sort((a,b) => a.price - b.price);
-            if (sort === 'price_desc') filtered.sort((a,b) => b.price - a.price);
-            if (sort === 'rating') filtered.sort((a,b) => b.rating - a.rating);
-            if (sort === 'sales') filtered.sort((a,b) => b.sales - a.sales);
-            
-            renderFilteredProducts(filtered);
-        }
-        
-        function renderFilteredProducts(filtered) {
-            const grid = document.getElementById('productsGrid');
-            grid.innerHTML = filtered.map(p => `
-                <div class="product-card">
-                    <button class="wishlist-btn" onclick="toggleWishlist(${p.id})">${wishlist.includes(p.id) ? '❤️' : '🤍'}</button>
-                    <div class="product-image">${p.image.startsWith('data:') ? `<img src="${p.image}">` : `<div class="product-emoji">${p.image}</div>`}</div>
-                    <span class="product-category">${p.category}</span>
-                    <h3>${p.name}</h3>
-                    <div class="product-price">$${p.price}</div>
-                    <div class="product-rating">${'⭐'.repeat(Math.floor(p.rating))} ${p.rating}</div>
-                    <div style="color:#94a3b8;">📦 ${p.stock} left | 🔥 ${p.sales} sold</div>
-                    <button class="btn btn-primary" onclick="addToCart(${p.id})">🛒 Add to Cart</button>
-                    <button class="btn btn-success" onclick="buyNow(${p.id})">💳 Buy Now</button>
-                </div>
-            `).join('');
-        }
-        
-        function renderProducts() { filterProducts(); }
-
-        // ==================== WISHLIST ====================
-        function toggleWishlist(id) {
-            if (!currentUser) { showToast('Please login first!', 'warning'); openLoginModal(); return; }
-            if (wishlist.includes(id)) wishlist = wishlist.filter(i => i !== id);
-            else wishlist.push(id);
-            saveAll();
-            renderWishlist();
-            updateWishlistBadge();
-            filterProducts();
-            showToast(wishlist.includes(id) ? 'Added to wishlist!' : 'Removed from wishlist!');
-        }
-        
-        function renderWishlist() {
-            const container = document.getElementById('wishlistItems');
-            const wishlistProducts = products.filter(p => wishlist.includes(p.id));
-            if (!wishlistProducts.length) { container.innerHTML = '<p style="text-align:center; padding:40px;">❤️ Your wishlist is empty</p>'; return; }
-            container.innerHTML = wishlistProducts.map(p => `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid rgba(255,255,255,0.1);">
-                    <div><strong>${p.name}</strong><br>$${p.price}</div>
-                    <div><button class="btn btn-primary" onclick="addToCart(${p.id})">🛒 Add to Cart</button>
-                    <button class="btn btn-danger" onclick="toggleWishlist(${p.id})">❤️ Remove</button></div>
-                </div>
-            `).join('');
-        }
-        
-        function toggleWishlistPage() { switchTab('wishlist'); }
-        function updateWishlistBadge() { 
-            document.getElementById('wishlistCount').innerHTML = wishlist.length;
-            document.getElementById('wishlistCountTab').innerHTML = wishlist.length;
-        }
-
-        // ==================== CART ====================
-        function addToCart(id) { 
-            let p = products.find(p => p.id === id); 
-            if (!p || p.stock <= 0) { showToast('Out of stock!', 'error'); return; } 
-            let e = cart.find(i => i.id === id); 
-            if (e) e.quantity++; 
-            else cart.push({ ...p, quantity: 1 }); 
-            saveAll(); updateCart(); updateCartBadge(); showToast(`✅ ${p.name} added!`); 
-        }
-        
-        function buyNow(id) { addToCart(id); switchTab('cart'); }
-        
-        function updateCart() { 
-            let container = document.getElementById('cartItems'); 
-            if (!cart.length) { container.innerHTML = '<div style="text-align:center; padding:60px;">🛒 Your cart is empty</div>'; document.getElementById('cartTotal').innerHTML = ''; document.getElementById('shippingCost').innerHTML = ''; return; } 
-            let subtotal = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
-            let shipping = subtotal >= 50 ? 0 : 3.99;
-            let discount = appliedPromo ? (appliedPromo.type === 'percent' ? subtotal * appliedPromo.discount / 100 : appliedPromo.discount) : 0;
-            let total = subtotal - discount + shipping;
-            container.innerHTML = cart.map(i => `
-                <div class="cart-item">
-                    <div><strong>${i.name}</strong><br>$${i.price} x ${i.quantity}</div>
-                    <div><strong>$${(i.price * i.quantity).toFixed(2)}</strong><br>
-                        <button class="btn btn-outline" onclick="updateQty(${i.id}, ${i.quantity - 1})">-</button>
-                        <button class="btn btn-outline" onclick="updateQty(${i.id}, ${i.quantity + 1})">+</button>
-                        <button class="btn btn-danger" onclick="removeFromCart(${i.id})">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
-            document.getElementById('cartTotal').innerHTML = `<strong>Subtotal: $${subtotal.toFixed(2)}</strong><br>Discount: -$${discount.toFixed(2)}<br>Shipping: $${shipping.toFixed(2)}<br><strong style="font-size:1.2rem;">Total: $${total.toFixed(2)}</strong>`;
-            document.getElementById('shippingCost').innerHTML = shipping > 0 ? `<span style="color:#f59e0b;">⚠️ Add $${(50 - subtotal).toFixed(2)} more for free shipping</span>` : `<span style="color:#10b981;">✅ Free Shipping Applied!</span>`;
-        }
-        
-        function updateQty(id, qty) { if (qty <= 0) removeFromCart(id); else { let i = cart.find(i => i.id === id); if (i) i.quantity = qty; saveAll(); updateCart(); updateCartBadge(); } }
-        function removeFromCart(id) { cart = cart.filter(i => i.id !== id); saveAll(); updateCart(); updateCartBadge(); }
-        function updateCartBadge() { document.getElementById('cartCount').innerHTML = cart.reduce((s, i) => s + i.quantity, 0); }
-        
-        function applyPromoCode() {
-            let code = document.getElementById('promoCode').value.toUpperCase();
-            if (promoCodes[code]) { appliedPromo = promoCodes[code]; document.getElementById('promoMessage').innerHTML = `<span style="color:#4CAF50;">✅ ${appliedPromo.description} applied!</span>`; updateCart(); showToast(`${appliedPromo.description} applied!`); }
-            else { document.getElementById('promoMessage').innerHTML = '<span style="color:#f44336;">❌ Invalid promo code!</span>'; showToast('Invalid promo code!', 'error'); }
-        }
-
-        // ==================== CHECKOUT & PAYMENT ====================
-        function checkout() {
-            if (!currentUser) { showToast('Please login first!', 'warning'); openLoginModal(); return; }
-            if (!cart.length) { showToast('Cart is empty!', 'error'); return; }
-            document.getElementById('paymentModal').style.display = 'flex';
-        }
-        
-        function closePaymentModal() { document.getElementById('paymentModal').style.display = 'none'; }
-        
-        function payWithABAPay() { processPayment('ABA PAY'); }
-        function payWithKHQR() { processPayment('KHQR'); }
-        function payWithCard() { processPayment('Credit Card'); }
-        function payWithCash() { processPayment('Cash on Delivery'); }
-        
-        function processPayment(method) {
-            let subtotal = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
-            let discount = appliedPromo ? (appliedPromo.type === 'percent' ? subtotal * appliedPromo.discount / 100 : appliedPromo.discount) : 0;
-            let total = subtotal - discount + (subtotal >= 50 ? 0 : 3.99);
-            let orderNumber = `ORD${Date.now()}${Math.floor(Math.random() * 1000)}`;
-            
-            orders.unshift({
-                id: orders.length + 1, order_number: orderNumber, customer_name: currentUser.name, customer_email: currentUser.email,
-                customer_phone: currentUser.phone, total_amount: total, payment_status: method === 'Cash on Delivery' ? 'pending' : 'paid',
-                order_status: 'processing', payment_method: method, created_at: new Date().toISOString(),
-                items: [...cart], shipping_address: currentUser.address || 'Not provided',
-                updates: [{ date: new Date().toISOString(), message: `Order placed via ${method}` }]
-            });
-            
-            // Send email confirmation
-            sendEmailConfirmation(orderNumber, total, method);
-            
-            cart = []; appliedPromo = null; saveAll(); updateCart(); updateCartBadge(); renderUserOrders(); updateStats();
-            closePaymentModal();
-            showToast(`✅ Order placed! #${orderNumber} via ${method}`);
-            showReceipt(orderNumber);
-        }
-        
-        function sendEmailConfirmation(orderNumber, amount, method) {
-            if (currentUser && currentUser.email) {
-                showToast(`📧 Email confirmation sent to ${currentUser.email}`, 'success');
-                // In production, integrate with EmailJS or SMTP
-            }
-        }
-        
-        function showReceipt(orderNumber) {
-            let order = orders.find(o => o.order_number === orderNumber);
-            if (!order) return;
-            document.getElementById('receiptContent').innerHTML = `
-                <div style="text-align:center;">
-                    <div style="font-size:3rem;">🛍️</div>
-                    <h2>L@ZY SHOP</h2>
-                    <p>Official Receipt</p>
-                    <hr>
-                    <p><strong>Order #:</strong> ${order.order_number}</p>
-                    <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
-                    <p><strong>Customer:</strong> ${order.customer_name}</p>
-                    <p><strong>Payment:</strong> ${order.payment_method}</p>
-                    <hr>
-                    ${order.items.map(i => `<p>${i.name} x${i.quantity} = $${(i.price * i.quantity).toFixed(2)}</p>`).join('')}
-                    <hr>
-                    <h3>Total: $${order.total_amount.toFixed(2)}</h3>
-                    <p>Thank you for shopping at L@ZY SHOP!</p>
-                </div>
-            `;
-            document.getElementById('receiptModal').style.display = 'flex';
-        }
-        
-        function sendReceiptEmail() {
-            if (currentUser && currentUser.email) {
-                showToast(`📧 Receipt sent to ${currentUser.email}!`, 'success');
-            } else { showToast('No email on file!', 'error'); }
-        }
-
-        // ==================== USER FUNCTIONS ====================
-        function openLoginModal() { document.getElementById('loginModal').style.display = 'flex'; }
-        function closeLoginModal() { document.getElementById('loginModal').style.display = 'none'; }
-        
-        function loginUser() {
-            let email = document.getElementById('loginEmail').value.trim();
-            let password = document.getElementById('loginPassword').value;
-            let name = document.getElementById('loginName').value.trim();
-            if (!email || !password) { showToast('Enter email and password!', 'error'); return; }
-            let user = users.find(u => u.email === email && u.password === password);
-            if (!user) { user = { email, password, name: name || email.split('@')[0], phone: '', address: '', joined: new Date().toISOString() }; users.push(user); saveAll(); showToast('Account created!'); }
-            currentUser = user; localStorage.setItem('currentUser', JSON.stringify(user));
-            updateUserDisplay(); closeLoginModal(); renderUserOrders(); showToast(`✨ Welcome ${user.name}!`);
-        }
-        
-        function loginWithPhone() {
-            let phone = document.getElementById('loginPhone').value.trim();
-            let user = users.find(u => u.phone === phone);
-            if (!user) { user = { phone, name: 'Customer', email: '', joined: new Date().toISOString() }; users.push(user); saveAll(); }
-            currentUser = user; localStorage.setItem('currentUser', JSON.stringify(user));
-            updateUserDisplay(); closeLoginModal(); renderUserOrders(); showToast(`✨ Welcome ${user.name}!`);
-        }
-        
-        function logout() { currentUser = null; localStorage.removeItem('currentUser'); updateUserDisplay(); renderUserOrders(); showToast('Logged out'); }
-        function checkUserSession() { let saved = localStorage.getItem('currentUser'); if (saved) { currentUser = JSON.parse(saved); updateUserDisplay(); } }
-        function updateUserDisplay() { document.getElementById('userNameDisplay').innerHTML = currentUser ? `👤 ${currentUser.name}` : '👤 Guest'; document.getElementById('loginBtn').style.display = currentUser ? 'none' : 'inline-block'; document.getElementById('logoutBtn').style.display = currentUser ? 'inline-block' : 'none'; }
-
-        // ==================== ORDERS ====================
-        function renderUserOrders() {
-            if (!currentUser) { document.getElementById('userOrdersList').innerHTML = '<p style="text-align:center; padding:40px;">Login to view orders</p>'; return; }
-            let userOrders = orders.filter(o => o.customer_email === currentUser.email || o.customer_phone === currentUser.phone);
-            if (!userOrders.length) { document.getElementById('userOrdersList').innerHTML = '<p style="text-align:center; padding:40px;">No orders yet</p>'; return; }
-            document.getElementById('userOrdersList').innerHTML = userOrders.map(o => `
-                <div style="background:rgba(255,255,255,0.05); border-radius:16px; padding:16px; margin-bottom:12px;">
-                    <div style="display:flex; justify-content:space-between; flex-wrap:wrap;">
-                        <div><strong>${o.order_number}</strong><br>$${o.total_amount}<br>${new Date(o.created_at).toLocaleDateString()}<br>Payment: ${o.payment_method}</div>
-                        <div><span style="background:${o.order_status === 'delivered' ? '#10b981' : '#f59e0b'}; padding:4px 12px; border-radius:20px;">${o.order_status}</span><br>
-                        <button class="btn btn-info" onclick="viewReceipt('${o.order_number}')">🧾 Receipt</button>
-                        ${o.order_status !== 'cancelled' && o.order_status !== 'delivered' ? `<button class="btn btn-danger" onclick="cancelOrder('${o.order_number}')">❌ Cancel</button>` : ''}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-        
-        function cancelOrder(orderNumber) {
-            if (confirm('Cancel this order?')) {
-                let order = orders.find(o => o.order_number === orderNumber);
-                if (order) { order.order_status = 'cancelled'; saveAll(); renderUserOrders(); showToast('Order cancelled!'); }
-            }
-        }
-        
-        function viewReceipt(orderNumber) {
-            let order = orders.find(o => o.order_number === orderNumber);
-            if (!order) return;
-            document.getElementById('receiptContent').innerHTML = `
-                <div style="text-align:center;"><div style="font-size:3rem;">🛍️</div><h2>L@ZY SHOP</h2><hr>
-                <p><strong>Order:</strong> ${order.order_number}</p><p><strong>Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
-                <p><strong>Customer:</strong> ${order.customer_name}</p><p><strong>Payment:</strong> ${order.payment_method}</p><hr>
-                ${order.items.map(i => `<p>${i.name} x${i.quantity} = $${(i.price * i.quantity).toFixed(2)}</p>`).join('')}<hr>
-                <h3>Total: $${order.total_amount.toFixed(2)}</h3><p>Thank you!</p></div>
-            `;
-            document.getElementById('receiptModal').style.display = 'flex';
-        }
-        
-        function downloadReceipt() { let w = window.open('', '_blank'); w.document.write(`<html><head><title>Receipt</title><style>body{font-family:Arial;padding:40px;}</style></head><body>${document.getElementById('receiptContent').innerHTML}<script>window.print();<\/script></body></html>`); w.document.close(); }
-        function closeReceiptModal() { document.getElementById('receiptModal').style.display = 'none'; }
-
-        // ==================== TRACKING ====================
-        function trackOrder() {
-            let orderNum = document.getElementById('trackOrderNumber').value.trim();
-            let phone = document.getElementById('trackPhoneNumber').value.trim();
-            let order = orders.find(o => o.order_number === orderNum && (o.customer_phone === phone || o.customer_email === (currentUser?.email)));
-            let resultDiv = document.getElementById('trackResult');
-            if (!order) { resultDiv.innerHTML = '<div style="color:#ef4444;">❌ Order not found!</div>'; return; }
-            resultDiv.innerHTML = `<div class="card"><h3>${order.order_number}</h3><p>Status: ${order.order_status}</p><p>Payment: ${order.payment_method}</p><p>Total: $${order.total_amount}</p><p>Updates: ${order.updates?.map(u => `<br>📅 ${new Date(u.date).toLocaleString()}: ${u.message}</p>`).join('') || 'No updates'}</div>`;
-        }
-
-        // ==================== REVIEWS ====================
-        function renderReviews() {
-            let container = document.getElementById('reviewsList');
-            if (!reviews.length) { container.innerHTML = '<p style="text-align:center; padding:40px;">No reviews yet. Be the first!</p>'; return; }
-            container.innerHTML = reviews.map(r => `
-                <div class="review-item">
-                    <div style="display:flex; justify-content:space-between;"><strong>${r.userName}</strong><span>${'⭐'.repeat(r.rating)}</span></div>
-                    <p>${r.text}</p>
-                    <small style="color:#94a3b8;">${r.date}</small>
-                </div>
-            `).join('');
-            let productSelect = document.getElementById('reviewProductId');
-            if (productSelect) productSelect.innerHTML = products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-        }
-        
-        function openReviewModal() { document.getElementById('reviewModal').style.display = 'flex'; setupRatingStars(); }
-        function closeReviewModal() { document.getElementById('reviewModal').style.display = 'none'; }
-        
-        function setupRatingStars() {
-            let stars = document.querySelectorAll('#ratingStars i');
-            stars.forEach(star => { star.onclick = () => { selectedRating = parseInt(star.dataset.rating); stars.forEach(s => { if (parseInt(s.dataset.rating) <= selectedRating) s.className = 'fas fa-star'; else s.className = 'far fa-star'; }); }; });
-        }
-        
-        function submitReview() {
-            if (!currentUser) { showToast('Please login first!', 'warning'); openLoginModal(); return; }
-            let productId = parseInt(document.getElementById('reviewProductId').value);
-            let text = document.getElementById('reviewText').value.trim();
-            if (selectedRating === 0) { showToast('Select a rating!', 'error'); return; }
-            if (!text) { showToast('Enter your review!', 'error'); return; }
-            reviews.unshift({ id: reviews.length + 1, productId, userName: currentUser.name, rating: selectedRating, text: text, date: new Date().toLocaleDateString() });
-            saveAll();
-            renderReviews();
-            closeReviewModal();
-            showToast('✅ Thank you for your review!');
-        }
-
-        // ==================== UTILITIES ====================
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`${tab}-tab`).classList.add('active');
-            event.target.classList.add('active');
-            if (tab === 'orders') renderUserOrders();
-            if (tab === 'wishlist') renderWishlist();
-            if (tab === 'reviews') renderReviews();
-        }
-        
-        function showToast(msg, type = 'success') {
-            let t = document.createElement('div'); t.className = `toast ${type}`; t.innerHTML = msg;
-            document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
-        }
-        
+        function switchTab(tab) { document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById(`${tab}-tab`).classList.add('active'); event.target.classList.add('active'); if(tab==='orders') renderUserOrders(); }
+        function renderProducts() { let grid=document.getElementById('productsGrid'); grid.innerHTML=products.map(p=>`<div class="product-card"><div class="product-image">${p.image}</div><h3>${p.name}</h3><div class="product-price">$${p.price}</div><div style="color:#94a3b8;">⭐ ${p.sales||0} sold | 📦 ${p.stock} left</div><button class="btn btn-primary" onclick="addToCart(${p.id})">🛒 Add to Cart</button><button class="btn btn-success" onclick="buyNow(${p.id})">💳 Buy Now</button></div>`).join(''); }
+        function addToCart(id) { let p=products.find(p=>p.id===id); if(!p||p.stock<=0){ showToast('Out of stock!','error'); return; } let e=cart.find(i=>i.id===id); if(e) e.quantity++; else cart.push({...p,quantity:1}); saveAll(); updateCart(); updateCartBadge(); showToast(`✅ ${p.name} added!`); }
+        function buyNow(id){ addToCart(id); switchTab('cart'); }
+        function updateCart() { let container=document.getElementById('cartItems'); if(!cart.length){ container.innerHTML='<div style="text-align:center; padding:60px;">🛒 Your cart is empty</div>'; document.getElementById('cartTotal').innerHTML=''; return; } let total=cart.reduce((s,i)=>s+(i.price*i.quantity),0); container.innerHTML=cart.map(i=>`<div class="cart-item"><div><strong>${i.name}</strong><br>$${i.price} x ${i.quantity}</div><div><strong>$${(i.price*i.quantity).toFixed(2)}</strong><br><button class="btn btn-outline" onclick="updateQty(${i.id},${i.quantity-1})">-</button><button class="btn btn-outline" onclick="updateQty(${i.id},${i.quantity+1})">+</button><button class="btn btn-danger" onclick="removeFromCart(${i.id})">🗑️</button></div></div>`).join(''); document.getElementById('cartTotal').innerHTML=`<strong>Total: $${total.toFixed(2)}</strong>`; }
+        function updateQty(id,qty){ if(qty<=0) removeFromCart(id); else{ let i=cart.find(i=>i.id===id); if(i) i.quantity=qty; saveAll(); updateCart(); updateCartBadge(); } }
+        function removeFromCart(id){ cart=cart.filter(i=>i.id!==id); saveAll(); updateCart(); updateCartBadge(); }
+        function updateCartBadge(){ document.getElementById('cartCount').innerHTML=cart.reduce((s,i)=>s+i.quantity,0); }
+        function checkout(){ if(!currentUser){ showToast('Please login first!','warning'); openLoginModal(); return; } if(!cart.length){ showToast('Cart empty!','error'); return; } let total=cart.reduce((s,i)=>s+(i.price*i.quantity),0); let orderNumber=`ORD${Date.now()}${Math.floor(Math.random()*1000)}`; orders.unshift({id:orders.length+1,order_number:orderNumber,customer_name:currentUser.name,customer_phone:currentUser.phone,total_amount:total,payment_status:"pending",order_status:"pending",created_at:new Date().toISOString(),items:[...cart],updates:[{date:new Date().toISOString(),message:"Order placed"}]}); cart=[]; saveAll(); updateCart(); updateCartBadge(); renderUserOrders(); updateStats(); showToast(`✅ Order placed! #${orderNumber}`); showPayment(orderNumber,total); }
+        function showPayment(orderNumber,amount){ let qrHtml=qrSettings.qrImage?`<img src="${qrSettings.qrImage}" style="max-width:180px;">`:'<div style="font-size:60px;">💳</div>'; document.getElementById('receiptContent').innerHTML=`<div style="text-align:center;"><h3>💳 Payment</h3><p>Order: ${orderNumber}</p><p>Amount: $${amount.toFixed(2)}</p><div style="background:#1e293b; padding:20px; border-radius:20px;">${qrHtml}<p>${qrSettings.bankName}<br>${qrSettings.accountNumber}<br>${qrSettings.accountName}</p></div><button class="btn btn-success" onclick="markPaid('${orderNumber}')">✅ I Have Paid</button></div>`; document.getElementById('receiptModal').style.display='flex'; }
+        function markPaid(orderNumber){ let order=orders.find(o=>o.order_number===orderNumber); if(order){ order.payment_status="paid"; order.order_status="processing"; order.updates.unshift({date:new Date().toISOString(),message:"Payment confirmed"}); saveAll(); renderUserOrders(); updateStats(); showToast('✅ Payment confirmed!'); } closeReceiptModal(); }
+        function openLoginModal(){ document.getElementById('loginModal').style.display='flex'; }
+        function closeLoginModal(){ document.getElementById('loginModal').style.display='none'; }
+        function loginUser(){ let phone=document.getElementById('loginPhone').value.trim(); let name=document.getElementById('loginName').value.trim(); if(!phone){ showToast('Enter phone!','error'); return; } let user=users.find(u=>u.phone===phone); if(!user){ user={phone,name:name||"Customer",joined:new Date().toISOString()}; users.push(user); saveAll(); updateStats(); } currentUser=user; localStorage.setItem('currentUser',JSON.stringify(user)); closeLoginModal(); renderUserOrders(); showToast(`✨ Welcome ${user.name}!`); }
+        function checkUserSession(){ let saved=localStorage.getItem('currentUser'); if(saved){ currentUser=JSON.parse(saved); } }
+        function renderUserOrders(){ if(!currentUser){ document.getElementById('userOrdersList').innerHTML='<p style="text-align:center; padding:40px;">Login to view orders</p>'; return; } let userOrders=orders.filter(o=>o.customer_phone===currentUser.phone); if(!userOrders.length){ document.getElementById('userOrdersList').innerHTML='<p style="text-align:center; padding:40px;">No orders yet</p>'; return; } document.getElementById('userOrdersList').innerHTML=userOrders.map(o=>`<div style="background:rgba(255,255,255,0.05); border-radius:16px; padding:16px; margin-bottom:12px;"><div style="display:flex; justify-content:space-between;"><div><strong>${o.order_number}</strong><br>$${o.total_amount}<br>${new Date(o.created_at).toLocaleDateString()}</div><div><span style="background:${o.payment_status==='paid'?'#10b981':'#f59e0b'}; padding:4px 12px; border-radius:20px;">${o.order_status}</span><br><button class="btn btn-info" onclick="viewReceipt('${o.order_number}')">Receipt</button><button class="btn btn-success" onclick="trackSpecific('${o.order_number}')">Track</button></div></div></div>`).join(''); }
+        function trackOrder(){ let orderNum=document.getElementById('trackOrderNumber').value.trim(); let phone=document.getElementById('trackPhoneNumber').value.trim(); let order=orders.find(o=>o.order_number===orderNum && o.customer_phone===phone); let resultDiv=document.getElementById('trackResult'); if(!order){ resultDiv.innerHTML='<div class="card" style="color:#ef4444;">❌ Order not found!</div>'; return; } resultDiv.innerHTML=`<div class="card"><h3>${order.order_number}</h3><p>Status: ${order.order_status}</p><p>Total: $${order.total_amount}</p><button class="btn btn-info" onclick="viewReceipt('${order.order_number}')">View Receipt</button></div>`; }
+        function trackSpecific(orderNumber){ switchTab('track'); document.getElementById('trackOrderNumber').value=orderNumber; let order=orders.find(o=>o.order_number===orderNumber); if(order) document.getElementById('trackPhoneNumber').value=order.customer_phone; trackOrder(); }
+        function viewReceipt(orderNumber){ let order=orders.find(o=>o.order_number===orderNumber); if(!order) return; document.getElementById('receiptContent').innerHTML=`<div style="text-align:center;"><div style="font-size:3rem;">🛍️</div><h2>L@ZY SHOP</h2><hr><p><strong>Order:</strong> ${order.order_number}</p><p><strong>Date:</strong> ${new Date(order.created_at).toLocaleString()}</p><p><strong>Customer:</strong> ${order.customer_name}</p><hr>${order.items.map(i=>`<p>${i.name} x${i.quantity} = $${(i.price*i.quantity).toFixed(2)}</p>`).join('')}<hr><h3>Total: $${order.total_amount.toFixed(2)}</h3><p>Thank you!</p></div>`; document.getElementById('receiptModal').style.display='flex'; }
+        function downloadReceipt(){ let w=window.open('','_blank'); w.document.write(`<html><head><title>Receipt</title><style>body{font-family:Inter; padding:40px;}</style></head><body>${document.getElementById('receiptContent').innerHTML}<script>window.print();<\/script></body></html>`); w.document.close(); }
+        function closeReceiptModal(){ document.getElementById('receiptModal').style.display='none'; }
+        function loadQR(){ let q=localStorage.getItem('qr_settings'); if(q) qrSettings=JSON.parse(q); updateQR(); }
+        function updateQR(){ let img=document.getElementById('paymentQRImage'); if(qrSettings.qrImage) { img.src=qrSettings.qrImage; img.style.display='block'; document.getElementById('qrPlaceholder').style.display='none'; } }
+        function copyPaymentInfo(){ navigator.clipboard.writeText(`${qrSettings.bankName}\n${qrSettings.accountNumber}\n${qrSettings.accountName}`); showToast('Copied!'); }
+        function openTelegram(){ window.open('https://t.me/lixing26', '_blank'); }
+        function showToast(msg,type='success'){ let t=document.createElement('div'); t.className=`toast ${type}`; t.innerHTML=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
         checkUserSession(); init();
     </script>
 </body>
