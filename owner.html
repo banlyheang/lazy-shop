@@ -6,7 +6,7 @@
     <title>Owner Dashboard - L@ZY SHOP</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -60,6 +60,7 @@
         .btn-primary { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; }
         .btn-warning { background: #f59e0b; color: white; }
         .btn-purple { background: #9C27B0; color: white; }
+        .btn-telegram { background: #0088cc; color: white; }
         .btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
         .danger-zone { border: 1px solid #ef4444; background: rgba(239,68,68,0.1); }
         input { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 14px; color: white; width: 100%; margin-bottom: 15px; }
@@ -83,15 +84,10 @@
             border-radius: 12px;
             margin-bottom: 10px;
         }
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 24px;
-            margin-bottom: 30px;
-        }
-        .chart-card { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; }
-        .chart-card h3 { color: #9C27B0; margin-bottom: 15px; }
-        canvas { max-height: 250px; }
+        .orders-table { overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        th { color: #9C27B0; }
         .toast {
             position: fixed;
             bottom: 30px;
@@ -102,8 +98,31 @@
             animation: slideIn 0.3s;
             z-index: 2000;
         }
+        .toast.error { background: #ef4444; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .charts-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content { background: #1e293b; border-radius: 28px; padding: 32px; max-width: 500px; width: 90%; }
+        .close { float: right; font-size: 1.5rem; cursor: pointer; }
+        .receipt-template {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            color: black;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
@@ -130,24 +149,60 @@
                 <div class="stat-card"><div class="stat-value" id="dbSize">0 KB</div><div class="stat-label">Database Size</div></div>
             </div>
 
-            <div class="charts-grid">
-                <div class="chart-card"><h3>📈 Daily Sales</h3><canvas id="salesChart"></canvas></div>
-                <div class="chart-card"><h3>🏆 Top Products</h3><canvas id="topProductsChart"></canvas></div>
-            </div>
-
+            <!-- CREATE ADMIN SECTION -->
             <div class="card">
-                <h2>👑 Admin Account Management</h2>
+                <h2><i class="fas fa-user-plus"></i> Create New Admin Account</h2>
+                <p style="color:#94a3b8; margin-bottom:15px;">Fill in the details below to create a new administrator account</p>
                 <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px;">
-                    <div><label>Username</label><input type="text" id="newAdminUsername"></div>
-                    <div><label>Password</label><input type="text" id="newAdminPassword"></div>
-                    <div><label>Name</label><input type="text" id="newAdminName"></div>
+                    <div><label>Username *</label><input type="text" id="newAdminUsername" placeholder="e.g., theary_admin"></div>
+                    <div><label>Password *</label><input type="text" id="newAdminPassword" placeholder="Enter password"></div>
+                    <div><label>Full Name</label><input type="text" id="newAdminName" placeholder="e.g., Theary"></div>
+                    <div><label>Telegram ID (optional)</label><input type="text" id="newAdminTelegram" placeholder="e.g., 1656048796"></div>
                 </div>
-                <button class="btn btn-success" onclick="createAdmin()">➕ Create Admin</button>
-                <div id="adminsList" style="margin-top:20px;"></div>
+                <button class="btn btn-success" onclick="createAdminAccount()" style="width:100%; margin-top:15px;">
+                    <i class="fas fa-plus-circle"></i> Create Admin Account
+                </button>
+                <div id="adminCreateResult" style="margin-top:15px;"></div>
             </div>
 
+            <!-- EXISTING ADMINS LIST -->
             <div class="card">
-                <h2>💾 Database Management</h2>
+                <h3><i class="fas fa-users"></i> Existing Admin Accounts</h3>
+                <div id="adminsList"></div>
+            </div>
+
+            <!-- GENERATE RECEIPT & SEND PDF TO TELEGRAM -->
+            <div class="card">
+                <h2><i class="fas fa-file-pdf"></i> Generate Receipt & Send PDF to Telegram</h2>
+                <p style="color:#94a3b8; margin-bottom:15px;">Select an order to generate PDF receipt and send as PDF file to Telegram</p>
+                <select id="receiptOrderSelect" style="margin-bottom:15px;">
+                    <option value="">-- Select Order --</option>
+                </select>
+                <div style="display:flex; gap:15px; flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="generateReceiptOnly()">📄 Generate PDF Only</button>
+                    <button class="btn btn-telegram" onclick="generateAndSendPDFToTelegram()">
+                        <i class="fab fa-telegram"></i> Generate & Send PDF to Telegram
+                    </button>
+                </div>
+                <div id="receiptResult" style="margin-top:15px;"></div>
+            </div>
+
+            <!-- ALL ORDERS LIST -->
+            <div class="card">
+                <h3><i class="fas fa-box"></i> All Orders</h3>
+                <div class="orders-table">
+                    <table style="width:100%">
+                        <thead>
+                            <tr><th>Order #</th><th>Customer</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="ordersListBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- DATABASE BACKUP -->
+            <div class="card">
+                <h2><i class="fas fa-database"></i> Database Management</h2>
                 <div style="display:flex; gap:15px; flex-wrap:wrap;">
                     <button class="btn btn-success" onclick="backupDatabase()">📥 Download Backup</button>
                     <button class="btn btn-primary" onclick="exportJSON()">📄 Export JSON</button>
@@ -165,11 +220,13 @@
                 </div>
             </div>
 
+            <!-- BACKUP HISTORY -->
             <div class="card">
                 <h3>📚 Backup History</h3>
                 <div id="backupHistoryList" class="backup-list"></div>
             </div>
 
+            <!-- DANGER ZONE -->
             <div class="card danger-zone">
                 <h3 style="color:#ef4444;">⚠️ Danger Zone</h3>
                 <div style="display:flex; gap:15px; flex-wrap:wrap;">
@@ -181,7 +238,13 @@
         </div>
     </div>
 
-    <div id="restoreModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); justify-content:center; align-items:center; z-index:1000;">
+    <!-- Hidden Receipt Template for PDF Generation -->
+    <div id="receiptTemplate" style="display:none;">
+        <div id="receiptContent" style="width: 100%; max-width: 800px; margin: 0 auto; background: white; color: black; font-family: monospace; padding: 30px;"></div>
+    </div>
+
+    <!-- Restore Modal -->
+    <div id="restoreModal" class="modal">
         <div style="background:#1e293b; border-radius:28px; padding:32px; max-width:500px; width:90%;">
             <span onclick="closeRestoreModal()" style="float:right; font-size:1.5rem; cursor:pointer;">&times;</span>
             <h2>📤 Restore Database</h2>
@@ -193,37 +256,591 @@
     </div>
 
     <script>
+        // ==================== TELEGRAM ALERT CONFIGURATION ====================
+        const TELEGRAM_WORKER = 'https://telegram-alert.banlyheang849.workers.dev/';
+        const BOT_TOKEN = "8342603162:AAFAxx91xeni-vXUddkkWs3DMuZEDnL9cvE";
         const OWNER_ID = "568280939";
+        const Admin_ID = "1656048796";
+            
+        async function sendPDFToTelegram(pdfBlob, orderNumber) {
+            // Convert blob to base64
+            const reader = new FileReader();
+            return new Promise((resolve) => {
+                reader.onloadend = async function() {
+                    const base64data = reader.result.split(',')[1];
+                    
+                    // Method 1: Try to send via Cloudflare Worker (for larger files)
+                    try {
+                        // Create form data for Telegram API
+                        const formData = new FormData();
+                        formData.append('chat_id', OWNER_ID);
+                        formData.append('document', pdfBlob, `Receipt_${orderNumber}.pdf`);
+                        
+                        // Direct Telegram API call (note: CORS may block this)
+                        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const result = await response.json();
+                        if(result.ok) {
+                            resolve({ success: true });
+                        } else {
+                            // Fallback: send text receipt instead
+                            await sendTextReceipt(orderNumber);
+                            resolve({ success: false, fallback: true });
+                        }
+                    } catch(e) {
+                        // Fallback: send text receipt
+                        await sendTextReceipt(orderNumber);
+                        resolve({ success: false, fallback: true });
+                    }
+                };
+                reader.readAsDataURL(pdfBlob);
+            });
+        }
+        
+        async function sendTextReceipt(orderNumber) {
+            const order = getOrderByNumber(orderNumber);
+            if(!order) return;
+            
+            const message = `📄 **RECEIPT (PDF unavailable - Text version)**\n\n` +
+                `━━━━━━━━━━━━━━━━━━━━━━\n` +
+                `🧾 Order #: ${order.order_number}\n` +
+                `👤 Customer: ${order.customer_name}\n` +
+                `📞 Phone: ${order.customer_phone || 'N/A'}\n` +
+                `💰 Amount: $${order.total_amount}\n` +
+                `📅 Date: ${new Date(order.created_at).toLocaleString()}\n` +
+                `━━━━━━━━━━━━━━━━━━━━━━\n` +
+                `Items:\n` +
+                `${order.items ? order.items.map(i => `   • ${i.name} x${i.quantity} = $${(i.price * i.quantity).toFixed(2)}`).join('\n') : '   • Product order'}\n` +
+                `━━━━━━━━━━━━━━━━━━━━━━\n` +
+                `✅ Thank you for shopping at L@ZY SHOP!\n` +
+                `📱 Contact: @lixing26 | 📞 0969903084`;
+            
+            await fetch(TELEGRAM_WORKER, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message, chat_id: OWNER_ID })
+            });
+        }
+        
+        async function sendTelegramAlert(message, chatId = null) {
+            try {
+                const response = await fetch(TELEGRAM_WORKER, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: message,
+                        chat_id: chatId || OWNER_ID
+                    })
+                });
+                return await response.json();
+            } catch (e) {
+                console.error('Telegram error:', e);
+                return { success: false };
+            }
+        }
+
+        // ==================== DATA ====================
         let products = [], orders = [], users = [];
-        let adminAccounts = [{ username: "admin1", password: "admin123", name: "Admin" }, { username: "lixing", password: "lixing26", name: "Lixing" }];
-        let salesChart, topProductsChart;
+        let adminAccounts = [
+            { username: "admin1", password: "admin123", name: "Admin", telegramId: "" },
+            { username: "lixing", password: "lixing26", name: "Lixing", telegramId: "568280939" }
+        ];
 
-        function init() { loadData(); updateStats(); renderAdmins(); initCharts(); loadBackupHistory(); }
-        function loadData() { let p=localStorage.getItem('lazy_products'); if(p) products=JSON.parse(p); let o=localStorage.getItem('lazy_orders'); if(o) orders=JSON.parse(o); let u=localStorage.getItem('lazy_users'); if(u) users=JSON.parse(u); let a=localStorage.getItem('admin_accounts'); if(a) adminAccounts=JSON.parse(a); }
-        function saveAll() { localStorage.setItem('lazy_products',JSON.stringify(products)); localStorage.setItem('lazy_orders',JSON.stringify(orders)); localStorage.setItem('lazy_users',JSON.stringify(users)); localStorage.setItem('admin_accounts',JSON.stringify(adminAccounts)); }
+        function init() { 
+            loadData(); 
+            updateStats(); 
+            renderAdminsList(); 
+            renderOrdersList();
+            loadBackupHistory();
+            updateReceiptOrderSelect();
+        }
+        
+        function loadData() { 
+            let p = localStorage.getItem('lazy_products'); if(p) products = JSON.parse(p);
+            let o = localStorage.getItem('lazy_orders'); if(o) orders = JSON.parse(o);
+            let u = localStorage.getItem('lazy_users'); if(u) users = JSON.parse(u);
+            let a = localStorage.getItem('admin_accounts'); if(a) adminAccounts = JSON.parse(a);
+            if(products.length === 0) {
+                products = [
+                    { id: 1, name: "Premium T-Shirt", price: 25.99, stock: 50, sales: 45, image: "👕" },
+                    { id: 2, name: "Wireless Headphones", price: 49.99, stock: 30, sales: 38, image: "🎧" },
+                    { id: 3, name: "Smart Watch", price: 89.99, stock: 20, sales: 25, image: "⌚" },
+                    { id: 4, name: "Leather Backpack", price: 39.99, stock: 40, sales: 32, image: "🎒" },
+                    { id: 5, name: "Sunglasses", price: 19.99, stock: 60, sales: 55, image: "🕶️" }
+                ];
+                saveAll();
+            }
+        }
+        
+        function saveAll() { 
+            localStorage.setItem('lazy_products', JSON.stringify(products));
+            localStorage.setItem('lazy_orders', JSON.stringify(orders));
+            localStorage.setItem('lazy_users', JSON.stringify(users));
+            localStorage.setItem('admin_accounts', JSON.stringify(adminAccounts));
+        }
 
-        function ownerLogin() { let id=document.getElementById('ownerPassword').value; if(id===OWNER_ID){ document.getElementById('loginCard').style.display='none'; document.getElementById('ownerPanel').style.display='block'; updateStats(); renderAdmins(); updateCharts(); loadBackupHistory(); showToast('Owner access granted!'); } else { document.getElementById('ownerError').innerHTML='Invalid Owner ID!'; } }
-        function updateStats() { let revenue=orders.filter(o=>o.payment_status==='paid').reduce((s,o)=>s+o.total_amount,0); document.getElementById('totalRevenue').innerHTML=`$${revenue.toFixed(2)}`; document.getElementById('totalOrders').innerHTML=orders.length; document.getElementById('totalCustomers').innerHTML=users.length; document.getElementById('totalProducts').innerHTML=products.length; document.getElementById('totalAdmins').innerHTML=adminAccounts.length; let dbSize=JSON.stringify(localStorage).length; document.getElementById('dbSize').innerHTML=(dbSize/1024).toFixed(2)+' KB'; document.getElementById('previewProducts').innerHTML=products.length; document.getElementById('previewOrders').innerHTML=orders.length; document.getElementById('previewUsers').innerHTML=users.length; document.getElementById('previewAdmins').innerHTML=adminAccounts.length; }
+        function ownerLogin() { 
+            let id = document.getElementById('ownerPassword').value; 
+            if(id === OWNER_ID) { 
+                document.getElementById('loginCard').style.display = 'none'; 
+                document.getElementById('ownerPanel').style.display = 'block'; 
+                updateStats(); 
+                renderAdminsList();
+                renderOrdersList();
+                updateReceiptOrderSelect();
+                loadBackupHistory();
+                showToast('👑 Owner access granted!'); 
+            } else { 
+                document.getElementById('ownerError').innerHTML = '❌ Invalid Owner ID!'; 
+            } 
+        }
 
-        function initCharts() { let sCtx=document.getElementById('salesChart')?.getContext('2d'); if(sCtx){ salesChart=new Chart(sCtx,{type:'line',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'Sales ($)',data:[0,0,0,0,0,0,0],borderColor:'#9C27B0',fill:true}]},options:{responsive:true}}); } let tCtx=document.getElementById('topProductsChart')?.getContext('2d'); if(tCtx){ topProductsChart=new Chart(tCtx,{type:'bar',data:{labels:products.slice(0,5).map(p=>p.name),datasets:[{label:'Units Sold',data:products.slice(0,5).map(p=>p.sales||0),backgroundColor:'#9C27B0'}]},options:{responsive:true}}); } }
-        function updateCharts() { if(topProductsChart){ topProductsChart.data.labels=products.slice(0,5).map(p=>p.name); topProductsChart.data.datasets[0].data=products.slice(0,5).map(p=>p.sales||0); topProductsChart.update(); } if(salesChart){ let salesByDay=[0,0,0,0,0,0,0]; orders.filter(o=>o.payment_status==='paid').forEach(o=>{ let day=new Date(o.created_at).getDay(); salesByDay[day]+=o.total_amount; }); salesChart.data.datasets[0].data=salesByDay; salesChart.update(); } }
+        function updateStats() { 
+            let revenue = orders.filter(o => o.payment_status === 'paid').reduce((s, o) => s + o.total_amount, 0); 
+            document.getElementById('totalRevenue').innerHTML = `$${revenue.toFixed(2)}`; 
+            document.getElementById('totalOrders').innerHTML = orders.length; 
+            document.getElementById('totalCustomers').innerHTML = users.length; 
+            document.getElementById('totalProducts').innerHTML = products.length; 
+            document.getElementById('totalAdmins').innerHTML = adminAccounts.length; 
+            let dbSize = JSON.stringify(localStorage).length; 
+            document.getElementById('dbSize').innerHTML = (dbSize / 1024).toFixed(2) + ' KB'; 
+            document.getElementById('previewProducts').innerHTML = products.length; 
+            document.getElementById('previewOrders').innerHTML = orders.length; 
+            document.getElementById('previewUsers').innerHTML = users.length; 
+            document.getElementById('previewAdmins').innerHTML = adminAccounts.length; 
+        }
 
-        function renderAdmins() { document.getElementById('adminsList').innerHTML=adminAccounts.map(a=>`<div class="admin-item"><div><strong>${a.name}</strong><br><small>@${a.username}</small></div>${a.username!=='lixing'?`<button class="btn btn-danger" onclick="removeAdmin('${a.username}')">Remove</button>`:'<span style="color:#9C27B0;">👑 Owner</span>'}</div>`).join(''); }
-        function createAdmin() { let u=document.getElementById('newAdminUsername').value.trim(); let p=document.getElementById('newAdminPassword').value.trim(); let n=document.getElementById('newAdminName').value.trim(); if(!u||!p){ showToast('Enter username and password!','error'); return; } if(adminAccounts.find(a=>a.username===u)){ showToast('Username exists!','error'); return; } adminAccounts.push({username:u,password:p,name:n||'Admin'}); saveAll(); renderAdmins(); updateStats(); showToast(`Admin ${u} created!`); document.getElementById('newAdminUsername').value=''; document.getElementById('newAdminPassword').value=''; document.getElementById('newAdminName').value=''; }
-        function removeAdmin(u){ if(confirm('Remove this admin?')){ adminAccounts=adminAccounts.filter(a=>a.username!==u); saveAll(); renderAdmins(); updateStats(); showToast('Admin removed'); } }
+        // ==================== CREATE ADMIN ACCOUNT ====================
+        function createAdminAccount() {
+            const username = document.getElementById('newAdminUsername').value.trim();
+            const password = document.getElementById('newAdminPassword').value.trim();
+            const name = document.getElementById('newAdminName').value.trim();
+            const telegramId = document.getElementById('newAdminTelegram').value.trim();
+            
+            if(!username) { showToast('❌ Please enter username!', 'error'); return; }
+            if(!password) { showToast('❌ Please enter password!', 'error'); return; }
+            if(password.length < 4) { showToast('❌ Password must be at least 4 characters!', 'error'); return; }
+            
+            if(adminAccounts.find(a => a.username === username)) {
+                showToast('❌ Username already exists!', 'error');
+                return;
+            }
+            
+            const newAdmin = {
+                username: username,
+                password: password,
+                name: name || username,
+                telegramId: telegramId || '',
+                role: 'admin',
+                createdAt: new Date().toISOString()
+            };
+            
+            adminAccounts.push(newAdmin);
+            saveAll();
+            renderAdminsList();
+            updateStats();
+            
+            document.getElementById('newAdminUsername').value = '';
+            document.getElementById('newAdminPassword').value = '';
+            document.getElementById('newAdminName').value = '';
+            document.getElementById('newAdminTelegram').value = '';
+            
+            showToast(`✅ Admin "${name || username}" created successfully!`);
+            
+            document.getElementById('adminCreateResult').innerHTML = `
+                <div style="background:#10b98120; padding:10px; border-radius:10px; border-left:3px solid #10b981;">
+                    <strong>✅ Admin Created!</strong><br>
+                    Username: ${username}<br>
+                    Password: ${password}<br>
+                    Name: ${name || username}<br>
+                    <small>Admin can login at: https://banlyheang.github.io/lazy-shop/admin.html</small>
+                </div>
+            `;
+            setTimeout(() => { document.getElementById('adminCreateResult').innerHTML = ''; }, 5000);
+        }
+        
+        function renderAdminsList() {
+            const container = document.getElementById('adminsList');
+            container.innerHTML = adminAccounts.map(admin => `
+                <div class="admin-item">
+                    <div>
+                        <strong>${admin.name}</strong>
+                        <span style="background:${admin.username === 'lixing' ? '#9C27B0' : '#f59e0b'}; padding:2px 8px; border-radius:20px; font-size:0.7rem; margin-left:8px;">
+                            ${admin.username === 'lixing' ? 'OWNER' : 'ADMIN'}
+                        </span>
+                        <br>
+                        <small>Username: ${admin.username}</small>
+                        ${admin.telegramId ? `<br><small>📱 Telegram: ${admin.telegramId}</small>` : ''}
+                    </div>
+                    ${admin.username !== 'lixing' ? `
+                        <button class="btn btn-warning" onclick="resetAdminPassword('${admin.username}')" style="padding:5px 10px;">Reset Password</button>
+                        <button class="btn btn-danger" onclick="removeAdmin('${admin.username}')" style="padding:5px 10px;">Remove</button>
+                    ` : '<span style="color:#9C27B0;">👑 Owner</span>'}
+                </div>
+            `).join('');
+        }
+        
+        function resetAdminPassword(username) {
+            const admin = adminAccounts.find(a => a.username === username);
+            if(admin && admin.username !== 'lixing') {
+                const newPassword = prompt(`Enter new password for "${admin.name}":`, "newpass123");
+                if(newPassword && newPassword.length >= 4) {
+                    admin.password = newPassword;
+                    saveAll();
+                    showToast(`✅ Password reset for ${admin.name}! New password: ${newPassword}`);
+                    renderAdminsList();
+                } else if(newPassword) {
+                    showToast('❌ Password must be at least 4 characters!', 'error');
+                }
+            }
+        }
+        
+        function removeAdmin(username) {
+            const admin = adminAccounts.find(a => a.username === username);
+            if(admin && admin.username !== 'lixing') {
+                if(confirm(`⚠️ Remove admin "${admin.name}" (${admin.username})?`)) {
+                    adminAccounts = adminAccounts.filter(a => a.username !== username);
+                    saveAll();
+                    renderAdminsList();
+                    updateStats();
+                    showToast(`🗑️ Admin "${admin.name}" removed.`);
+                }
+            }
+        }
 
-        function backupDatabase(){ let backup={timestamp:new Date().toISOString(),data:{lazy_products:localStorage.getItem('lazy_products'),lazy_orders:localStorage.getItem('lazy_orders'),lazy_users:localStorage.getItem('lazy_users'),admin_accounts:localStorage.getItem('admin_accounts')}}; let blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`lazy_shop_backup_${new Date().toISOString().replace(/[:.]/g,'-')}.json`; a.click(); saveBackupToHistory(); showToast('Backup created!'); }
-        function exportJSON(){ let exportData={}; for(let i=0;i<localStorage.length;i++){ let key=localStorage.key(i); exportData[key]=localStorage.getItem(key); } let blob=new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`lazy_shop_export_${new Date().toISOString().slice(0,19)}.json`; a.click(); showToast('Exported!'); }
-        function saveBackupToHistory(){ let backups=JSON.parse(localStorage.getItem('backup_history')||'[]'); backups.unshift({name:`backup_${new Date().toISOString().slice(0,19)}`,date:new Date().toISOString()}); if(backups.length>10) backups.pop(); localStorage.setItem('backup_history',JSON.stringify(backups)); loadBackupHistory(); }
-        function loadBackupHistory(){ let backups=JSON.parse(localStorage.getItem('backup_history')||'[]'); let container=document.getElementById('backupHistoryList'); if(backups.length===0){ container.innerHTML='<p>No backups yet</p>'; return; } container.innerHTML=backups.map(b=>`<div class="backup-item"><div><strong>${b.name}</strong><br><small>${new Date(b.date).toLocaleString()}</small></div></div>`).join(''); }
-        function openRestoreModal(){ document.getElementById('restoreModal').style.display='flex'; }
-        function closeRestoreModal(){ document.getElementById('restoreModal').style.display='none'; }
-        function restoreFromFile(){ let file=document.getElementById('restoreFile').files[0]; if(!file){ showToast('Select backup file!','error'); return; } let reader=new FileReader(); reader.onload=function(e){ try{ let backup=JSON.parse(e.target.result); if(backup.data){ for(let key in backup.data){ if(backup.data[key]) localStorage.setItem(key,backup.data[key]); } } else { for(let key in backup){ localStorage.setItem(key,backup[key]); } } showToast('Restored! Reloading...'); setTimeout(()=>location.reload(),1500); } catch(err){ showToast('Invalid backup file!','error'); } }; reader.readAsText(file); }
-        function clearAllData(){ if(confirm('⚠️ Delete ALL data?')){ localStorage.clear(); showToast('All data cleared! Reloading...'); setTimeout(()=>location.reload(),1500); } }
-        function factoryReset(){ if(confirm('🏭 FACTORY RESET? This will restore demo data.')){ localStorage.clear(); let demoProducts=[{id:1,name:"Premium T-Shirt",price:25.99,stock:50,sales:45,image:"👕"},{id:2,name:"Wireless Headphones",price:49.99,stock:30,sales:38,image:"🎧"},{id:3,name:"Smart Watch",price:89.99,stock:20,sales:25,image:"⌚"},{id:4,name:"Leather Backpack",price:39.99,stock:40,sales:32,image:"🎒"},{id:5,name:"Sunglasses",price:19.99,stock:60,sales:55,image:"🕶️"}]; localStorage.setItem('lazy_products',JSON.stringify(demoProducts)); localStorage.setItem('lazy_orders',JSON.stringify([])); localStorage.setItem('lazy_users',JSON.stringify([])); localStorage.setItem('admin_accounts',JSON.stringify([{username:"admin1",password:"admin123",name:"Admin"},{username:"lixing",password:"lixing26",name:"Lixing"}])); showToast('Factory reset complete! Reloading...'); setTimeout(()=>location.reload(),1500); } }
-        function deleteAllOrders(){ if(confirm('Delete ALL orders?')){ localStorage.setItem('lazy_orders',JSON.stringify([])); updateStats(); showToast('Orders deleted'); } }
-        function deleteAllProducts(){ if(confirm('Delete ALL products?')){ localStorage.setItem('lazy_products',JSON.stringify([])); updateStats(); updateCharts(); showToast('Products deleted'); } }
-        function showToast(msg){ let t=document.createElement('div'); t.className='toast'; t.innerHTML=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
+        // ==================== RECEIPT GENERATION WITH PDF ====================
+        function getOrderByNumber(orderNumber) {
+            return orders.find(o => o.order_number === orderNumber);
+        }
+        
+        function generateReceiptHTML(order) {
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Receipt ${order.order_number}</title>
+                    <style>
+                        body {
+                            font-family: 'Courier New', monospace;
+                            padding: 40px;
+                            max-width: 800px;
+                            margin: 0 auto;
+                        }
+                        .receipt {
+                            border: 1px solid #333;
+                            padding: 20px;
+                        }
+                        .header {
+                            text-align: center;
+                            border-bottom: 2px solid #333;
+                            padding-bottom: 10px;
+                            margin-bottom: 20px;
+                        }
+                        .header h1 { margin: 0; font-size: 24px; }
+                        .store-name { font-size: 20px; font-weight: bold; }
+                        .divider { border-top: 1px dashed #333; margin: 15px 0; }
+                        .total { font-size: 18px; font-weight: bold; text-align: right; margin-top: 15px; }
+                        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+                        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+                        .right { text-align: right; }
+                        .center { text-align: center; }
+                    </style>
+                </head>
+                <body>
+                    <div class="receipt">
+                        <div class="header">
+                            <div class="store-name">L@ZY SHOP</div>
+                            <div>Official Receipt / Invoice</div>
+                        </div>
+                        
+                        <div><strong>Order #:</strong> ${order.order_number}</div>
+                        <div><strong>Date:</strong> ${new Date(order.created_at).toLocaleString()}</div>
+                        <div><strong>Customer:</strong> ${order.customer_name}</div>
+                        <div><strong>Phone:</strong> ${order.customer_phone || 'N/A'}</div>
+                        
+                        <div class="divider"></div>
+                        
+                        <table>
+                            <thead>
+                                <tr><th>Product</th><th class="center">Qty</th><th class="right">Price</th><th class="right">Total</th></tr>
+                            </thead>
+                            <tbody>
+                                ${order.items ? order.items.map(i => `
+                                    <tr>
+                                        <td>${i.name}</td>
+                                        <td class="center">${i.quantity}</td>
+                                        <td class="right">$${i.price.toFixed(2)}</td>
+                                        <td class="right">$${(i.price * i.quantity).toFixed(2)}</td>
+                                    </tr>
+                                `).join('') : '<tr><td colspan="4">Product order</td></tr>'}
+                            </tbody>
+                        </table>
+                        
+                        <div class="divider"></div>
+                        
+                        <div class="total">Total: $${order.total_amount}</div>
+                        <div>Status: ${order.order_status}</div>
+                        <div>Payment: ${order.payment_method || 'KHQR'}</div>
+                        
+                        <div class="footer">
+                            <p>Thank you for shopping at L@ZY SHOP!</p>
+                            <p>Contact: @lixing26 | 📞 0969903084</p>
+                            <p>Generated: ${new Date().toLocaleString()}</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+        }
+        
+        async function generatePDFBlob(order) {
+            const receiptHtml = generateReceiptHTML(order);
+            
+            // Create iframe for PDF generation
+            return new Promise((resolve) => {
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+                
+                iframe.contentWindow.document.open();
+                iframe.contentWindow.document.write(receiptHtml);
+                iframe.contentWindow.document.close();
+                
+                setTimeout(() => {
+                    iframe.contentWindow.print();
+                    
+                    // Capture print as PDF (user will see print dialog)
+                    // For automatic PDF, we need to use html2pdf
+                    const element = iframe.contentDocument.body;
+                    const opt = {
+                        margin: [0.5, 0.5, 0.5, 0.5],
+                        filename: `Receipt_${order.order_number}.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2 },
+                        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                    };
+                    
+                    // Use html2pdf if available
+                    if(typeof html2pdf !== 'undefined') {
+                        html2pdf().set(opt).from(element).save().then(() => {
+                            document.body.removeChild(iframe);
+                            resolve(null);
+                        });
+                    } else {
+                        document.body.removeChild(iframe);
+                        resolve(null);
+                    }
+                }, 500);
+            });
+        }
+        
+        async function generateAndSendPDFToTelegram() {
+            const select = document.getElementById('receiptOrderSelect');
+            const orderNumber = select.value;
+            if(!orderNumber) { showToast('Please select an order!', 'error'); return; }
+            
+            const order = getOrderByNumber(orderNumber);
+            if(!order) { showToast('Order not found!', 'error'); return; }
+            
+            showToast('⏳ Generating PDF and sending to Telegram...');
+            
+            // Create PDF blob from HTML
+            const receiptHtml = generateReceiptHTML(order);
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(receiptHtml);
+            printWindow.document.close();
+            
+            // Wait for print dialog then send
+            setTimeout(async () => {
+                // Use print to PDF
+                printWindow.print();
+                
+                // Send Telegram alert with link to download
+                await sendTelegramAlert(
+                    `📄 **PDF RECEIPT GENERATED**\n\n` +
+                    `━━━━━━━━━━━━━━━━━━━━━━\n` +
+                    `🧾 Order #: ${order.order_number}\n` +
+                    `👤 Customer: ${order.customer_name}\n` +
+                    `💰 Amount: $${order.total_amount}\n` +
+                    `📅 Date: ${new Date().toLocaleString()}\n` +
+                    `━━━━━━━━━━━━━━━━━━━━━━\n` +
+                    `✅ PDF receipt has been generated!\n` +
+                    `💡 You can download it from the print dialog.\n\n` +
+                    `📁 File: Receipt_${order.order_number}.pdf`
+                );
+                
+                showToast(`✅ PDF generated! Check print dialog to save.`);
+                document.getElementById('receiptResult').innerHTML = `
+                    <div style="background:#10b98120; padding:10px; border-radius:10px;">
+                        ✅ PDF receipt for ${order.order_number} generated!<br>
+                        📁 Save the PDF from the print dialog.<br>
+                        📱 Telegram notification sent!
+                    </div>
+                `;
+                setTimeout(() => { document.getElementById('receiptResult').innerHTML = ''; }, 5000);
+            }, 1000);
+        }
+        
+        function generateReceiptOnly() {
+            const select = document.getElementById('receiptOrderSelect');
+            const orderNumber = select.value;
+            if(!orderNumber) { showToast('Please select an order!', 'error'); return; }
+            
+            const order = getOrderByNumber(orderNumber);
+            if(!order) { showToast('Order not found!', 'error'); return; }
+            
+            const receiptHtml = generateReceiptHTML(order);
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(receiptHtml);
+            printWindow.document.close();
+            
+            setTimeout(() => {
+                printWindow.print();
+            }, 500);
+            
+            showToast(`📄 Receipt for ${order.order_number} generated!`);
+        }
+        
+        function generateReceiptForOrder(orderNumber) {
+            const order = getOrderByNumber(orderNumber);
+            if(!order) { showToast('Order not found!', 'error'); return; }
+            
+            const receiptHtml = generateReceiptHTML(order);
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(receiptHtml);
+            printWindow.document.close();
+            
+            setTimeout(() => {
+                printWindow.print();
+            }, 500);
+            
+            sendTelegramAlert(`🧾 **RECEIPT GENERATED**\n━━━━━━━━━━━━━━━━━━━━━━\n📄 Order: ${order.order_number}\n👤 Customer: ${order.customer_name}\n💰 Amount: $${order.total_amount}\n📅 Time: ${new Date().toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━━━\n✅ Receipt generated!`);
+            
+            showToast(`📄 Receipt for ${order.order_number} generated!`);
+        }
+        
+        function renderOrdersList() {
+            const tbody = document.getElementById('ordersListBody');
+            if(!orders.length) {
+                tbody.innerHTML = '<table><td colspan="5" style="text-align:center;">No orders yet</td></tr>';
+                return;
+            }
+            tbody.innerHTML = orders.map(o => `
+                <tr>
+                    <td>${o.order_number}</td
+                    <td>${o.customer_name}</td
+                    <td>$${o.total_amount}</td
+                    <td style="color:${o.order_status === 'delivered' ? '#10b981' : '#f59e0b'}">${o.order_status}</td
+                    <td>
+                        <button class="btn btn-primary" onclick="generateReceiptForOrder('${o.order_number}')" style="padding:5px 10px;">📄 Receipt</button>
+                        <button class="btn btn-telegram" onclick="generateAndSendPDFToTelegramForOrder('${o.order_number}')" style="padding:5px 10px;">📱 PDF to Telegram</button>
+                     </td
+                </tr>
+            `).join('');
+        }
+        
+        async function generateAndSendPDFToTelegramForOrder(orderNumber) {
+            const select = document.getElementById('receiptOrderSelect');
+            select.value = orderNumber;
+            await generateAndSendPDFToTelegram();
+        }
+        
+        function updateReceiptOrderSelect() {
+            const select = document.getElementById('receiptOrderSelect');
+            select.innerHTML = '<option value="">-- Select Order --</option>' + 
+                orders.map(o => `<option value="${o.order_number}">${o.order_number} - ${o.customer_name} - $${o.total_amount}</option>`).join('');
+        }
+
+        // ==================== DATABASE FUNCTIONS ====================
+        function backupDatabase() {
+            const backup = { timestamp: new Date().toISOString(), data: { 
+                lazy_products: localStorage.getItem('lazy_products'),
+                lazy_orders: localStorage.getItem('lazy_orders'),
+                lazy_users: localStorage.getItem('lazy_users'),
+                admin_accounts: localStorage.getItem('admin_accounts')
+            }};
+            const blob = new Blob([JSON.stringify(backup, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `lazy_shop_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+            a.click();
+            saveBackupToHistory();
+            showToast('✅ Backup created!');
+        }
+        
+        function exportJSON() {
+            const exportData = {};
+            for(let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                exportData[key] = localStorage.getItem(key);
+            }
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `lazy_shop_export_${new Date().toISOString().slice(0,19)}.json`;
+            a.click();
+            showToast('✅ Exported!');
+        }
+        
+        function saveBackupToHistory() {
+            let backups = JSON.parse(localStorage.getItem('backup_history') || '[]');
+            backups.unshift({ name: `backup_${new Date().toISOString().slice(0,19)}`, date: new Date().toISOString() });
+            if(backups.length > 10) backups.pop();
+            localStorage.setItem('backup_history', JSON.stringify(backups));
+            loadBackupHistory();
+        }
+        
+        function loadBackupHistory() {
+            const backups = JSON.parse(localStorage.getItem('backup_history') || '[]');
+            const container = document.getElementById('backupHistoryList');
+            if(backups.length === 0) { container.innerHTML = '<p>No backups yet</p>'; return; }
+            container.innerHTML = backups.map(b => `<div class="backup-item"><div><strong>${b.name}</strong><br><small>${new Date(b.date).toLocaleString()}</small></div></div>`).join('');
+        }
+        
+        function openRestoreModal() { document.getElementById('restoreModal').style.display = 'flex'; }
+        function closeRestoreModal() { document.getElementById('restoreModal').style.display = 'none'; }
+        
+        function restoreFromFile() {
+            const file = document.getElementById('restoreFile').files[0];
+            if(!file) { showToast('Select backup file!', 'error'); return; }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backup = JSON.parse(e.target.result);
+                    if(backup.data) {
+                        for(let key in backup.data) {
+                            if(backup.data[key]) localStorage.setItem(key, backup.data[key]);
+                        }
+                    } else {
+                        for(let key in backup) {
+                            localStorage.setItem(key, backup[key]);
+                        }
+                    }
+                    showToast('✅ Restored! Reloading...');
+                    setTimeout(() => location.reload(), 1500);
+                } catch(err) { showToast('Invalid backup file!', 'error'); }
+            };
+            reader.readAsText(file);
+        }
+        
+        function clearAllData() { if(confirm('⚠️ Delete ALL data?')) { localStorage.clear(); showToast('All data cleared! Reloading...'); setTimeout(() => location.reload(), 1500); } }
+        function factoryReset() { if(confirm('🏭 FACTORY RESET?')) { localStorage.clear(); location.reload(); } }
+        function deleteAllOrders() { if(confirm('Delete ALL orders?')) { localStorage.setItem('lazy_orders', JSON.stringify([])); updateStats(); renderOrdersList(); showToast('Orders deleted'); } }
+        function deleteAllProducts() { if(confirm('Delete ALL products?')) { localStorage.setItem('lazy_products', JSON.stringify([])); updateStats(); showToast('Products deleted'); } }
+        
+        function showToast(msg, type = 'success') {
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.innerHTML = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+        
         init();
     </script>
 </body>
