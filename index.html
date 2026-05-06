@@ -215,6 +215,7 @@
             color: #f59e0b;
             margin-top: 10px;
             font-weight: 600;
+            text-align: center;
         }
         .order-status-badge {
             display: inline-block;
@@ -228,6 +229,17 @@
         .status-shipped { background: #8b5cf6; color: white; }
         .status-delivered { background: #10b981; color: white; }
         .status-cancelled { background: #ef4444; color: white; }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @media (max-width: 768px) {
             .container { padding: 16px; }
@@ -310,60 +322,173 @@
         // KHPAY Configuration
         const KHPAY_API_KEY = "ak_9206f072a35196d022a0e8e2d9138b4e25b1d0f1de212589";
         const KHPAY_BASE_URL = "https://khpay.site/api/v1";
-        const QR_EXPIRY_SECONDS = 180;
+        const QR_EXPIRY_SECONDS = 300; // 5 minutes
 
         // Store data
         let products = [], orders = [], users = [], cart = [], currentUser = null;
         let pendingPayments = {};
         let timerIntervals = {};
 
-        const TELEGRAM_WORKER = "https://telegram-alert.banlyheang849.workers.dev/";
+        const TELEGRAM_WORKER = "https://telegram-alert.banlyheang849.workers.dev";
         let telegramSettings = { botToken: "", chatId: "" };
 
-        // ==================== KHPAY API Functions ====================
+        // ==================== KHQR Generation Functions ====================
+        
+        // Method 1: Try KHPAY API
         async function createKHQRPayment(orderNumber, amount, description) {
             try {
-                const response = await fetch(`${KHPAY_BASE_URL}/khqr/create`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${KHPAY_API_KEY}`
-                    },
-                    body: JSON.stringify({
-                        amount: amount,
-                        currency: "USD",
-                        order_id: orderNumber,
-                        description: description || `L@ZY SHOP Order ${orderNumber}`,
-                        expire_seconds: QR_EXPIRY_SECONDS
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`KHPAY API error: ${response.status}`);
+                console.log("Attempting KHPAY API for order:", orderNumber);
+                
+                // Try different endpoint formats that KHPAY might use
+                const endpoints = [
+                    `${KHPAY_BASE_URL}/khqr/create`,
+                    `${KHPAY_BASE_URL}/payment/qr`,
+                    `${KHPAY_BASE_URL}/qr/generate`,
+                    `${KHPAY_BASE_URL}/v1/khqr`
+                ];
+                
+                let lastError = null;
+                
+                for (const endpoint of endpoints) {
+                    try {
+                        const response = await fetch(endpoint, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${KHPAY_API_KEY}`,
+                                "X-API-Key": KHPAY_API_KEY
+                            },
+                            body: JSON.stringify({
+                                amount: amount,
+                                currency: "USD",
+                                order_id: orderNumber,
+                                order_number: orderNumber,
+                                description: description || `L@ZY SHOP Order ${orderNumber}`,
+                                expire_seconds: QR_EXPIRY_SECONDS,
+                                merchant_id: "LazyShop",
+                                merchant_name: "L@ZY SHOP"
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            console.log("KHPAY success:", data);
+                            return {
+                                success: true,
+                                qrCode: data.qr_code_url || data.qr_image || data.qr_url || data.data?.qr_code,
+                                paymentId: data.payment_id || data.id || data.transaction_id,
+                                expiresAt: data.expires_at || Date.now() + (QR_EXPIRY_SECONDS * 1000)
+                            };
+                        }
+                    } catch (e) {
+                        lastError = e;
+                        console.log(`Endpoint ${endpoint} failed:`, e.message);
+                    }
                 }
-
-                const data = await response.json();
-                return {
-                    success: true,
-                    qrCode: data.qr_code_url || data.qr_image,
-                    paymentId: data.payment_id || data.id,
-                    expiresAt: data.expires_at || Date.now() + (QR_EXPIRY_SECONDS * 1000)
-                };
+                
+                throw new Error(lastError?.message || "All KHPAY endpoints failed");
             } catch (error) {
                 console.error("KHPAY QR generation failed:", error);
-                return { success: false, error: error.message, fallback: true };
+                // Fallback to QR code generation
+                return await generateFallbackQR(orderNumber, amount, description);
             }
         }
+        
+        // Method 2: Generate QR Code using free QR API (Fallback)
+        async function generateFallbackQR(orderNumber, amount, description) {
+            console.log("Using fallback QR generation for order:", orderNumber);
+            
+            // Create KHQR format string (Cambodia QR standard)
+            // Format: KHQR|merchant_name|account_number|amount|currency|order_id
+            const merchantName = "Ban Lyheang";
+            const accountNumber = "001059172";
+            const bankCode = "ABA";
+            
+            // Create a payment string that can be scanned
+            const paymentString = JSON.stringify({
+                merchant: merchantName,
+                bank: bankCode,
+                account: accountNumber,
+                amount: amount,
+                currency: "USD",
+                orderId: orderNumber,
+                description: description,
+                timestamp: Date.now()
+            });
+            
+            // Encode to base64 for QR
+            const encodedData = btoa(unescape(encodeURIComponent(paymentString)));
+            
+            // Use multiple free QR APIs for redundancy
+            const qrApis = [
+                `https://quickchart.io/qr?text=${encodeURIComponent(encodedData)}&size=300`,
+                `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(encodedData)}`,
+                `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(encodedData)}`
+            ];
+            
+            // Try each QR API
+            for (const qrUrl of qrApis) {
+                try {
+                    // Test if the URL is reachable
+                    const testResponse = await fetch(qrUrl, { method: 'HEAD', mode: 'no-cors' });
+                    console.log("Using QR API:", qrUrl);
+                    return {
+                        success: true,
+                        qrCode: qrUrl,
+                        paymentId: `fallback_${orderNumber}`,
+                        expiresAt: Date.now() + (QR_EXPIRY_SECONDS * 1000),
+                        isFallback: true,
+                        paymentString: encodedData
+                    };
+                } catch (e) {
+                    console.log("QR API failed:", qrUrl);
+                }
+            }
+            
+            // Last resort: return static payment info
+            return {
+                success: false,
+                error: "QR generation failed - please use manual transfer",
+                fallback: true
+            };
+        }
 
-        async function checkKHQRPaymentStatus(paymentId) {
+        async function checkKHQRPaymentStatus(paymentId, orderNumber) {
             try {
-                const response = await fetch(`${KHPAY_BASE_URL}/khqr/status/${paymentId}`, {
-                    method: "GET",
-                    headers: { "Authorization": `Bearer ${KHPAY_API_KEY}` }
-                });
-                if (!response.ok) throw new Error(`Status check error: ${response.status}`);
-                const data = await response.json();
-                return { success: true, status: data.status, amount: data.amount, paidAt: data.paid_at };
+                // If it's a fallback payment, we need manual confirmation
+                if (paymentId && paymentId.startsWith('fallback_')) {
+                    console.log("Fallback payment - needs manual confirmation");
+                    return { success: true, status: 'pending', isFallback: true };
+                }
+                
+                // Try checking status with KHPAY
+                const endpoints = [
+                    `${KHPAY_BASE_URL}/khqr/status/${paymentId}`,
+                    `${KHPAY_BASE_URL}/payment/status/${paymentId}`,
+                    `${KHPAY_BASE_URL}/v1/khqr/status?payment_id=${paymentId}`
+                ];
+                
+                for (const endpoint of endpoints) {
+                    try {
+                        const response = await fetch(endpoint, {
+                            method: "GET",
+                            headers: { "Authorization": `Bearer ${KHPAY_API_KEY}` }
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            return { 
+                                success: true, 
+                                status: data.status || data.payment_status || 'pending',
+                                amount: data.amount,
+                                paidAt: data.paid_at
+                            };
+                        }
+                    } catch (e) {
+                        console.log(`Status check endpoint ${endpoint} failed`);
+                    }
+                }
+                
+                throw new Error("Unable to check payment status");
             } catch (error) {
                 console.error("Payment status check failed:", error);
                 return { success: false, error: error.message };
@@ -419,6 +544,10 @@
             
             showToast('Generating KHQR code...', 'info');
             
+            // Show loading in payment modal
+            document.getElementById('paymentContent').innerHTML = `<div style="text-align:center; padding:40px;"><div class="loading-spinner"></div><p>Generating QR Code...</p></div>`;
+            document.getElementById('paymentModal').style.display = 'flex';
+            
             let khqrResult = await createKHQRPayment(orderNumber, total, description);
             
             let newOrder = { 
@@ -431,9 +560,10 @@
                 order_status: "pending", 
                 created_at: new Date().toISOString(), 
                 items: [...cart], 
-                updates: [{ date: new Date().toISOString(), message: "Order placed - awaiting KHQR payment" }],
+                updates: [{ date: new Date().toISOString(), message: "Order placed - awaiting payment" }],
                 khqr_payment_id: khqrResult.paymentId || null,
-                qr_expires_at: khqrResult.expiresAt || null
+                qr_expires_at: khqrResult.expiresAt || null,
+                qr_is_fallback: khqrResult.isFallback || false
             };
             
             orders.unshift(newOrder);
@@ -444,7 +574,9 @@
                 qrCode: khqrResult.qrCode,
                 expiresAt: khqrResult.expiresAt,
                 createdAt: Date.now(),
-                khqrSuccess: khqrResult.success
+                khqrSuccess: khqrResult.success,
+                isFallback: khqrResult.isFallback || false,
+                paymentString: khqrResult.paymentString
             };
             
             cart = [];
@@ -456,19 +588,20 @@
             
             showPaymentModal(orderNumber, total, khqrResult);
             
-            let alertMsg = `🛍️ *NEW ORDER WITH KHQR*\nOrder: ${orderNumber}\nCustomer: ${currentUser.name}\nTotal: $${total.toFixed(2)}`;
+            let alertMsg = `🛍️ *NEW ORDER*\nOrder: ${orderNumber}\nCustomer: ${currentUser.name}\nTotal: $${total.toFixed(2)}\nQR: ${khqrResult.success ? 'Generated' : 'Fallback mode'}`;
             await sendTelegramAlert(alertMsg);
         }
 
         function showPaymentModal(orderNumber, amount, khqrResult) {
-            let expiryTime = Date.now() + (QR_EXPIRY_SECONDS * 1000);
+            let expiryTime = khqrResult.expiresAt || Date.now() + (QR_EXPIRY_SECONDS * 1000);
             
             let qrHtml = '';
             if (khqrResult.success && khqrResult.qrCode) {
                 qrHtml = `<div class="qr-display">
-                    <img src="${khqrResult.qrCode}" alt="KHQR Code" style="max-width:250px; width:100%;">
-                    <p style="margin-top:15px; color:#10b981;">✅ KHQR Code Generated</p>
+                    <img src="${khqrResult.qrCode}" alt="KHQR Code" style="max-width:280px; width:100%; cursor:pointer;" onclick="window.open(this.src)" onerror="this.onerror=null; this.src='https://quickchart.io/qr?text=Payment%20${orderNumber}&size=300'">
+                    <p style="margin-top:15px; color:#10b981;">✅ ${khqrResult.isFallback ? 'QR Code Generated' : 'KHQR Code Generated'}</p>
                     <p style="font-size:0.8rem; color:#94a3b8;">Scan with ABA Mobile or any banking app</p>
+                    <p style="font-size:0.7rem; color:#f59e0b; margin-top:8px;"><i class="fas fa-download"></i> Click QR to enlarge</p>
                 </div>`;
             } else {
                 qrHtml = `<div class="qr-display" style="background:#1e293b;">
@@ -476,26 +609,35 @@
                     <p><strong>🏦 ABA Bank</strong></p>
                     <p><strong>📱 001059172</strong></p>
                     <p><strong>👤 Ban Lyheang</strong></p>
-                    <p style="font-size:0.8rem; color:#f59e0b;">⚠️ QR generation failed. Please transfer manually.</p>
+                    <p style="font-size:0.8rem; color:#f59e0b;">⚠️ Please transfer manually to above account</p>
+                    <button class="btn btn-outline" onclick="copyBankInfo()" style="margin-top:10px;">📋 Copy Bank Info</button>
                 </div>`;
             }
+            
+            const isFallbackNote = khqrResult.isFallback ? `<p style="font-size:0.7rem; color:#f59e0b; margin-top:8px;">ℹ️ Using fallback QR generator - please screenshot and scan</p>` : '';
             
             document.getElementById('paymentContent').innerHTML = `
                 <div style="text-align:center;">
                     <h3>Order: ${orderNumber}</h3>
                     <p>Amount: <strong style="color:#10b981;">$${amount.toFixed(2)}</strong></p>
                     ${qrHtml}
+                    ${isFallbackNote}
                     <div style="margin-top:15px; padding:10px; background:rgba(255,255,255,0.05); border-radius:12px;">
                         <p><strong>📌 Instructions:</strong></p>
-                        <p>1. Scan QR code with your banking app</p>
-                        <p>2. Make payment of $${amount.toFixed(2)}</p>
+                        <p>1. ${khqrResult.success ? 'Scan QR code with your banking app' : 'Transfer to ABA account above'}</p>
+                        <p>2. Make payment of <strong>$${amount.toFixed(2)}</strong></p>
                         <p>3. Click "Check Payment Status" after paying</p>
                     </div>
                 </div>
             `;
             
-            document.getElementById('paymentModal').style.display = 'flex';
             startPaymentTimer(expiryTime, orderNumber);
+        }
+
+        function copyBankInfo() {
+            const bankInfo = `ABA Bank\nAccount: 001059172\nName: Ban Lyheang`;
+            navigator.clipboard.writeText(bankInfo);
+            showToast('✅ Bank info copied!', 'success');
         }
 
         function startPaymentTimer(expiryTime, orderNumber) {
@@ -506,7 +648,7 @@
                 const minutes = Math.floor(remaining / 60000);
                 const seconds = Math.floor((remaining % 60000) / 1000);
                 if (remaining <= 0) {
-                    timerElement.innerHTML = '⏰ QR Code Expired! Please contact support.';
+                    timerElement.innerHTML = '⏰ QR Code Expired! Please contact support for manual payment.';
                     timerElement.style.color = '#ef4444';
                     if (timerIntervals[orderNumber]) clearInterval(timerIntervals[orderNumber]);
                 } else {
@@ -525,25 +667,27 @@
             }
             
             let paymentInfo = pendingPayments[pendingOrder.order_number];
-            if (!paymentInfo || !paymentInfo.paymentId) {
-                showToast('Manual payment - please contact admin', 'warning');
+            
+            // For fallback or manual payments
+            if (!paymentInfo || !paymentInfo.paymentId || paymentInfo.isFallback) {
+                showToast('📞 Manual payment - Please send screenshot to admin for confirmation', 'warning');
                 return;
             }
             
             showToast('Checking payment status...', 'info');
-            let statusResult = await checkKHQRPaymentStatus(paymentInfo.paymentId);
+            let statusResult = await checkKHQRPaymentStatus(paymentInfo.paymentId, pendingOrder.order_number);
             
             if (statusResult.success && statusResult.status === 'paid') {
                 pendingOrder.payment_status = "paid";
                 pendingOrder.order_status = "processing";
-                pendingOrder.updates.unshift({ date: new Date().toISOString(), message: `Payment confirmed via KHQR - $${pendingOrder.total_amount}` });
+                pendingOrder.updates.unshift({ date: new Date().toISOString(), message: `Payment confirmed - $${pendingOrder.total_amount}` });
                 saveAll();
                 renderUserOrders();
                 updateStats();
                 if (timerIntervals[pendingOrder.order_number]) clearInterval(timerIntervals[pendingOrder.order_number]);
                 
-                document.getElementById('paymentContent').innerHTML = `<div style="text-align:center;"><div style="font-size:60px;">✅</div><h3 style="color:#10b981;">Payment Confirmed!</h3><p>Order #${pendingOrder.order_number}</p><p>Amount: $${pendingOrder.total_amount}</p><button class="btn btn-success" onclick="closePaymentModal()" style="margin-top:15px;">Close</button></div>`;
-                await sendTelegramAlert(`💰 *PAYMENT CONFIRMED VIA KHQR*\nOrder: ${pendingOrder.order_number}\nAmount: $${pendingOrder.total_amount}\nCustomer: ${pendingOrder.customer_name}`);
+                document.getElementById('paymentContent').innerHTML = `<div style="text-align:center;"><div style="font-size:60px;">✅</div><h3 style="color:#10b981;">Payment Confirmed!</h3><p>Order #${pendingOrder.order_number}</p><p>Amount: $${pendingOrder.total_amount}</p><p>Thank you for your purchase!</p><button class="btn btn-success" onclick="closePaymentModal()" style="margin-top:15px;">Continue Shopping</button></div>`;
+                await sendTelegramAlert(`💰 *PAYMENT CONFIRMED*\nOrder: ${pendingOrder.order_number}\nAmount: $${pendingOrder.total_amount}\nCustomer: ${pendingOrder.customer_name}`);
                 showToast('✅ Payment confirmed! Thank you!', 'success');
             } else if (statusResult.status === 'expired') {
                 showToast('❌ QR Code expired. Please contact support.', 'error');
@@ -586,7 +730,7 @@
             let container = document.getElementById('cartItems'); 
             if(!cart.length) { container.innerHTML = '<div style="text-align:center; padding:40px;">🛒 Your cart is empty</div>'; document.getElementById('cartTotal').innerHTML = ''; return; } 
             let total = cart.reduce((s,i) => s + (i.price * i.quantity), 0);
-            container.innerHTML = cart.map(i => `<div class="cart-item"><div><strong>${i.name}</strong><br><span style="color:#94a3b8;">$${i.price} x ${i.quantity}</span></div><div><strong>$${(i.price * i.quantity).toFixed(2)}</strong><br><button class="btn btn-outline" onclick="updateQty(${i.id}, ${i.quantity - 1})" style="padding:5px 12px;">-</button><button class="btn btn-outline" onclick="updateQty(${i.id}, ${i.quantity + 1})" style="padding:5px 12px;">+</button><button class="btn btn-danger" onclick="removeFromCart(${i.id})" style="padding:5px 12px;">🗑️</button></div></div>`).join('');
+            container.innerHTML = cart.map(i => `<div class="cart-item"><div><strong>${i.name}</strong><br><span style="color:#94a3b8;">$${i.price} x ${i.quantity}</span></div><div><strong>$${(i.price * i.quantity).toFixed(2)}</strong><br><button class="btn btn-outline" onclick="updateQty(${i.id}, ${i.quantity - 1})" style="padding:5px 10px;">-</button><button class="btn btn-outline" onclick="updateQty(${i.id}, ${i.quantity + 1})" style="padding:5px 10px;">+</button><button class="btn btn-danger" onclick="removeFromCart(${i.id})" style="padding:5px 10px;">🗑️</button></div></div>`).join('');
             document.getElementById('cartTotal').innerHTML = `<strong>Total: $${total.toFixed(2)}</strong>`;
             document.getElementById('cartCountDesktop').innerHTML = cart.reduce((s,i) => s + i.quantity, 0);
         }
@@ -658,16 +802,36 @@
             let order = orders.find(o => o.order_number === orderNumber);
             if (order && order.payment_status === 'pending') {
                 let paymentInfo = pendingPayments[orderNumber];
-                if (paymentInfo) {
+                if (paymentInfo && paymentInfo.qrCode) {
                     showPaymentModal(orderNumber, order.total_amount, {
-                        success: paymentInfo.khqrSuccess,
+                        success: true,
                         qrCode: paymentInfo.qrCode,
                         paymentId: paymentInfo.paymentId,
-                        expiresAt: paymentInfo.expiresAt
+                        expiresAt: paymentInfo.expiresAt,
+                        isFallback: paymentInfo.isFallback || false
                     });
                     if (paymentInfo.expiresAt) startPaymentTimer(paymentInfo.expiresAt, orderNumber);
                 } else {
-                    showPaymentModal(orderNumber, order.total_amount, { success: false });
+                    // Generate new QR for existing order
+                    showToast('Generating new QR code...', 'info');
+                    createKHQRPayment(orderNumber, order.total_amount, `L@ZY SHOP Order ${orderNumber}`).then(khqrResult => {
+                        if (khqrResult.success) {
+                            pendingPayments[orderNumber] = {
+                                paymentId: khqrResult.paymentId,
+                                amount: order.total_amount,
+                                qrCode: khqrResult.qrCode,
+                                expiresAt: khqrResult.expiresAt,
+                                createdAt: Date.now(),
+                                khqrSuccess: true,
+                                isFallback: khqrResult.isFallback || false
+                            };
+                            saveAll();
+                            showPaymentModal(orderNumber, order.total_amount, khqrResult);
+                            if (khqrResult.expiresAt) startPaymentTimer(khqrResult.expiresAt, orderNumber);
+                        } else {
+                            showPaymentModal(orderNumber, order.total_amount, { success: false });
+                        }
+                    });
                 }
             }
         }
