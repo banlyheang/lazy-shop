@@ -6,6 +6,7 @@
     <title>Owner Panel - L@ZY SHOP</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -73,6 +74,7 @@
             margin-bottom: 15px;
             font-family: 'Inter', sans-serif;
         }
+        input[type="file"] { padding: 8px; background: rgba(255,255,255,0.05); }
         label { display: block; margin-bottom: 8px; color: #94a3b8; }
         .admin-item {
             display: flex;
@@ -89,8 +91,27 @@
             gap: 20px;
             margin-top: 20px;
         }
-        .product-card { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; text-align: center; }
-        .product-card .product-image { font-size: 3rem; }
+        .product-card { 
+            background: rgba(255,255,255,0.05); 
+            border-radius: 20px; 
+            padding: 20px; 
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        .product-card:hover { transform: translateY(-5px); }
+        .product-card .product-image { 
+            width: 120px; 
+            height: 120px; 
+            margin: 0 auto 15px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .product-card .product-image img { width: 100%; height: 100%; object-fit: cover; }
+        .product-card .product-image span { font-size: 3rem; }
         .orders-table { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
@@ -132,8 +153,20 @@
         }
         .telegram-status.active { background: rgba(16,185,129,0.2); color: #10b981; }
         .telegram-status.inactive { background: rgba(239,68,68,0.2); color: #ef4444; }
-        /* Hidden class for sensitive info */
-        .hidden-id { display: none; }
+        .qr-container {
+            display: inline-block;
+            padding: 10px;
+            background: white;
+            border-radius: 12px;
+            margin: 10px 0;
+        }
+        .qr-small { width: 80px; height: 80px; cursor: pointer; }
+        .preview-image {
+            max-width: 100px;
+            max-height: 100px;
+            margin-top: 10px;
+            border-radius: 12px;
+        }
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .products-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -171,7 +204,6 @@
                 <div class="stat-card"><div class="stat-value" id="totalAdmins">0</div><div class="stat-label">Admins</div></div>
             </div>
 
-            <!-- Owner Info Card (Only visible after login) -->
             <div class="card" style="background: linear-gradient(135deg, rgba(156,39,176,0.2), rgba(99,102,241,0.2));">
                 <h2>👤 Owner Information</h2>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -181,14 +213,12 @@
                 <button class="btn btn-info" onclick="setOwnerTelegramId()" style="margin-top: 10px;">📱 Set My Telegram Chat ID</button>
             </div>
 
-            <!-- Reset Admin Password Button -->
             <div class="card">
                 <h2>🔑 Admin Management</h2>
                 <button class="btn btn-warning" onclick="openResetAdminPasswordModal()">🔐 Reset Admin Password</button>
                 <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 10px;">Reset any admin account password (except owner account)</p>
             </div>
 
-            <!-- Telegram Alert Configuration Card -->
             <div class="card">
                 <h2>🤖 Telegram Bot Settings</h2>
                 <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 15px;">Configure bot to send alerts to Owner (@lixing26) and Admins</p>
@@ -232,10 +262,10 @@
                 <div class="orders-table">
                     <table style="width:100%">
                         <thead>
-                            <tr><th>Order #</th><th>Customer</th><th>Amount</th><th>Status</th><th>Payment</th><th>Actions</th></tr>
+                            <tr><th>Order #</th><th>Customer</th><th>Amount</th><th>Status</th><th>Payment</th><th>QR</th><th>Actions</th></tr>
                         </thead>
                         <tbody id="ordersListBody"></tbody>
-                    </table>
+                    \l
                 </div>
             </div>
 
@@ -269,7 +299,7 @@
         </div>
     </div>
 
-    <!-- Product Modal -->
+    <!-- Product Modal with Image Upload -->
     <div id="productModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeProductModal()">&times;</span>
@@ -278,10 +308,24 @@
             <label>Product Name</label><input type="text" id="productName">
             <label>Price ($)</label><input type="number" id="productPrice" step="0.01">
             <label>Stock</label><input type="number" id="productStock" placeholder="-1 for unlimited">
-            <label>Image Emoji</label><input type="text" id="productImage" placeholder="👕">
+            <label>Product Image</label>
+            <input type="file" id="productImageFile" accept="image/*" onchange="previewProductImage()">
+            <div id="imagePreview" style="margin-top:10px;"></div>
+            <input type="hidden" id="productImageData">
             <label>Description</label><textarea id="productDesc" rows="2"></textarea>
             <button class="btn btn-success" onclick="saveProduct()">Save Product</button>
             <button class="btn btn-danger" id="deleteProductBtn" style="display:none;" onclick="deleteProductFromModal()">Delete Product</button>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="modal">
+        <div class="modal-content" style="text-align:center;">
+            <span class="close" onclick="closeQrModal()">&times;</span>
+            <h2 id="qrModalTitle">QR Code</h2>
+            <div id="qrCodeContainer" class="qr-container" style="margin:20px auto;"></div>
+            <button class="btn btn-primary" onclick="downloadQRCode()">💾 Download QR Code</button>
+            <button class="btn btn-info" onclick="printQRCode()">🖨️ Print QR Code</button>
         </div>
     </div>
 
@@ -314,14 +358,12 @@
     </div>
 
     <script>
-        // ==================== OWNER CREDENTIALS (Hidden from UI) ====================
+        // ==================== OWNER CREDENTIALS ====================
         const OWNER_ID = "568280939";
         const OWNER_TELEGRAM_USERNAME = "@lixing26";
         const OWNER_NAME = "Lixing";
         
         let ownerAuthenticated = false;
-        
-        // Admin accounts storage
         let adminAccounts = [
             { username: "admin1", password: "admin123", name: "Admin", telegram: "" },
             { username: "lixing", password: "lixing26", name: "Lixing (Owner)", telegram: "568280939", isOwner: true }
@@ -331,16 +373,115 @@
         let orders = [];
         let users = [];
         let currentOrderForUpdate = null;
+        let currentQRData = null;
         
-        // Telegram settings
         let telegramSettings = {
             botToken: "",
-            chatId: "568280939"  // Default owner chat ID
+            chatId: "568280939"
         };
         
         const TELEGRAM_WORKER_URL = "https://telegram-alert.banlyheang849.workers.dev";
         
-        // ==================== INIT & LOAD ====================
+        // ==================== IMAGE HANDLING ====================
+        function previewProductImage() {
+            const file = document.getElementById('productImageFile').files[0];
+            const preview = document.getElementById('imagePreview');
+            
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}" class="preview-image" style="max-width:100px; border-radius:12px;"><br><small style="color:#94a3b8;">${file.name}</small>`;
+                    document.getElementById('productImageData').value = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.innerHTML = '';
+            }
+        }
+        
+        function getProductImageHtml(product) {
+            if(product.imageData && product.imageData.startsWith('data:image')) {
+                return `<img src="${product.imageData}" style="width:100%; height:100%; object-fit:cover;">`;
+            } else if(product.image) {
+                return `<span style="font-size:3rem;">${product.image}</span>`;
+            }
+            return `<span style="font-size:3rem;">📦</span>`;
+        }
+        
+        // ==================== QR CODE FUNCTIONS ====================
+        function generateQRCode(data, title) {
+            currentQRData = { data, title };
+            document.getElementById('qrModalTitle').innerHTML = title;
+            document.getElementById('qrCodeContainer').innerHTML = '';
+            
+            new QRCode(document.getElementById('qrCodeContainer'), {
+                text: data,
+                width: 200,
+                height: 200,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            document.getElementById('qrModal').style.display = "flex";
+        }
+        
+        function generateProductQR(product) {
+            const productUrl = `${window.location.origin}/product.html?id=${product.id}`;
+            generateQRCode(productUrl, `📦 ${product.name} - QR Code`);
+        }
+        
+        function generateOrderQR(order) {
+            const orderUrl = `${window.location.origin}/track.html?order=${order.order_number}`;
+            generateQRCode(orderUrl, `📋 Order #${order.order_number} - QR Code`);
+        }
+        
+        function generatePaymentQR(amount, orderNumber) {
+            // Generate payment QR (you can integrate with payment gateway)
+            const paymentData = `Payment for Order ${orderNumber}: $${amount}`;
+            generateQRCode(paymentData, `💳 Payment QR - Order #${orderNumber}`);
+        }
+        
+        function downloadQRCode() {
+            const qrContainer = document.getElementById('qrCodeContainer');
+            const qrImg = qrContainer.querySelector('img');
+            if(qrImg) {
+                const link = document.createElement('a');
+                link.download = `qr_${Date.now()}.png`;
+                link.href = qrImg.src;
+                link.click();
+                showToast("QR Code downloaded!");
+            }
+        }
+        
+        function printQRCode() {
+            const qrContainer = document.getElementById('qrCodeContainer');
+            const qrImg = qrContainer.querySelector('img');
+            if(qrImg) {
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html>
+                        <head><title>Print QR Code</title></head>
+                        <body style="display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0;">
+                            <div style="text-align:center;">
+                                <img src="${qrImg.src}" style="width:300px; height:300px;">
+                                <p>${currentQRData?.title || 'QR Code'}</p>
+                                <p style="font-size:12px;">Scan to view</p>
+                            </div>
+                        </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.print();
+            }
+        }
+        
+        function closeQrModal() {
+            document.getElementById('qrModal').style.display = "none";
+            document.getElementById('qrCodeContainer').innerHTML = '';
+        }
+        
+        // ==================== LOAD & SAVE ====================
         function loadAllData() {
             let p = localStorage.getItem('lazy_products');
             if(p) products = JSON.parse(p);
@@ -363,7 +504,6 @@
             let a = localStorage.getItem('lazy_admin_accounts');
             if(a) adminAccounts = JSON.parse(a);
             else {
-                // Ensure owner is in admin list
                 if (!adminAccounts.find(acc => acc.username === "lixing")) {
                     adminAccounts.push({ username: "lixing", password: "lixing26", name: "Lixing (Owner)", telegram: "568280939", isOwner: true });
                 }
@@ -377,11 +517,9 @@
                 saveAllData();
             }
             
-            // Populate telegram fields if saved
             if(telegramSettings.botToken) document.getElementById('telegramBotToken').value = telegramSettings.botToken;
             if(telegramSettings.chatId) document.getElementById('telegramChatId').value = telegramSettings.chatId;
             
-            // Update owner chat ID display
             document.getElementById('ownerChatIdDisplay').innerHTML = telegramSettings.chatId || "Not set";
         }
         
@@ -412,15 +550,28 @@
             if(!grid) return;
             grid.innerHTML = products.map(p => `
                 <div class="product-card">
-                    <div class="product-image">${p.image || '📦'}</div>
+                    <div class="product-image">
+                        ${p.imageData ? `<img src="${p.imageData}" style="width:100%; height:100%; object-fit:cover;">` : `<span>${p.image || '📦'}</span>`}
+                    </div>
                     <h3>${p.name}</h3>
                     <div>$${p.price}</div>
                     <div>📦 Stock: ${p.stock === -1 ? 'Unlimited' : p.stock}</div>
                     <div>📈 Sold: ${p.sales || 0}</div>
-                    <button class="btn btn-warning" onclick="editProduct(${p.id})">✏️ Edit</button>
-                    <button class="btn btn-danger" onclick="deleteProductById(${p.id})">🗑️ Delete</button>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap; justify-content:center; margin-top:10px;">
+                        <button class="btn btn-info" onclick="generateProductQR(${p.id})" style="padding:6px 12px; font-size:0.8rem;">📱 QR Code</button>
+                        <button class="btn btn-warning" onclick="editProduct(${p.id})" style="padding:6px 12px; font-size:0.8rem;">✏️ Edit</button>
+                        <button class="btn btn-danger" onclick="deleteProductById(${p.id})" style="padding:6px 12px; font-size:0.8rem;">🗑️ Delete</button>
+                    </div>
                 </div>
             `).join('');
+        }
+        
+        function generateProductQR(productId) {
+            const product = products.find(p => p.id === productId);
+            if(product) {
+                const productUrl = `${window.location.origin}/product.html?id=${productId}`;
+                generateQRCode(productUrl, `📦 ${product.name} - QR Code`);
+            }
         }
         
         function renderAdminsList() {
@@ -448,12 +599,26 @@
                     <td>$${(o.total_amount || 0).toFixed(2)}</td>
                     <td><span style="background:${o.order_status === 'delivered' ? '#10b981' : '#f59e0b'}; padding:4px 12px; border-radius:20px;">${o.order_status}</span></td>
                     <td><span style="background:${o.payment_status === 'paid' ? '#10b981' : '#ef4444'}; padding:4px 12px; border-radius:20px;">${o.payment_status}</span></td>
-                    <td><button class="btn btn-primary" onclick="openOrderUpdateModal(${o.id})">Update</button></td>
+                    <td>
+                        <button class="btn btn-info" onclick="generateOrderQR('${o.order_number}')" style="padding:4px 10px; font-size:0.7rem;">📱 QR</button>
+                        <button class="btn btn-primary" onclick="generatePaymentQR(${o.total_amount}, '${o.order_number}')" style="padding:4px 10px; font-size:0.7rem;">💰 Payment QR</button>
+                    </td>
+                    <td><button class="btn btn-primary" onclick="openOrderUpdateModal(${o.id})" style="padding:4px 10px; font-size:0.7rem;">Update</button></td>
                 </tr>
             `).join('');
         }
         
-        // ==================== TELEGRAM ALERT FUNCTION ====================
+        function generateOrderQR(orderNumber) {
+            const orderUrl = `${window.location.origin}/track.html?order=${orderNumber}`;
+            generateQRCode(orderUrl, `📋 Order #${orderNumber} - QR Code`);
+        }
+        
+        function generatePaymentQR(amount, orderNumber) {
+            const paymentData = `Payment for Order ${orderNumber}: $${amount.toFixed(2)}`;
+            generateQRCode(paymentData, `💳 Payment QR - Order #${orderNumber}\nAmount: $${amount.toFixed(2)}`);
+        }
+        
+        // ==================== TELEGRAM FUNCTIONS ====================
         async function sendTelegramAlert(message, targetChatId = null) {
             const botToken = telegramSettings.botToken;
             const chatId = targetChatId || telegramSettings.chatId;
@@ -475,28 +640,11 @@
                 });
                 
                 const result = await response.json();
-                if(result.success) {
-                    console.log("Telegram alert sent to:", chatId);
-                    return true;
-                } else {
-                    console.error("Telegram error:", result.error);
-                    return false;
-                }
+                return result.success === true;
             } catch(error) {
                 console.error("Failed to send Telegram alert:", error);
                 return false;
             }
-        }
-        
-        async function broadcastToAllAdmins(message) {
-            let successCount = 0;
-            for(const admin of adminAccounts) {
-                if(admin.telegram && admin.telegram.trim()) {
-                    const sent = await sendTelegramAlert(message, admin.telegram);
-                    if(sent) successCount++;
-                }
-            }
-            return successCount;
         }
         
         async function sendOwnerAlert(message) {
@@ -506,7 +654,6 @@
         async function sendCriticalAlert(action, details) {
             const msg = `🚨 *OWNER CRITICAL ALERT* 🚨\n\n👑 Owner: ${OWNER_NAME} (${OWNER_TELEGRAM_USERNAME})\nAction: ${action}\nDetails: ${details}\nTime: ${new Date().toLocaleString()}`;
             await sendOwnerAlert(msg);
-            await broadcastToAllAdmins(`⚠️ Admin Alert: ${action} performed by Owner`);
         }
         
         function saveTelegramSettings() {
@@ -566,53 +713,6 @@
             }
         }
         
-        // ==================== RESET ADMIN PASSWORD ====================
-        function openResetAdminPasswordModal() {
-            const username = prompt("Enter admin username to reset password:", "");
-            if (username && username.trim()) {
-                const admin = adminAccounts.find(a => a.username === username && !a.isOwner);
-                if (admin) {
-                    const newPassword = prompt(`Enter new password for admin "${username}":`, "admin123");
-                    if (newPassword && newPassword.length >= 4) {
-                        admin.password = newPassword;
-                        saveAllData();
-                        renderAdminsList();
-                        showToast(`✅ Password for ${username} has been reset!`, "success");
-                        sendCriticalAlert("ADMIN PASSWORD RESET", `Password reset for admin: ${username}`);
-                    } else if (newPassword) {
-                        showToast("❌ Password must be at least 4 characters", "error");
-                    }
-                } else {
-                    showToast(`❌ Admin "${username}" not found or is owner account`, "error");
-                }
-            }
-        }
-        
-        // ==================== OWNER AUTH ====================
-        function ownerLogin() {
-            let pwd = document.getElementById('ownerPassword').value;
-            if(pwd === OWNER_ID) {
-                ownerAuthenticated = true;
-                localStorage.setItem('owner_authenticated', 'true');
-                document.getElementById('loginCard').style.display = 'none';
-                document.getElementById('ownerPanel').style.display = 'block';
-                refreshAllData();
-                updateTelegramStatusUI();
-                showToast(`👑 Welcome, Owner ${OWNER_NAME}! Full control granted.`);
-                sendOwnerAlert(`👑 Owner ${OWNER_NAME} (${OWNER_TELEGRAM_USERNAME}) logged into dashboard`);
-            } else {
-                document.getElementById('ownerError').innerHTML = "❌ Invalid Owner Password!";
-            }
-        }
-        
-        function refreshAllData() {
-            loadAllData();
-            updateStatsUI();
-            renderProductsGrid();
-            renderAdminsList();
-            renderOrdersTable();
-        }
-        
         // ==================== PRODUCT MANAGEMENT ====================
         function openAddProductModal() {
             document.getElementById('modalTitle').innerHTML = "Add New Product";
@@ -620,7 +720,9 @@
             document.getElementById('productName').value = "";
             document.getElementById('productPrice').value = "";
             document.getElementById('productStock').value = "";
-            document.getElementById('productImage').value = "🛍️";
+            document.getElementById('productImageFile').value = "";
+            document.getElementById('productImageData').value = "";
+            document.getElementById('imagePreview').innerHTML = "";
             document.getElementById('productDesc').value = "";
             document.getElementById('deleteProductBtn').style.display = "none";
             document.getElementById('productModal').style.display = "flex";
@@ -634,8 +736,13 @@
                 document.getElementById('productName').value = p.name;
                 document.getElementById('productPrice').value = p.price;
                 document.getElementById('productStock').value = p.stock;
-                document.getElementById('productImage').value = p.image || "🛍️";
                 document.getElementById('productDesc').value = p.description || "";
+                if(p.imageData) {
+                    document.getElementById('imagePreview').innerHTML = `<img src="${p.imageData}" class="preview-image" style="max-width:100px; border-radius:12px;">`;
+                    document.getElementById('productImageData').value = p.imageData;
+                } else {
+                    document.getElementById('imagePreview').innerHTML = `<span style="font-size:2rem;">${p.image || '📦'}</span>`;
+                }
                 document.getElementById('deleteProductBtn').style.display = "inline-block";
                 document.getElementById('productModal').style.display = "flex";
             }
@@ -646,8 +753,8 @@
             let name = document.getElementById('productName').value.trim();
             let price = parseFloat(document.getElementById('productPrice').value);
             let stock = parseInt(document.getElementById('productStock').value);
-            let image = document.getElementById('productImage').value.trim() || "🛍️";
             let desc = document.getElementById('productDesc').value.trim();
+            let imageData = document.getElementById('productImageData').value;
             
             if(!name || isNaN(price)) {
                 showToast("Please fill all fields", "error");
@@ -657,12 +764,24 @@
             if(id) {
                 let idx = products.findIndex(p => p.id === id);
                 if(idx !== -1) {
-                    products[idx] = { ...products[idx], name, price, stock, image, description: desc };
+                    products[idx] = { 
+                        ...products[idx], 
+                        name, price, stock, 
+                        description: desc,
+                        imageData: imageData || products[idx].imageData,
+                        image: imageData ? null : (products[idx].image || '📦')
+                    };
                     await sendCriticalAlert("PRODUCT UPDATED", `Product ID ${id} - ${name} updated`);
                 }
             } else {
                 let newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-                products.push({ id: newId, name, price, stock, image, description: desc, sales: 0 });
+                products.push({ 
+                    id: newId, name, price, stock, 
+                    image: imageData ? null : '📦',
+                    imageData: imageData || null,
+                    description: desc, 
+                    sales: 0 
+                });
                 await sendCriticalAlert("PRODUCT ADDED", `New product: ${name} ($${price}) added`);
             }
             saveAllData();
@@ -731,6 +850,27 @@
             }
         }
         
+        function openResetAdminPasswordModal() {
+            const username = prompt("Enter admin username to reset password:", "");
+            if (username && username.trim()) {
+                const admin = adminAccounts.find(a => a.username === username && !a.isOwner);
+                if (admin) {
+                    const newPassword = prompt(`Enter new password for admin "${username}":`, "admin123");
+                    if (newPassword && newPassword.length >= 4) {
+                        admin.password = newPassword;
+                        saveAllData();
+                        renderAdminsList();
+                        showToast(`✅ Password for ${username} has been reset!`, "success");
+                        sendCriticalAlert("ADMIN PASSWORD RESET", `Password reset for admin: ${username}`);
+                    } else if (newPassword) {
+                        showToast("❌ Password must be at least 4 characters", "error");
+                    }
+                } else {
+                    showToast(`❌ Admin "${username}" not found or is owner account`, "error");
+                }
+            }
+        }
+        
         // ==================== ORDER MANAGEMENT ====================
         function openOrderUpdateModal(orderId) {
             currentOrderForUpdate = orders.find(o => o.id === orderId);
@@ -760,7 +900,7 @@
             }
         }
         
-        // ==================== DATABASE MGMT ====================
+        // ==================== DATABASE MANAGEMENT ====================
         function backupDatabase() {
             let data = { products, orders, users, adminAccounts, telegramSettings };
             let blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
@@ -855,6 +995,31 @@
                 await sendCriticalAlert("ALL PRODUCTS DELETED", "Owner deleted all products from store");
                 showToast("All products deleted");
             }
+        }
+        
+        // ==================== OWNER AUTH ====================
+        function ownerLogin() {
+            let pwd = document.getElementById('ownerPassword').value;
+            if(pwd === OWNER_ID) {
+                ownerAuthenticated = true;
+                localStorage.setItem('owner_authenticated', 'true');
+                document.getElementById('loginCard').style.display = 'none';
+                document.getElementById('ownerPanel').style.display = 'block';
+                refreshAllData();
+                updateTelegramStatusUI();
+                showToast(`👑 Welcome, Owner ${OWNER_NAME}! Full control granted.`);
+                sendOwnerAlert(`👑 Owner ${OWNER_NAME} (${OWNER_TELEGRAM_USERNAME}) logged into dashboard`);
+            } else {
+                document.getElementById('ownerError').innerHTML = "❌ Invalid Owner Password!";
+            }
+        }
+        
+        function refreshAllData() {
+            loadAllData();
+            updateStatsUI();
+            renderProductsGrid();
+            renderAdminsList();
+            renderOrdersTable();
         }
         
         // ==================== UTILITIES ====================
