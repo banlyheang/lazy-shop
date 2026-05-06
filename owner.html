@@ -112,7 +112,7 @@
         let products = [], orders = [], users = [], adminAccounts = [];
         let telegramSettings = { botToken: "", chatId: "" };
         let currentOrderForUpdate = null;
-        const TELEGRAM_WORKER = "https://telegram-alert.banlyheang849.workers.dev";
+        const TELEGRAM_WORKER = "https://telegram-alert.banlyheang849.workers.dev/";
 
         function loadAllData() {
             let p = localStorage.getItem('lazy_products'); if(p) products = JSON.parse(p);
