@@ -6,7 +6,6 @@
     <title>Owner Dashboard - L@ZY SHOP</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -63,7 +62,15 @@
         .btn-telegram { background: #0088cc; color: white; }
         .btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
         .danger-zone { border: 1px solid #ef4444; background: rgba(239,68,68,0.1); }
-        input { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 14px; color: white; width: 100%; margin-bottom: 15px; }
+        input, select, textarea {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 12px;
+            color: white;
+            width: 100%;
+            margin-bottom: 15px;
+        }
         label { display: block; margin-bottom: 8px; color: #94a3b8; }
         .admin-item {
             display: flex;
@@ -114,15 +121,77 @@
             align-items: center;
             z-index: 1000;
         }
-        .modal-content { background: #1e293b; border-radius: 28px; padding: 32px; max-width: 500px; width: 90%; }
+        .modal-content { background: #1e293b; border-radius: 28px; padding: 32px; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; }
         .close { float: right; font-size: 1.5rem; cursor: pointer; }
-        .receipt-template {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            color: black;
-            font-family: monospace;
+        
+        /* Product Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
         }
+        .product-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 20px;
+            position: relative;
+        }
+        .product-images-preview {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .product-images-preview img {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+        .product-price { font-size: 1.5rem; font-weight: bold; color: #10b981; }
+        .product-stock { color: #94a3b8; font-size: 0.8rem; }
+        .product-actions { margin-top: 15px; display: flex; gap: 10px; justify-content: center; }
+        
+        /* Image Upload */
+        .images-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .image-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(255,255,255,0.1);
+            position: relative;
+        }
+        .image-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .remove-img-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .upload-area {
+            border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            margin: 15px 0;
+            transition: all 0.3s;
+        }
+        .upload-area:hover { border-color: #9C27B0; background: rgba(156,39,176,0.1); }
     </style>
 </head>
 <body>
@@ -146,22 +215,29 @@
                 <div class="stat-card"><div class="stat-value" id="totalCustomers">0</div><div class="stat-label">Customers</div></div>
                 <div class="stat-card"><div class="stat-value" id="totalProducts">0</div><div class="stat-label">Products</div></div>
                 <div class="stat-card"><div class="stat-value" id="totalAdmins">0</div><div class="stat-label">Admins</div></div>
-                <div class="stat-card"><div class="stat-value" id="dbSize">0 KB</div><div class="stat-label">Database Size</div></div>
+                <div class="stat-card"><div class="stat-value" id="dbSize">0 KB</div><div class="stat-label">Database</div></div>
+            </div>
+
+            <!-- PRODUCT MANAGEMENT SECTION -->
+            <div class="card">
+                <h2><i class="fas fa-boxes"></i> Product Management</h2>
+                <p style="color:#94a3b8; margin-bottom:15px;">Add, edit, or remove products. Upload up to 5 images per product.</p>
+                <button class="btn btn-success" onclick="openAddProductModal()">
+                    <i class="fas fa-plus"></i> Add New Product
+                </button>
+                <div class="products-grid" id="productsGrid"></div>
             </div>
 
             <!-- CREATE ADMIN SECTION -->
             <div class="card">
                 <h2><i class="fas fa-user-plus"></i> Create New Admin Account</h2>
-                <p style="color:#94a3b8; margin-bottom:15px;">Fill in the details below to create a new administrator account</p>
                 <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px;">
                     <div><label>Username *</label><input type="text" id="newAdminUsername" placeholder="e.g., theary_admin"></div>
                     <div><label>Password *</label><input type="text" id="newAdminPassword" placeholder="Enter password"></div>
                     <div><label>Full Name</label><input type="text" id="newAdminName" placeholder="e.g., Theary"></div>
-                    <div><label>Telegram ID (optional)</label><input type="text" id="newAdminTelegram" placeholder="e.g., 1656048796"></div>
+                    <div><label>Telegram ID (Required for alerts)</label><input type="text" id="newAdminTelegram" placeholder="e.g., 1656048796"></div>
                 </div>
-                <button class="btn btn-success" onclick="createAdminAccount()" style="width:100%; margin-top:15px;">
-                    <i class="fas fa-plus-circle"></i> Create Admin Account
-                </button>
+                <button class="btn btn-success" onclick="createAdminAccount()" style="width:100%; margin-top:15px;">➕ Create Admin Account</button>
                 <div id="adminCreateResult" style="margin-top:15px;"></div>
             </div>
 
@@ -171,30 +247,13 @@
                 <div id="adminsList"></div>
             </div>
 
-            <!-- GENERATE RECEIPT & SEND PDF TO TELEGRAM -->
-            <div class="card">
-                <h2><i class="fas fa-file-pdf"></i> Generate Receipt & Send PDF to Telegram</h2>
-                <p style="color:#94a3b8; margin-bottom:15px;">Select an order to generate PDF receipt and send as PDF file to Telegram</p>
-                <select id="receiptOrderSelect" style="margin-bottom:15px;">
-                    <option value="">-- Select Order --</option>
-                </select>
-                <div style="display:flex; gap:15px; flex-wrap:wrap;">
-                    <button class="btn btn-primary" onclick="generateReceiptOnly()">📄 Generate PDF Only</button>
-                    <button class="btn btn-telegram" onclick="generateAndSendPDFToTelegram()">
-                        <i class="fab fa-telegram"></i> Generate & Send PDF to Telegram
-                    </button>
-                </div>
-                <div id="receiptResult" style="margin-top:15px;"></div>
-            </div>
-
             <!-- ALL ORDERS LIST -->
             <div class="card">
                 <h3><i class="fas fa-box"></i> All Orders</h3>
                 <div class="orders-table">
                     <table style="width:100%">
-                        <thead>
-                            <tr><th>Order #</th><th>Customer</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
-                        </thead>
+                        <thead><tr><th>Order #</th><th>Customer
+                            <th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
                         <tbody id="ordersListBody"></tbody>
                     </table>
                 </div>
@@ -211,7 +270,7 @@
                 </div>
                 <div style="margin-top:20px; background:rgba(0,0,0,0.3); border-radius:16px; padding:15px;">
                     <h3>📊 Database Statistics</h3>
-                    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:10px;">
+                    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px;">
                         <div><strong>Products:</strong> <span id="previewProducts">0</span></div>
                         <div><strong>Orders:</strong> <span id="previewOrders">0</span></div>
                         <div><strong>Users:</strong> <span id="previewUsers">0</span></div>
@@ -238,9 +297,49 @@
         </div>
     </div>
 
-    <!-- Hidden Receipt Template for PDF Generation -->
-    <div id="receiptTemplate" style="display:none;">
-        <div id="receiptContent" style="width: 100%; max-width: 800px; margin: 0 auto; background: white; color: black; font-family: monospace; padding: 30px;"></div>
+    <!-- Product Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeProductModal()">&times;</span>
+            <h2 id="productModalTitle">Add New Product</h2>
+            <input type="hidden" id="productId">
+            
+            <label>Product Name *</label>
+            <input type="text" id="productName" placeholder="e.g., Premium T-Shirt">
+            
+            <label>Price ($) *</label>
+            <input type="number" id="productPrice" step="0.01" placeholder="0.00">
+            
+            <label>Category</label>
+            <select id="productCategory">
+                <option value="Electronics">Electronics</option>
+                <option value="Clothing">Clothing</option>
+                <option value="Accessories">Accessories</option>
+                <option value="Home">Home & Living</option>
+                <option value="Sports">Sports & Outdoors</option>
+            </select>
+            
+            <label>Stock Quantity</label>
+            <input type="number" id="productStock" placeholder="-1 for unlimited">
+            
+            <label>Description</label>
+            <textarea id="productDesc" rows="3" placeholder="Product description..."></textarea>
+            
+            <label>Product Images (Up to 5 images)</label>
+            <div class="images-container" id="imagesContainer"></div>
+            
+            <div class="upload-area" onclick="document.getElementById('productImageInput').click()">
+                <i class="fas fa-cloud-upload-alt" style="font-size: 24px;"></i>
+                <p>Click to upload images (PNG, JPG)</p>
+                <p style="font-size: 12px; color: #aaa;">You can upload up to 5 images</p>
+            </div>
+            <input type="file" id="productImageInput" accept="image/*" multiple style="display:none;" onchange="handleImageUpload(this)">
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-success" onclick="saveProduct()" style="flex:1;">💾 Save Product</button>
+                <button class="btn btn-danger" id="deleteProductBtn" style="display:none;" onclick="deleteProduct()">🗑️ Delete Product</button>
+            </div>
+        </div>
     </div>
 
     <!-- Restore Modal -->
@@ -256,83 +355,19 @@
     </div>
 
     <script>
-        // ==================== TELEGRAM ALERT CONFIGURATION ====================
-        const TELEGRAM_WORKER = 'https://telegram-alert.banlyheang849.workers.dev/';
+        // ==================== TELEGRAM CONFIGURATION ====================
+        const TELEGRAM_WORKER = 'https://telegram-alert.banlyheang849.workers.dev';
         const BOT_TOKEN = "8342603162:AAFAxx91xeni-vXUddkkWs3DMuZEDnL9cvE";
         const OWNER_ID = "568280939";
-        const Admin_ID = "1656048796";
-            
-        async function sendPDFToTelegram(pdfBlob, orderNumber) {
-            // Convert blob to base64
-            const reader = new FileReader();
-            return new Promise((resolve) => {
-                reader.onloadend = async function() {
-                    const base64data = reader.result.split(',')[1];
-                    
-                    // Method 1: Try to send via Cloudflare Worker (for larger files)
-                    try {
-                        // Create form data for Telegram API
-                        const formData = new FormData();
-                        formData.append('chat_id', OWNER_ID);
-                        formData.append('document', pdfBlob, `Receipt_${orderNumber}.pdf`);
-                        
-                        // Direct Telegram API call (note: CORS may block this)
-                        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
-                            method: 'POST',
-                            body: formData
-                        });
-                        
-                        const result = await response.json();
-                        if(result.ok) {
-                            resolve({ success: true });
-                        } else {
-                            // Fallback: send text receipt instead
-                            await sendTextReceipt(orderNumber);
-                            resolve({ success: false, fallback: true });
-                        }
-                    } catch(e) {
-                        // Fallback: send text receipt
-                        await sendTextReceipt(orderNumber);
-                        resolve({ success: false, fallback: true });
-                    }
-                };
-                reader.readAsDataURL(pdfBlob);
-            });
-        }
         
-        async function sendTextReceipt(orderNumber) {
-            const order = getOrderByNumber(orderNumber);
-            if(!order) return;
-            
-            const message = `📄 **RECEIPT (PDF unavailable - Text version)**\n\n` +
-                `━━━━━━━━━━━━━━━━━━━━━━\n` +
-                `🧾 Order #: ${order.order_number}\n` +
-                `👤 Customer: ${order.customer_name}\n` +
-                `📞 Phone: ${order.customer_phone || 'N/A'}\n` +
-                `💰 Amount: $${order.total_amount}\n` +
-                `📅 Date: ${new Date(order.created_at).toLocaleString()}\n` +
-                `━━━━━━━━━━━━━━━━━━━━━━\n` +
-                `Items:\n` +
-                `${order.items ? order.items.map(i => `   • ${i.name} x${i.quantity} = $${(i.price * i.quantity).toFixed(2)}`).join('\n') : '   • Product order'}\n` +
-                `━━━━━━━━━━━━━━━━━━━━━━\n` +
-                `✅ Thank you for shopping at L@ZY SHOP!\n` +
-                `📱 Contact: @lixing26 | 📞 0969903084`;
-            
-            await fetch(TELEGRAM_WORKER, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: message, chat_id: OWNER_ID })
-            });
-        }
-        
-        async function sendTelegramAlert(message, chatId = null) {
+        async function sendTelegramMessage(chatId, message) {
             try {
                 const response = await fetch(TELEGRAM_WORKER, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         message: message,
-                        chat_id: chatId || OWNER_ID
+                        chat_id: chatId
                     })
                 });
                 return await response.json();
@@ -341,38 +376,46 @@
                 return { success: false };
             }
         }
+        
+        async function sendTelegramAlert(message, chatId = null) {
+            const targetId = chatId || OWNER_ID;
+            return await sendTelegramMessage(targetId, message);
+        }
 
         // ==================== DATA ====================
-        let products = [], orders = [], users = [];
+        let products = [];
+        let orders = [];
+        let users = [];
         let adminAccounts = [
             { username: "admin1", password: "admin123", name: "Admin", telegramId: "" },
             { username: "lixing", password: "lixing26", name: "Lixing", telegramId: "568280939" }
         ];
+        let currentProductImages = [];
+        let editingProductId = null;
 
         function init() { 
             loadData(); 
             updateStats(); 
+            renderProducts(); 
             renderAdminsList(); 
             renderOrdersList();
             loadBackupHistory();
-            updateReceiptOrderSelect();
         }
         
         function loadData() { 
-            let p = localStorage.getItem('lazy_products'); if(p) products = JSON.parse(p);
-            let o = localStorage.getItem('lazy_orders'); if(o) orders = JSON.parse(o);
-            let u = localStorage.getItem('lazy_users'); if(u) users = JSON.parse(u);
-            let a = localStorage.getItem('admin_accounts'); if(a) adminAccounts = JSON.parse(a);
-            if(products.length === 0) {
-                products = [
-                    { id: 1, name: "Premium T-Shirt", price: 25.99, stock: 50, sales: 45, image: "👕" },
-                    { id: 2, name: "Wireless Headphones", price: 49.99, stock: 30, sales: 38, image: "🎧" },
-                    { id: 3, name: "Smart Watch", price: 89.99, stock: 20, sales: 25, image: "⌚" },
-                    { id: 4, name: "Leather Backpack", price: 39.99, stock: 40, sales: 32, image: "🎒" },
-                    { id: 5, name: "Sunglasses", price: 19.99, stock: 60, sales: 55, image: "🕶️" }
-                ];
-                saveAll();
-            }
+            let p = localStorage.getItem('lazy_products'); 
+            if(p) products = JSON.parse(p);
+            else products = [];
+            
+            let o = localStorage.getItem('lazy_orders'); 
+            if(o) orders = JSON.parse(o);
+            else orders = [];
+            
+            let u = localStorage.getItem('lazy_users'); 
+            if(u) users = JSON.parse(u);
+            
+            let a = localStorage.getItem('admin_accounts'); 
+            if(a) adminAccounts = JSON.parse(a);
         }
         
         function saveAll() { 
@@ -388,10 +431,11 @@
                 document.getElementById('loginCard').style.display = 'none'; 
                 document.getElementById('ownerPanel').style.display = 'block'; 
                 updateStats(); 
+                renderProducts();
                 renderAdminsList();
                 renderOrdersList();
-                updateReceiptOrderSelect();
                 loadBackupHistory();
+                sendTelegramAlert(`👑 **OWNER LOGIN**\n\nOwner logged into dashboard at ${new Date().toLocaleString()}`);
                 showToast('👑 Owner access granted!'); 
             } else { 
                 document.getElementById('ownerError').innerHTML = '❌ Invalid Owner ID!'; 
@@ -413,8 +457,174 @@
             document.getElementById('previewAdmins').innerHTML = adminAccounts.length; 
         }
 
-        // ==================== CREATE ADMIN ACCOUNT ====================
-        function createAdminAccount() {
+        // ==================== PRODUCT MANAGEMENT ====================
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            if(!products.length) {
+                grid.innerHTML = '<div style="text-align:center; padding:40px;">📦 No products yet. Click "Add New Product" to get started.</div>';
+                return;
+            }
+            grid.innerHTML = products.map(p => `
+                <div class="product-card">
+                    <div class="product-images-preview">
+                        ${p.images && p.images.length ? p.images.slice(0,3).map(img => `<img src="${img}">`).join('') : '<div style="font-size:2rem;">🛍️</div>'}
+                        ${p.images && p.images.length > 3 ? `<span style="color:#94a3b8;">+${p.images.length-3}</span>` : ''}
+                    </div>
+                    <h3>${escapeHtml(p.name)}</h3>
+                    <div class="product-price">$${p.price}</div>
+                    <div class="product-stock">📦 Stock: ${p.stock === -1 ? 'Unlimited' : p.stock}</div>
+                    <div class="product-stock">📈 Sold: ${p.sales || 0}</div>
+                    <div class="product-actions">
+                        <button class="btn btn-warning" onclick="editProduct(${p.id})">✏️ Edit</button>
+                        <button class="btn btn-danger" onclick="deleteProductById(${p.id})">🗑️ Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function openAddProductModal() {
+            editingProductId = null;
+            currentProductImages = [];
+            document.getElementById('productModalTitle').innerHTML = 'Add New Product';
+            document.getElementById('productId').value = '';
+            document.getElementById('productName').value = '';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('productCategory').value = 'Electronics';
+            document.getElementById('productStock').value = '';
+            document.getElementById('productDesc').value = '';
+            document.getElementById('imagesContainer').innerHTML = '';
+            document.getElementById('deleteProductBtn').style.display = 'none';
+            document.getElementById('productModal').style.display = 'flex';
+        }
+        
+        function editProduct(id) {
+            const product = products.find(p => p.id === id);
+            if(!product) return;
+            
+            editingProductId = id;
+            document.getElementById('productModalTitle').innerHTML = 'Edit Product';
+            document.getElementById('productId').value = product.id;
+            document.getElementById('productName').value = product.name;
+            document.getElementById('productPrice').value = product.price;
+            document.getElementById('productCategory').value = product.category || 'Electronics';
+            document.getElementById('productStock').value = product.stock;
+            document.getElementById('productDesc').value = product.description || '';
+            currentProductImages = product.images ? [...product.images] : [];
+            renderImagePreviews();
+            document.getElementById('deleteProductBtn').style.display = 'inline-block';
+            document.getElementById('productModal').style.display = 'flex';
+        }
+        
+        function handleImageUpload(input) {
+            const files = Array.from(input.files);
+            for(let file of files) {
+                if(currentProductImages.length >= 5) {
+                    showToast('Maximum 5 images allowed!', 'error');
+                    break;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentProductImages.push(e.target.result);
+                    renderImagePreviews();
+                };
+                reader.readAsDataURL(file);
+            }
+            input.value = '';
+        }
+        
+        function renderImagePreviews() {
+            const container = document.getElementById('imagesContainer');
+            container.innerHTML = currentProductImages.map((img, idx) => `
+                <div class="image-preview">
+                    <img src="${img}">
+                    <button class="remove-img-btn" onclick="removeImage(${idx})">✕</button>
+                </div>
+            `).join('');
+        }
+        
+        function removeImage(idx) {
+            currentProductImages.splice(idx, 1);
+            renderImagePreviews();
+        }
+        
+        function saveProduct() {
+            const name = document.getElementById('productName').value.trim();
+            const price = parseFloat(document.getElementById('productPrice').value);
+            const category = document.getElementById('productCategory').value;
+            const stock = parseInt(document.getElementById('productStock').value);
+            const description = document.getElementById('productDesc').value.trim();
+            
+            if(!name || isNaN(price)) {
+                showToast('Please enter product name and price!', 'error');
+                return;
+            }
+            
+            if(editingProductId) {
+                const index = products.findIndex(p => p.id === editingProductId);
+                if(index !== -1) {
+                    products[index] = {
+                        ...products[index],
+                        name, price, category, stock, description,
+                        images: currentProductImages
+                    };
+                    showToast('✅ Product updated!');
+                    sendTelegramAlert(`📦 **PRODUCT UPDATED**\n\nProduct: ${name}\nPrice: $${price}\nStock: ${stock === -1 ? 'Unlimited' : stock}\n\nUpdated by Owner`);
+                }
+            } else {
+                const newId = Math.max(...products.map(p => p.id), 0) + 1;
+                products.push({
+                    id: newId,
+                    name, price, category, stock: stock || 0, sales: 0,
+                    images: currentProductImages,
+                    description: description
+                });
+                showToast('✅ Product added!');
+                sendTelegramAlert(`🆕 **NEW PRODUCT ADDED**\n\nProduct: ${name}\nPrice: $${price}\nStock: ${stock === -1 ? 'Unlimited' : stock}\n\nAdded by Owner`);
+            }
+            
+            saveAll();
+            renderProducts();
+            updateStats();
+            closeProductModal();
+        }
+        
+        function deleteProduct() {
+            if(editingProductId) {
+                const product = products.find(p => p.id === editingProductId);
+                if(confirm('Are you sure you want to delete this product?')) {
+                    const productName = product ? product.name : 'Unknown';
+                    products = products.filter(p => p.id !== editingProductId);
+                    saveAll();
+                    renderProducts();
+                    updateStats();
+                    closeProductModal();
+                    showToast('✅ Product deleted!');
+                    sendTelegramAlert(`🗑️ **PRODUCT DELETED**\n\nProduct: ${productName}\n\nDeleted by Owner`);
+                }
+            }
+        }
+        
+        function deleteProductById(id) {
+            const product = products.find(p => p.id === id);
+            if(confirm('Are you sure you want to delete this product?')) {
+                const productName = product ? product.name : 'Unknown';
+                products = products.filter(p => p.id !== id);
+                saveAll();
+                renderProducts();
+                updateStats();
+                showToast('✅ Product deleted!');
+                sendTelegramAlert(`🗑️ **PRODUCT DELETED**\n\nProduct: ${productName}\n\nDeleted by Owner`);
+            }
+        }
+        
+        function closeProductModal() {
+            document.getElementById('productModal').style.display = 'none';
+            currentProductImages = [];
+            editingProductId = null;
+        }
+
+        // ==================== ADMIN MANAGEMENT WITH TELEGRAM ALERTS ====================
+        async function createAdminAccount() {
             const username = document.getElementById('newAdminUsername').value.trim();
             const password = document.getElementById('newAdminPassword').value.trim();
             const name = document.getElementById('newAdminName').value.trim();
@@ -422,33 +632,46 @@
             
             if(!username) { showToast('❌ Please enter username!', 'error'); return; }
             if(!password) { showToast('❌ Please enter password!', 'error'); return; }
-            if(password.length < 4) { showToast('❌ Password must be at least 4 characters!', 'error'); return; }
+            if(!telegramId) { showToast('❌ Please enter Telegram ID for alerts!', 'error'); return; }
             
             if(adminAccounts.find(a => a.username === username)) {
                 showToast('❌ Username already exists!', 'error');
                 return;
             }
             
-            const newAdmin = {
-                username: username,
-                password: password,
-                name: name || username,
-                telegramId: telegramId || '',
-                role: 'admin',
-                createdAt: new Date().toISOString()
-            };
-            
-            adminAccounts.push(newAdmin);
+            adminAccounts.push({
+                username, password, name: name || username, telegramId: telegramId,
+                role: 'admin', createdAt: new Date().toISOString()
+            });
             saveAll();
             renderAdminsList();
             updateStats();
+            
+            // Send welcome message to new admin via Telegram
+            const welcomeMessage = `🎉 **Welcome to L@ZY SHOP Admin Team!** 🎉\n\n` +
+                `You have been added as an administrator.\n\n` +
+                `🔐 **Your Login Credentials:**\n` +
+                `👤 Username: ${username}\n` +
+                `🔑 Password: ${password}\n` +
+                `🌐 Login URL: https://banlyheang.github.io/lazy-shop/admin.html\n\n` +
+                `📋 **Your Responsibilities:**\n` +
+                `• Manage products\n` +
+                `• Process orders\n` +
+                `• Update order status\n\n` +
+                `⚠️ Please change your password after first login!\n\n` +
+                `Thank you for joining the team! 👑`;
+            
+            await sendTelegramMessage(telegramId, welcomeMessage);
+            
+            // Also notify owner
+            await sendTelegramAlert(`👑 **NEW ADMIN CREATED**\n\nUsername: ${username}\nName: ${name || username}\nTelegram ID: ${telegramId}\n\nWelcome email sent via Telegram!`);
             
             document.getElementById('newAdminUsername').value = '';
             document.getElementById('newAdminPassword').value = '';
             document.getElementById('newAdminName').value = '';
             document.getElementById('newAdminTelegram').value = '';
             
-            showToast(`✅ Admin "${name || username}" created successfully!`);
+            showToast(`✅ Admin "${name || username}" created! Telegram welcome sent.`);
             
             document.getElementById('adminCreateResult').innerHTML = `
                 <div style="background:#10b98120; padding:10px; border-radius:10px; border-left:3px solid #10b981;">
@@ -456,10 +679,82 @@
                     Username: ${username}<br>
                     Password: ${password}<br>
                     Name: ${name || username}<br>
-                    <small>Admin can login at: https://banlyheang.github.io/lazy-shop/admin.html</small>
+                    Telegram ID: ${telegramId}<br>
+                    <small>Welcome message sent to admin's Telegram!</small>
                 </div>
             `;
             setTimeout(() => { document.getElementById('adminCreateResult').innerHTML = ''; }, 5000);
+        }
+        
+        async function resetAdminPassword(username) {
+            const admin = adminAccounts.find(a => a.username === username);
+            if(admin && admin.username !== 'lixing') {
+                const newPassword = prompt(`Enter new password for "${admin.name}":`, generateRandomPassword());
+                if(newPassword && newPassword.length >= 4) {
+                    const oldPassword = admin.password;
+                    admin.password = newPassword;
+                    saveAll();
+                    
+                    // Send new password to admin via Telegram
+                    if(admin.telegramId) {
+                        const passwordMessage = `🔐 **Password Reset Notification** 🔐\n\n` +
+                            `Hello ${admin.name},\n\n` +
+                            `Your administrator password has been reset by the Owner.\n\n` +
+                            `🆕 **New Password:** ${newPassword}\n` +
+                            `👤 Username: ${admin.username}\n` +
+                            `🌐 Login: https://banlyheang.github.io/lazy-shop/admin.html\n\n` +
+                            `⚠️ Please change your password after logging in for security.\n\n` +
+                            `If you did not request this change, please contact the Owner immediately.`;
+                        
+                        await sendTelegramMessage(admin.telegramId, passwordMessage);
+                        showToast(`✅ Password reset for ${admin.name}! New password sent via Telegram.`);
+                    } else {
+                        showToast(`⚠️ Password reset but no Telegram ID for ${admin.name}. Cannot send notification.`);
+                    }
+                    
+                    // Notify owner
+                    await sendTelegramAlert(`🔐 **PASSWORD RESET**\n\nAdmin: ${admin.name} (${admin.username})\nNew password: ${newPassword}\n\nAdmin notified via Telegram.`);
+                    
+                    renderAdminsList();
+                } else if(newPassword) {
+                    showToast('❌ Password must be at least 4 characters!', 'error');
+                }
+            }
+        }
+        
+        function generateRandomPassword() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let password = '';
+            for(let i = 0; i < 8; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return password;
+        }
+        
+        async function removeAdmin(username) {
+            const admin = adminAccounts.find(a => a.username === username);
+            if(admin && admin.username !== 'lixing') {
+                if(confirm(`⚠️ Remove admin "${admin.name}" (${admin.username})?`)) {
+                    adminAccounts = adminAccounts.filter(a => a.username !== username);
+                    saveAll();
+                    renderAdminsList();
+                    updateStats();
+                    
+                    // Notify removed admin
+                    if(admin.telegramId) {
+                        const removalMessage = `❌ **Admin Access Revoked** ❌\n\n` +
+                            `Hello ${admin.name},\n\n` +
+                            `Your administrator privileges for L@ZY SHOP have been removed by the Owner.\n\n` +
+                            `You no longer have access to the admin panel.\n\n` +
+                            `If you believe this is an error, please contact the Owner.`;
+                        
+                        await sendTelegramMessage(admin.telegramId, removalMessage);
+                    }
+                    
+                    await sendTelegramAlert(`❌ **ADMIN REMOVED**\n\nAdmin: ${admin.name} (${admin.username})\n\nAdmin notified via Telegram.`);
+                    showToast(`🗑️ Admin "${admin.name}" removed.`);
+                }
+            }
         }
         
         function renderAdminsList() {
@@ -468,292 +763,61 @@
                 <div class="admin-item">
                     <div>
                         <strong>${admin.name}</strong>
-                        <span style="background:${admin.username === 'lixing' ? '#9C27B0' : '#f59e0b'}; padding:2px 8px; border-radius:20px; font-size:0.7rem; margin-left:8px;">
+                        <span style="background:${admin.username === 'lixing' ? '#9C27B0' : '#f59e0b'}; padding:2px 8px; border-radius:20px;">
                             ${admin.username === 'lixing' ? 'OWNER' : 'ADMIN'}
                         </span>
-                        <br>
-                        <small>Username: ${admin.username}</small>
-                        ${admin.telegramId ? `<br><small>📱 Telegram: ${admin.telegramId}</small>` : ''}
+                        <br><small>Username: ${admin.username}</small>
+                        ${admin.telegramId ? `<br><small>📱 Telegram: ${admin.telegramId}</small>` : '<br><small>⚠️ No Telegram ID</small>'}
                     </div>
                     ${admin.username !== 'lixing' ? `
-                        <button class="btn btn-warning" onclick="resetAdminPassword('${admin.username}')" style="padding:5px 10px;">Reset Password</button>
-                        <button class="btn btn-danger" onclick="removeAdmin('${admin.username}')" style="padding:5px 10px;">Remove</button>
+                        <div>
+                            <button class="btn btn-warning" onclick="resetAdminPassword('${admin.username}')" style="padding:5px 10px;">Reset Password</button>
+                            <button class="btn btn-danger" onclick="removeAdmin('${admin.username}')" style="padding:5px 10px;">Remove</button>
+                        </div>
                     ` : '<span style="color:#9C27B0;">👑 Owner</span>'}
                 </div>
             `).join('');
         }
-        
-        function resetAdminPassword(username) {
-            const admin = adminAccounts.find(a => a.username === username);
-            if(admin && admin.username !== 'lixing') {
-                const newPassword = prompt(`Enter new password for "${admin.name}":`, "newpass123");
-                if(newPassword && newPassword.length >= 4) {
-                    admin.password = newPassword;
-                    saveAll();
-                    showToast(`✅ Password reset for ${admin.name}! New password: ${newPassword}`);
-                    renderAdminsList();
-                } else if(newPassword) {
-                    showToast('❌ Password must be at least 4 characters!', 'error');
-                }
-            }
-        }
-        
-        function removeAdmin(username) {
-            const admin = adminAccounts.find(a => a.username === username);
-            if(admin && admin.username !== 'lixing') {
-                if(confirm(`⚠️ Remove admin "${admin.name}" (${admin.username})?`)) {
-                    adminAccounts = adminAccounts.filter(a => a.username !== username);
-                    saveAll();
-                    renderAdminsList();
-                    updateStats();
-                    showToast(`🗑️ Admin "${admin.name}" removed.`);
-                }
-            }
-        }
 
-        // ==================== RECEIPT GENERATION WITH PDF ====================
-        function getOrderByNumber(orderNumber) {
-            return orders.find(o => o.order_number === orderNumber);
-        }
-        
-        function generateReceiptHTML(order) {
-            return `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Receipt ${order.order_number}</title>
-                    <style>
-                        body {
-                            font-family: 'Courier New', monospace;
-                            padding: 40px;
-                            max-width: 800px;
-                            margin: 0 auto;
-                        }
-                        .receipt {
-                            border: 1px solid #333;
-                            padding: 20px;
-                        }
-                        .header {
-                            text-align: center;
-                            border-bottom: 2px solid #333;
-                            padding-bottom: 10px;
-                            margin-bottom: 20px;
-                        }
-                        .header h1 { margin: 0; font-size: 24px; }
-                        .store-name { font-size: 20px; font-weight: bold; }
-                        .divider { border-top: 1px dashed #333; margin: 15px 0; }
-                        .total { font-size: 18px; font-weight: bold; text-align: right; margin-top: 15px; }
-                        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
-                        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-                        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-                        .right { text-align: right; }
-                        .center { text-align: center; }
-                    </style>
-                </head>
-                <body>
-                    <div class="receipt">
-                        <div class="header">
-                            <div class="store-name">L@ZY SHOP</div>
-                            <div>Official Receipt / Invoice</div>
-                        </div>
-                        
-                        <div><strong>Order #:</strong> ${order.order_number}</div>
-                        <div><strong>Date:</strong> ${new Date(order.created_at).toLocaleString()}</div>
-                        <div><strong>Customer:</strong> ${order.customer_name}</div>
-                        <div><strong>Phone:</strong> ${order.customer_phone || 'N/A'}</div>
-                        
-                        <div class="divider"></div>
-                        
-                        <table>
-                            <thead>
-                                <tr><th>Product</th><th class="center">Qty</th><th class="right">Price</th><th class="right">Total</th></tr>
-                            </thead>
-                            <tbody>
-                                ${order.items ? order.items.map(i => `
-                                    <tr>
-                                        <td>${i.name}</td>
-                                        <td class="center">${i.quantity}</td>
-                                        <td class="right">$${i.price.toFixed(2)}</td>
-                                        <td class="right">$${(i.price * i.quantity).toFixed(2)}</td>
-                                    </tr>
-                                `).join('') : '<tr><td colspan="4">Product order</td></tr>'}
-                            </tbody>
-                        </table>
-                        
-                        <div class="divider"></div>
-                        
-                        <div class="total">Total: $${order.total_amount}</div>
-                        <div>Status: ${order.order_status}</div>
-                        <div>Payment: ${order.payment_method || 'KHQR'}</div>
-                        
-                        <div class="footer">
-                            <p>Thank you for shopping at L@ZY SHOP!</p>
-                            <p>Contact: @lixing26 | 📞 0969903084</p>
-                            <p>Generated: ${new Date().toLocaleString()}</p>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            `;
-        }
-        
-        async function generatePDFBlob(order) {
-            const receiptHtml = generateReceiptHTML(order);
-            
-            // Create iframe for PDF generation
-            return new Promise((resolve) => {
-                const iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                document.body.appendChild(iframe);
-                
-                iframe.contentWindow.document.open();
-                iframe.contentWindow.document.write(receiptHtml);
-                iframe.contentWindow.document.close();
-                
-                setTimeout(() => {
-                    iframe.contentWindow.print();
-                    
-                    // Capture print as PDF (user will see print dialog)
-                    // For automatic PDF, we need to use html2pdf
-                    const element = iframe.contentDocument.body;
-                    const opt = {
-                        margin: [0.5, 0.5, 0.5, 0.5],
-                        filename: `Receipt_${order.order_number}.pdf`,
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2 },
-                        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-                    };
-                    
-                    // Use html2pdf if available
-                    if(typeof html2pdf !== 'undefined') {
-                        html2pdf().set(opt).from(element).save().then(() => {
-                            document.body.removeChild(iframe);
-                            resolve(null);
-                        });
-                    } else {
-                        document.body.removeChild(iframe);
-                        resolve(null);
-                    }
-                }, 500);
-            });
-        }
-        
-        async function generateAndSendPDFToTelegram() {
-            const select = document.getElementById('receiptOrderSelect');
-            const orderNumber = select.value;
-            if(!orderNumber) { showToast('Please select an order!', 'error'); return; }
-            
-            const order = getOrderByNumber(orderNumber);
-            if(!order) { showToast('Order not found!', 'error'); return; }
-            
-            showToast('⏳ Generating PDF and sending to Telegram...');
-            
-            // Create PDF blob from HTML
-            const receiptHtml = generateReceiptHTML(order);
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(receiptHtml);
-            printWindow.document.close();
-            
-            // Wait for print dialog then send
-            setTimeout(async () => {
-                // Use print to PDF
-                printWindow.print();
-                
-                // Send Telegram alert with link to download
-                await sendTelegramAlert(
-                    `📄 **PDF RECEIPT GENERATED**\n\n` +
-                    `━━━━━━━━━━━━━━━━━━━━━━\n` +
-                    `🧾 Order #: ${order.order_number}\n` +
-                    `👤 Customer: ${order.customer_name}\n` +
-                    `💰 Amount: $${order.total_amount}\n` +
-                    `📅 Date: ${new Date().toLocaleString()}\n` +
-                    `━━━━━━━━━━━━━━━━━━━━━━\n` +
-                    `✅ PDF receipt has been generated!\n` +
-                    `💡 You can download it from the print dialog.\n\n` +
-                    `📁 File: Receipt_${order.order_number}.pdf`
-                );
-                
-                showToast(`✅ PDF generated! Check print dialog to save.`);
-                document.getElementById('receiptResult').innerHTML = `
-                    <div style="background:#10b98120; padding:10px; border-radius:10px;">
-                        ✅ PDF receipt for ${order.order_number} generated!<br>
-                        📁 Save the PDF from the print dialog.<br>
-                        📱 Telegram notification sent!
-                    </div>
-                `;
-                setTimeout(() => { document.getElementById('receiptResult').innerHTML = ''; }, 5000);
-            }, 1000);
-        }
-        
-        function generateReceiptOnly() {
-            const select = document.getElementById('receiptOrderSelect');
-            const orderNumber = select.value;
-            if(!orderNumber) { showToast('Please select an order!', 'error'); return; }
-            
-            const order = getOrderByNumber(orderNumber);
-            if(!order) { showToast('Order not found!', 'error'); return; }
-            
-            const receiptHtml = generateReceiptHTML(order);
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(receiptHtml);
-            printWindow.document.close();
-            
-            setTimeout(() => {
-                printWindow.print();
-            }, 500);
-            
-            showToast(`📄 Receipt for ${order.order_number} generated!`);
-        }
-        
-        function generateReceiptForOrder(orderNumber) {
-            const order = getOrderByNumber(orderNumber);
-            if(!order) { showToast('Order not found!', 'error'); return; }
-            
-            const receiptHtml = generateReceiptHTML(order);
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(receiptHtml);
-            printWindow.document.close();
-            
-            setTimeout(() => {
-                printWindow.print();
-            }, 500);
-            
-            sendTelegramAlert(`🧾 **RECEIPT GENERATED**\n━━━━━━━━━━━━━━━━━━━━━━\n📄 Order: ${order.order_number}\n👤 Customer: ${order.customer_name}\n💰 Amount: $${order.total_amount}\n📅 Time: ${new Date().toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━━━\n✅ Receipt generated!`);
-            
-            showToast(`📄 Receipt for ${order.order_number} generated!`);
-        }
-        
+        // ==================== ORDERS ====================
         function renderOrdersList() {
             const tbody = document.getElementById('ordersListBody');
             if(!orders.length) {
-                tbody.innerHTML = '<table><td colspan="5" style="text-align:center;">No orders yet</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No orders yet</td></tr>';
                 return;
             }
             tbody.innerHTML = orders.map(o => `
                 <tr>
-                    <td>${o.order_number}</td
-                    <td>${o.customer_name}</td
-                    <td>$${o.total_amount}</td
-                    <td style="color:${o.order_status === 'delivered' ? '#10b981' : '#f59e0b'}">${o.order_status}</td
-                    <td>
-                        <button class="btn btn-primary" onclick="generateReceiptForOrder('${o.order_number}')" style="padding:5px 10px;">📄 Receipt</button>
-                        <button class="btn btn-telegram" onclick="generateAndSendPDFToTelegramForOrder('${o.order_number}')" style="padding:5px 10px;">📱 PDF to Telegram</button>
-                     </td
+                    <td>${o.order_number}</td>
+                    <td>${o.customer_name}</td>
+                    <td>$${o.total_amount}</td>
+                    <td style="color:${o.order_status === 'delivered' ? '#10b981' : '#f59e0b'}">${o.order_status}</td>
+                    <td><button class="btn btn-primary" onclick="viewOrderReceipt('${o.order_number}')" style="padding:5px 10px;">Receipt</button></td>
                 </tr>
             `).join('');
         }
         
-        async function generateAndSendPDFToTelegramForOrder(orderNumber) {
-            const select = document.getElementById('receiptOrderSelect');
-            select.value = orderNumber;
-            await generateAndSendPDFToTelegram();
-        }
-        
-        function updateReceiptOrderSelect() {
-            const select = document.getElementById('receiptOrderSelect');
-            select.innerHTML = '<option value="">-- Select Order --</option>' + 
-                orders.map(o => `<option value="${o.order_number}">${o.order_number} - ${o.customer_name} - $${o.total_amount}</option>`).join('');
+        function viewOrderReceipt(orderNumber) {
+            const order = orders.find(o => o.order_number === orderNumber);
+            if(!order) return;
+            const receiptHtml = `
+                <div style="text-align:center; padding:20px;">
+                    <h2>L@ZY SHOP</h2>
+                    <p>Official Receipt</p>
+                    <hr>
+                    <p><strong>Order:</strong> ${order.order_number}</p>
+                    <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
+                    <p><strong>Customer:</strong> ${order.customer_name}</p>
+                    <p><strong>Amount:</strong> $${order.total_amount}</p>
+                    <hr>
+                    ${order.items ? order.items.map(i => `<p>${i.name} x${i.quantity} = $${(i.price*i.quantity).toFixed(2)}</p>`).join('') : ''}
+                    <hr>
+                    <p>Thank you!</p>
+                </div>
+            `;
+            const win = window.open('', '_blank');
+            win.document.write(`<html><head><title>Receipt</title><style>body{font-family:Arial;padding:40px;}</style></head><body>${receiptHtml}<script>window.print();<\/script></body></html>`);
+            win.document.close();
         }
 
         // ==================== DATABASE FUNCTIONS ====================
@@ -771,6 +835,7 @@
             a.click();
             saveBackupToHistory();
             showToast('✅ Backup created!');
+            sendTelegramAlert(`💾 **DATABASE BACKUP CREATED**\n\nBackup file downloaded by Owner at ${new Date().toLocaleString()}`);
         }
         
         function exportJSON() {
@@ -822,16 +887,58 @@
                         }
                     }
                     showToast('✅ Restored! Reloading...');
+                    sendTelegramAlert(`📤 **DATABASE RESTORED**\n\nDatabase restored from backup by Owner at ${new Date().toLocaleString()}`);
                     setTimeout(() => location.reload(), 1500);
                 } catch(err) { showToast('Invalid backup file!', 'error'); }
             };
             reader.readAsText(file);
         }
         
-        function clearAllData() { if(confirm('⚠️ Delete ALL data?')) { localStorage.clear(); showToast('All data cleared! Reloading...'); setTimeout(() => location.reload(), 1500); } }
-        function factoryReset() { if(confirm('🏭 FACTORY RESET?')) { localStorage.clear(); location.reload(); } }
-        function deleteAllOrders() { if(confirm('Delete ALL orders?')) { localStorage.setItem('lazy_orders', JSON.stringify([])); updateStats(); renderOrdersList(); showToast('Orders deleted'); } }
-        function deleteAllProducts() { if(confirm('Delete ALL products?')) { localStorage.setItem('lazy_products', JSON.stringify([])); updateStats(); showToast('Products deleted'); } }
+        function clearAllData() { 
+            if(confirm('⚠️ Delete ALL data?')) { 
+                localStorage.clear(); 
+                showToast('All data cleared! Reloading...'); 
+                setTimeout(() => location.reload(), 1500); 
+            } 
+        }
+        
+        function factoryReset() { 
+            if(confirm('🏭 FACTORY RESET? This will delete all data.')) { 
+                localStorage.clear(); 
+                showToast('Factory reset complete! Reloading...'); 
+                setTimeout(() => location.reload(), 1500); 
+            } 
+        }
+        
+        function deleteAllOrders() { 
+            if(confirm('Delete ALL orders?')) { 
+                localStorage.setItem('lazy_orders', JSON.stringify([])); 
+                updateStats(); 
+                renderOrdersList(); 
+                showToast('Orders deleted');
+                sendTelegramAlert(`🗑️ **ALL ORDERS DELETED**\n\nAll orders have been deleted by Owner at ${new Date().toLocaleString()}`);
+            } 
+        }
+        
+        function deleteAllProducts() { 
+            if(confirm('Delete ALL products?')) { 
+                localStorage.setItem('lazy_products', JSON.stringify([])); 
+                updateStats(); 
+                renderProducts(); 
+                showToast('Products deleted');
+                sendTelegramAlert(`🗑️ **ALL PRODUCTS DELETED**\n\nAll products have been deleted by Owner at ${new Date().toLocaleString()}`);
+            } 
+        }
+        
+        function escapeHtml(text) {
+            if(!text) return '';
+            return text.replace(/[&<>]/g, function(m) {
+                if(m === '&') return '&amp;';
+                if(m === '<') return '&lt;';
+                if(m === '>') return '&gt;';
+                return m;
+            });
+        }
         
         function showToast(msg, type = 'success') {
             const t = document.createElement('div');
