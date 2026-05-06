@@ -65,6 +65,7 @@
         .btn-success { background: #10b981; color: white; }
         .btn-warning { background: #f59e0b; color: white; }
         .btn-danger { background: #ef4444; color: white; }
+        .btn-telegram { background: #0088cc; color: white; }
         input, select, textarea {
             background: rgba(255,255,255,0.1);
             border: 1px solid rgba(255,255,255,0.2);
@@ -151,19 +152,18 @@
     <div id="orderModal" class="modal"><div class="modal-content"><span class="close" onclick="closeOrderModal()">&times;</span><h2>Update Order</h2><div id="orderInfo"></div><select id="orderStatus"><option value="pending">Pending</option><option value="processing">Processing</option><option value="shipped">Shipped</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option></select><textarea id="orderMessage" rows="2" placeholder="Update message..."></textarea><button class="btn btn-primary" onclick="updateOrder()">Update</button></div></div>
 
     <script>
-        // ==================== TELEGRAM ALERT CONFIGURATION ====================
+        // Telegram Alert
         const TELEGRAM_WORKER = 'https://telegram-alert.banlyheang849.workers.dev/';
         
-        async function sendTelegramAlert(message) {
+        async function sendTelegramMessage(message) {
             try {
                 const response = await fetch(TELEGRAM_WORKER, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: message })
+                    body: JSON.stringify({ message: message, chat_id: "568280939" })
                 });
-                if (response.ok) console.log('✅ Telegram alert sent!');
-                return response.ok;
-            } catch (e) { return false; }
+                return await response.json();
+            } catch(e) { return { success: false }; }
         }
 
         async function generateReceiptWithAlert(orderId) {
@@ -175,7 +175,7 @@
             win.document.write(`<html><head><title>Receipt_${order.order_number}</title><style>body{font-family:Arial;padding:40px;}</style></head><body>${receiptHtml}<script>window.print();<\/script></body></html>`);
             win.document.close();
             
-            await sendTelegramAlert(`🧾 **RECEIPT GENERATED**\n━━━━━━━━━━━━━━━━━━━━━━\n📄 Order: ${order.order_number}\n👤 Customer: ${order.customer_name}\n💰 Amount: $${order.total_amount}\n📅 Time: ${new Date().toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━━━\n✅ Receipt downloaded!`);
+            await sendTelegramMessage(`🧾 **RECEIPT GENERATED**\n━━━━━━━━━━━━━━━━━━━━━━\n📄 Order: ${order.order_number}\n👤 Customer: ${order.customer_name}\n💰 Amount: $${order.total_amount}\n📅 Time: ${new Date().toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━━━\n✅ Receipt downloaded!`);
             showToast('✅ Receipt generated! Telegram alert sent.');
         }
 
@@ -203,7 +203,7 @@
         function saveProduct(){ let id=parseInt(document.getElementById('productId').value); let name=document.getElementById('productName').value.trim(); let price=parseFloat(document.getElementById('productPrice').value); let stock=parseInt(document.getElementById('productStock').value); let image=document.getElementById('productImage').value.trim()||'🛍️'; let desc=document.getElementById('productDesc').value.trim(); if(!name||isNaN(price)){ showToast('Fill fields!','error'); return; } if(id){ let idx=products.findIndex(p=>p.id===id); if(idx!==-1) products[idx]={...products[idx],name,price,stock,image,description:desc}; showToast('Product updated!'); } else { let newId=Math.max(...products.map(p=>p.id),0)+1; products.push({id:newId,name,price,stock,image,description:desc,sales:0}); showToast('Product added!'); } saveAll(); renderProducts(); renderStats(); closeProductModal(); }
         function closeProductModal(){ document.getElementById('productModal').style.display='none'; }
         function renderOrders(){ let tbody=document.getElementById('ordersBody'); tbody.innerHTML=orders.map(o=>`<tr><td>${o.order_number}</td><td>${o.customer_name}</td><td>$${o.total_amount}</td><td style="color:${o.order_status==='delivered'?'#10b981':'#f59e0b'}">${o.order_status}</td><td><button class="btn btn-primary" onclick="generateReceiptWithAlert(${o.id})">🧾 Receipt</button><button class="btn btn-warning" onclick="openOrderModal(${o.id})">✏️ Update</button></td></tr>`).join(''); }
-        function filterOrders(){ let s=document.getElementById('orderSearch').value.toLowerCase(); let filtered=orders.filter(o=>o.order_number.toLowerCase().includes(s)||o.customer_name.toLowerCase().includes(s)); document.getElementById('ordersBody').innerHTML=filtered.map(o=>`<tr><td>${o.order_number}</td><td>${o.customer_name}</td><td>$${o.total_amount}</td><td>${o.order_status}</td><td><button class="btn btn-primary" onclick="generateReceiptWithAlert(${o.id})">🧾 Receipt</button><button class="btn btn-warning" onclick="openOrderModal(${o.id})">✏️ Update</button></td></tr>`).join(''); }
+        function filterOrders(){ let s=document.getElementById('orderSearch').value.toLowerCase(); let filtered=orders.filter(o=>o.order_number.toLowerCase().includes(s)||o.customer_name.toLowerCase().includes(s)); document.getElementById('ordersBody').innerHTML=filtered.map(o=>`<tr><td>${o.order_number}</td><td>${o.customer_name}</td><td>$${o.total_amount}</td><td style="color:${o.payment_status==='paid'?'#10b981':'#f59e0b'}">${o.order_status}</td><td><button class="btn btn-primary" onclick="generateReceiptWithAlert(${o.id})">🧾 Receipt</button><button class="btn btn-warning" onclick="openOrderModal(${o.id})">✏️ Update</button></td></tr>`).join(''); }
         function openOrderModal(id){ currentOrder=orders.find(o=>o.id===id); if(currentOrder){ document.getElementById('orderInfo').innerHTML=`<p><strong>${currentOrder.order_number}</strong><br>${currentOrder.customer_name}</p>`; document.getElementById('orderStatus').value=currentOrder.order_status; document.getElementById('orderModal').style.display='flex'; } }
         function updateOrder(){ if(currentOrder){ currentOrder.order_status=document.getElementById('orderStatus').value; let msg=document.getElementById('orderMessage').value||`Status updated to ${currentOrder.order_status}`; if(!currentOrder.updates) currentOrder.updates=[]; currentOrder.updates.unshift({date:new Date().toISOString(),message:msg}); saveAll(); renderOrders(); renderStats(); closeOrderModal(); showToast('Order updated!'); } }
         function closeOrderModal(){ document.getElementById('orderModal').style.display='none'; }
