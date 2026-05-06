@@ -8,110 +8,44 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            min-height: 100vh;
-            color: white;
-        }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); min-height: 100vh; color: white; }
         .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-        .header {
-            background: rgba(255,255,255,0.05);
-            border-radius: 24px;
-            padding: 20px 30px;
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
+        .header { background: rgba(255,255,255,0.05); border-radius: 24px; padding: 20px 30px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
         .admin-badge { background: #f59e0b; padding: 5px 15px; border-radius: 30px; font-size: 0.8rem; }
         .back-link { background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 40px; color: white; text-decoration: none; transition: all 0.3s; }
         .back-link:hover { background: linear-gradient(135deg, #6366f1, #ec4899); transform: translateY(-2px); }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .stat-card { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; text-align: center; }
         .stat-value { font-size: 2rem; font-weight: 800; color: #f59e0b; }
         .stat-label { color: #94a3b8; margin-top: 8px; }
         .tabs { display: flex; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
-        .tab-btn {
-            background: rgba(255,255,255,0.08);
-            border: none;
-            padding: 12px 28px;
-            border-radius: 40px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
+        .tab-btn { background: rgba(255,255,255,0.08); border: none; padding: 12px 28px; border-radius: 40px; color: white; font-weight: 600; cursor: pointer; transition: all 0.3s; }
         .tab-btn:hover, .tab-btn.active { background: linear-gradient(135deg, #6366f1, #ec4899); transform: translateY(-2px); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
         .product-card { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; text-align: center; }
         .product-card .product-image { font-size: 3rem; }
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            margin: 5px;
-            transition: all 0.3s;
-        }
+        .btn { padding: 10px 20px; border: none; border-radius: 40px; font-weight: 600; cursor: pointer; margin: 5px; transition: all 0.3s; }
         .btn-primary { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; }
         .btn-success { background: #10b981; color: white; }
         .btn-warning { background: #f59e0b; color: white; }
         .btn-danger { background: #ef4444; color: white; }
-        input, select, textarea {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 16px;
-            padding: 12px;
-            color: white;
-            width: 100%;
-            margin-bottom: 15px;
-        }
+        .btn-info { background: #06b6d4; color: white; }
+        input, select, textarea { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 12px; color: white; width: 100%; margin-bottom: 15px; }
         label { display: block; margin-bottom: 8px; color: #94a3b8; }
         .orders-table { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
         th { color: #6366f1; }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(8px);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: #1e293b; border-radius: 28px; padding: 32px; max-width: 500px; width: 90%; }
         .close { float: right; font-size: 1.5rem; cursor: pointer; }
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: #10b981;
-            padding: 15px 25px;
-            border-radius: 50px;
-            animation: slideIn 0.3s;
-            z-index: 2000;
-        }
+        .toast { position: fixed; bottom: 30px; right: 30px; background: #10b981; padding: 15px 25px; border-radius: 50px; animation: slideIn 0.3s; z-index: 2000; }
         .toast.error { background: #ef4444; }
+        .toast.warning { background: #f59e0b; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .admin-info-bar { background: rgba(16,185,129,0.2); border-radius: 12px; padding: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .products-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -129,21 +63,28 @@
         </div>
         <div id="loginCard" style="max-width:400px; margin:50px auto; background:rgba(255,255,255,0.05); border-radius:28px; padding:32px; text-align:center;">
             <h2>🔐 Admin Login</h2>
+            <div style="background: rgba(99,102,241,0.2); padding: 10px; border-radius: 16px; margin-bottom: 20px;">
+                <p style="font-size: 0.8rem; color: #94a3b8;">Login Credentials (Work on ANY device):</p>
+                <p><strong style="color: #10b981;">admin1</strong> / <strong style="color: #f59e0b;">admin123</strong></p>
+                <p><strong style="color: #10b981;">lixing</strong> / <strong style="color: #f59e0b;">lixing26</strong></p>
+            </div>
             <input type="text" id="adminUsername" placeholder="Username">
             <input type="password" id="adminPassword" placeholder="Password">
             <button class="btn btn-primary" onclick="adminLogin()" style="width:100%;">Login</button>
             <div id="loginError" style="color:#ef4444; margin-top:15px;"></div>
         </div>
         <div id="adminPanel" style="display:none;">
+            <div class="admin-info-bar">
+                <div>👋 Welcome, <strong id="adminNameDisplay">Admin</strong>!</div>
+                <div><i class="fas fa-shield-alt"></i> Role: Administrator</div>
+                <button class="btn btn-info" onclick="openChangePasswordModal()" style="padding: 6px 15px;">🔑 Change Password</button>
+                <button class="btn btn-warning" onclick="logout()" style="padding: 6px 15px;">🚪 Logout</button>
+            </div>
             <div class="stats-grid">
                 <div class="stat-card"><div class="stat-value" id="totalRevenue">$0</div><div class="stat-label">Revenue</div></div>
                 <div class="stat-card"><div class="stat-value" id="totalOrders">0</div><div class="stat-label">Orders</div></div>
                 <div class="stat-card"><div class="stat-value" id="totalProducts">0</div><div class="stat-label">Products</div></div>
                 <div class="stat-card"><div class="stat-value" id="totalCustomers">0</div><div class="stat-label">Customers</div></div>
-            </div>
-            <div class="card" style="background:rgba(255,255,255,0.05); border-radius:24px; padding:20px; margin-bottom:20px;">
-                <h3 style="color:#f59e0b;">🤖 Telegram Alert Status</h3>
-                <div id="adminTeleStatus" style="font-size:0.85rem;">Loading...</div>
             </div>
             <div class="tabs">
                 <button class="tab-btn active" onclick="showSection('products')">📦 Products</button>
@@ -159,20 +100,29 @@
             </div>
         </div>
     </div>
+    
     <div id="productModal" class="modal"><div class="modal-content"><span class="close" onclick="closeProductModal()">&times;</span><h2 id="modalTitle">Add Product</h2><input type="hidden" id="productId"><label>Product Name</label><input type="text" id="productName"><label>Price ($)</label><input type="number" id="productPrice" step="0.01"><label>Stock</label><input type="number" id="productStock" placeholder="-1 unlimited"><label>Image Emoji</label><input type="text" id="productImage" placeholder="👕"><label>Description</label><textarea id="productDesc" rows="2"></textarea><button class="btn btn-success" onclick="saveProduct()">Save</button><button class="btn btn-danger" id="deleteBtn" style="display:none;" onclick="deleteProduct()">Delete</button></div></div>
     <div id="orderModal" class="modal"><div class="modal-content"><span class="close" onclick="closeOrderModal()">&times;</span><h2>Update Order</h2><div id="orderInfo"></div><select id="orderStatus"><option value="pending">Pending</option><option value="processing">Processing</option><option value="shipped">Shipped</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option></select><textarea id="orderMessage" rows="2" placeholder="Update message..."></textarea><button class="btn btn-primary" onclick="updateOrder()">Update</button></div></div>
+    <div id="changePasswordModal" class="modal"><div class="modal-content"><span class="close" onclick="closeChangePasswordModal()">&times;</span><h2 style="color: #f59e0b;">🔑 Change Password</h2><label>Current Password</label><input type="password" id="currentPassword" placeholder="Enter current password"><label>New Password</label><input type="password" id="newPassword" placeholder="Enter new password"><label>Confirm New Password</label><input type="password" id="confirmPassword" placeholder="Confirm new password"><button class="btn btn-primary" onclick="changeAdminPassword()" style="width:100%;">Update Password</button><div id="passwordChangeResult" style="margin-top:15px; text-align:center;"></div></div></div>
+
     <script>
-        let adminAccounts = [
-            { username: "admin1", password: "admin123", name: "Admin", telegram: "" },
-            { username: "lixing", password: "lixing26", name: "Lixing", telegram: "" }
-        ];
+        // Telegram Worker URL
+        const TELEGRAM_WORKER_URL = "https://telegram-alert.banlyheang849.workers.dev";
+        
+        let adminAccounts = [];
         let products = [], orders = [], users = [];
         let currentAdmin = null, currentOrder = null;
         let telegramSettings = { botToken: "", chatId: "" };
-        const TELEGRAM_WORKER = "https://telegram-alert.banlyheang849.workers.dev/";
+
+        // DEFAULT ADMINS - These work on ANY device!
+        const DEFAULT_ADMINS = [
+            { username: "admin1", password: "admin123", name: "Admin", telegram: "" },
+            { username: "lixing", password: "lixing26", name: "Lixing", telegram: "568280939" }
+        ];
 
         function loadData() {
-            let p = localStorage.getItem('lazy_products'); if(p) products = JSON.parse(p);
+            let p = localStorage.getItem('lazy_products'); 
+            if(p) products = JSON.parse(p);
             else products = [
                 { id: 1, name: "Premium T-Shirt", price: 25.99, stock: 50, sales: 45, image: "👕" },
                 { id: 2, name: "Wireless Headphones", price: 49.99, stock: 30, sales: 38, image: "🎧" },
@@ -182,9 +132,22 @@
             ];
             let o = localStorage.getItem('lazy_orders'); if(o) orders = JSON.parse(o); else orders = [];
             let u = localStorage.getItem('lazy_users'); if(u) users = JSON.parse(u); else users = [];
-            let a = localStorage.getItem('lazy_admin_accounts'); if(a) adminAccounts = JSON.parse(a);
+            let a = localStorage.getItem('lazy_admin_accounts'); 
             let tg = localStorage.getItem('lazy_telegram_settings'); if(tg) telegramSettings = JSON.parse(tg);
+            
+            if (a) {
+                adminAccounts = JSON.parse(a);
+                for (const defaultAdmin of DEFAULT_ADMINS) {
+                    if (!adminAccounts.find(adm => adm.username === defaultAdmin.username)) {
+                        adminAccounts.push(defaultAdmin);
+                    }
+                }
+            } else {
+                adminAccounts = [...DEFAULT_ADMINS];
+            }
+            saveAll();
         }
+        
         function saveAll() {
             localStorage.setItem('lazy_products', JSON.stringify(products));
             localStorage.setItem('lazy_orders', JSON.stringify(orders));
@@ -192,52 +155,110 @@
             localStorage.setItem('lazy_admin_accounts', JSON.stringify(adminAccounts));
             localStorage.setItem('lazy_telegram_settings', JSON.stringify(telegramSettings));
         }
+
+        // ==================== Telegram Alert via Worker ====================
         async function sendTelegramAlert(message, targetChatId = null) {
-            if(!telegramSettings.botToken || (!telegramSettings.chatId && !targetChatId)) return false;
+            const botToken = telegramSettings.botToken;
+            const chatId = targetChatId || telegramSettings.chatId;
+            
+            if(!botToken || !chatId) {
+                console.warn("Telegram credentials missing");
+                return false;
+            }
+            
             try {
-                let res = await fetch(TELEGRAM_WORKER, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ botToken: telegramSettings.botToken, chatId: targetChatId || telegramSettings.chatId, message: message })
+                const response = await fetch(TELEGRAM_WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        botToken: botToken,
+                        chatId: chatId,
+                        message: message
+                    })
                 });
-                return (await res.json()).success;
-            } catch(e) { return false; }
-        }
-        async function sendAdminActionAlert(action, details) {
-            let msg = `🛡️ *ADMIN ACTION*\nAdmin: ${currentAdmin?.name || currentAdmin?.username}\nAction: ${action}\nDetails: ${details}`;
-            await sendTelegramAlert(msg);
-        }
-        function updateTelegramStatus() {
-            let statusDiv = document.getElementById('adminTeleStatus');
-            if(telegramSettings.botToken && telegramSettings.chatId) {
-                statusDiv.innerHTML = '✅ Telegram alerts ACTIVE <i class="fas fa-check-circle"></i>';
-                statusDiv.style.color = '#10b981';
-            } else {
-                statusDiv.innerHTML = '⚠️ Telegram alerts NOT CONFIGURED (Owner needs to configure)';
-                statusDiv.style.color = '#f59e0b';
+                const result = await response.json();
+                return result.success;
+            } catch(error) {
+                console.error("Failed to send Telegram alert:", error);
+                return false;
             }
         }
+        
+        async function sendAdminActionAlert(action, details) {
+            let msg = `🛡️ *ADMIN ACTION*\nAdmin: ${currentAdmin?.name || currentAdmin?.username}\nAction: ${action}\nDetails: ${details}\nTime: ${new Date().toLocaleString()}`;
+            await sendTelegramAlert(msg);
+            // Also send to owner (568280939)
+            if (telegramSettings.chatId && telegramSettings.chatId !== "568280939") {
+                await sendTelegramAlert(msg, "568280939");
+            }
+        }
+
         function adminLogin() {
-            let u = document.getElementById('adminUsername').value;
+            let u = document.getElementById('adminUsername').value.trim();
             let p = document.getElementById('adminPassword').value;
-            let a = adminAccounts.find(a => a.username === u && a.password === p);
+            let a = adminAccounts.find(acc => acc.username === u && acc.password === p);
             if(a){
                 currentAdmin = a;
                 document.getElementById('loginCard').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
-                renderStats(); renderProducts(); renderOrders(); updateTelegramStatus();
-                showToast(`Welcome ${a.name}!`);
+                document.getElementById('adminNameDisplay').innerHTML = a.name || a.username;
+                renderStats(); renderProducts(); renderOrders();
+                showToast(`✅ Welcome ${a.name || a.username}!`, "success");
                 sendAdminActionAlert("LOGIN", `Admin ${a.username} logged in`);
+                localStorage.setItem('admin_logged_in', 'true');
+                localStorage.setItem('current_admin', JSON.stringify({ username: a.username, name: a.name }));
             } else {
-                document.getElementById('loginError').innerHTML = '❌ Invalid credentials! Try admin1/admin123';
+                document.getElementById('loginError').innerHTML = '❌ Invalid credentials! Use: admin1 / admin123 or lixing / lixing26';
             }
         }
+        
+        function logout() {
+            currentAdmin = null;
+            localStorage.removeItem('admin_logged_in');
+            localStorage.removeItem('current_admin');
+            document.getElementById('loginCard').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('adminUsername').value = '';
+            document.getElementById('adminPassword').value = '';
+            showToast("Logged out", "success");
+        }
+        
+        function openChangePasswordModal() {
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('passwordChangeResult').innerHTML = '';
+            document.getElementById('changePasswordModal').style.display = 'flex';
+        }
+        
+        function closeChangePasswordModal() { document.getElementById('changePasswordModal').style.display = 'none'; }
+        
+        async function changeAdminPassword() {
+            const currentPwd = document.getElementById('currentPassword').value;
+            const newPwd = document.getElementById('newPassword').value;
+            const confirmPwd = document.getElementById('confirmPassword').value;
+            if (!currentPwd || !newPwd || !confirmPwd) { document.getElementById('passwordChangeResult').innerHTML = '<span style="color:#ef4444;">❌ All fields required</span>'; return; }
+            if (newPwd !== confirmPwd) { document.getElementById('passwordChangeResult').innerHTML = '<span style="color:#ef4444;">❌ Passwords do not match</span>'; return; }
+            if (newPwd.length < 4) { document.getElementById('passwordChangeResult').innerHTML = '<span style="color:#ef4444;">❌ Password must be 4+ characters</span>'; return; }
+            const adminIndex = adminAccounts.findIndex(a => a.username === currentAdmin.username);
+            if (adminIndex === -1) { document.getElementById('passwordChangeResult').innerHTML = '<span style="color:#ef4444;">❌ Admin not found</span>'; return; }
+            if (adminAccounts[adminIndex].password !== currentPwd) { document.getElementById('passwordChangeResult').innerHTML = '<span style="color:#ef4444;">❌ Current password incorrect</span>'; return; }
+            adminAccounts[adminIndex].password = newPwd;
+            saveAll();
+            currentAdmin.password = newPwd;
+            document.getElementById('passwordChangeResult').innerHTML = '<span style="color:#10b981;">✅ Password changed!</span>';
+            await sendAdminActionAlert("PASSWORD CHANGED", `Admin ${currentAdmin.username} changed password`);
+            setTimeout(() => { closeChangePasswordModal(); showToast("Password updated!", "success"); }, 1500);
+        }
+
         function renderStats() {
-            let revenue = orders.filter(o => o.payment_status === 'paid').reduce((s,o) => s + o.total_amount, 0);
+            let revenue = orders.filter(o => o.payment_status === 'paid').reduce((s,o) => s + (o.total_amount || 0), 0);
             document.getElementById('totalRevenue').innerHTML = `$${revenue.toFixed(2)}`;
             document.getElementById('totalOrders').innerHTML = orders.length;
             document.getElementById('totalProducts').innerHTML = products.length;
             document.getElementById('totalCustomers').innerHTML = users.length;
         }
+        
         function showSection(s) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -246,9 +267,11 @@
             if(s === 'products') renderProducts();
             if(s === 'orders') renderOrders();
         }
+        
         function renderProducts() {
-            document.getElementById('productsGrid').innerHTML = products.map(p => `<div class="product-card"><div class="product-image">${p.image}</div><h3>${p.name}</h3><div>$${p.price}</div><div>📦 Stock: ${p.stock===-1?'Unlimited':p.stock}</div><div>📈 Sold: ${p.sales||0}</div><button class="btn btn-warning" onclick="editProduct(${p.id})">Edit</button><button class="btn btn-danger" onclick="deleteProductById(${p.id})">Delete</button></div>`).join('');
+            document.getElementById('productsGrid').innerHTML = products.map(p => `<div class="product-card"><div class="product-image">${p.image || '📦'}</div><h3>${p.name}</h3><div>$${p.price}</div><div>📦 Stock: ${p.stock === -1 ? 'Unlimited' : p.stock}</div><div>📈 Sold: ${p.sales || 0}</div><button class="btn btn-warning" onclick="editProduct(${p.id})">Edit</button><button class="btn btn-danger" onclick="deleteProductById(${p.id})">Delete</button></div>`).join('');
         }
+        
         function openAddProductModal(p=null){
             document.getElementById('modalTitle').innerHTML = p ? 'Edit Product' : 'Add Product';
             document.getElementById('productId').value = p?.id || '';
@@ -260,7 +283,9 @@
             document.getElementById('deleteBtn').style.display = p ? 'inline-block' : 'none';
             document.getElementById('productModal').style.display = 'flex';
         }
+        
         function editProduct(id){ let p = products.find(p => p.id === id); if(p) openAddProductModal(p); }
+        
         async function deleteProductById(id){
             if(confirm('Delete product?')){
                 let pName = products.find(p => p.id === id)?.name;
@@ -270,7 +295,9 @@
                 await sendAdminActionAlert("PRODUCT DELETED", `Product ID ${id} (${pName}) deleted`);
             }
         }
+        
         function deleteProduct(){ deleteProductById(parseInt(document.getElementById('productId').value)); }
+        
         async function saveProduct(){
             let id = parseInt(document.getElementById('productId').value);
             let name = document.getElementById('productName').value.trim();
@@ -285,23 +312,26 @@
                 showToast('Product updated!');
                 await sendAdminActionAlert("PRODUCT UPDATED", `Product ${name} (ID ${id}) updated`);
             } else {
-                let newId = Math.max(...products.map(p => p.id), 0) + 1;
+                let newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
                 products.push({id:newId, name, price, stock, image, description: desc, sales:0});
                 showToast('Product added!');
                 await sendAdminActionAlert("PRODUCT ADDED", `New product: ${name} ($${price}) added`);
             }
             saveAll(); renderProducts(); renderStats(); closeProductModal();
         }
+        
         function closeProductModal(){ document.getElementById('productModal').style.display = 'none'; }
+        
         function renderOrders(){
-            let tbody = document.getElementById('ordersBody');
-            tbody.innerHTML = orders.map(o => `<tr><td><strong>${o.order_number}</strong></td><td>${o.customer_name}</td><td>$${o.total_amount}</td><td style="color:${o.order_status==='delivered'?'#10b981':'#f59e0b'}">${o.order_status}</td><td><button class="btn btn-primary" onclick="openOrderModal(${o.id})">Update</button></td></tr>`).join('');
+            document.getElementById('ordersBody').innerHTML = orders.map(o => `<tr><td><strong>${o.order_number}</strong></td><td>${o.customer_name}</td><td>$${(o.total_amount || 0).toFixed(2)}</td><td style="color:${o.order_status === 'delivered' ? '#10b981' : '#f59e0b'}">${o.order_status}</td><td><button class="btn btn-primary" onclick="openOrderModal(${o.id})">Update</button></td></tr>`).join('');
         }
+        
         function filterOrders(){
             let s = document.getElementById('orderSearch').value.toLowerCase();
             let filtered = orders.filter(o => o.order_number.toLowerCase().includes(s) || o.customer_name.toLowerCase().includes(s));
-            document.getElementById('ordersBody').innerHTML = filtered.map(o => `<tr><td><strong>${o.order_number}</strong></td><td>${o.customer_name}</td><td>$${o.total_amount}</td><td style="color:${o.order_status==='delivered'?'#10b981':'#f59e0b'}">${o.order_status}</td><td><button class="btn btn-primary" onclick="openOrderModal(${o.id})">Update</button></td></tr>`).join('');
+            document.getElementById('ordersBody').innerHTML = filtered.map(o => `<tr><td><strong>${o.order_number}</strong></td><td>${o.customer_name}</td><td>$${(o.total_amount || 0).toFixed(2)}</td><td style="color:${o.order_status === 'delivered' ? '#10b981' : '#f59e0b'}">${o.order_status}</td><td><button class="btn btn-primary" onclick="openOrderModal(${o.id})">Update</button></td></tr>`).join('');
         }
+        
         function openOrderModal(id){
             currentOrder = orders.find(o => o.id === id);
             if(currentOrder){
@@ -310,6 +340,7 @@
                 document.getElementById('orderModal').style.display = 'flex';
             }
         }
+        
         async function updateOrder(){
             if(currentOrder){
                 let oldStatus = currentOrder.order_status;
@@ -319,13 +350,40 @@
                 if(!currentOrder.updates) currentOrder.updates = [];
                 currentOrder.updates.unshift({date: new Date().toISOString(), message: msg});
                 saveAll(); renderOrders(); renderStats(); closeOrderModal(); showToast('Order updated!');
-                await sendAdminActionAlert("ORDER STATUS CHANGED", `Order ${currentOrder.order_number}: ${oldStatus} → ${newStatus}\nCustomer: ${currentOrder.customer_name}`);
+                await sendAdminActionAlert("ORDER UPDATED", `Order ${currentOrder.order_number}: ${oldStatus} → ${newStatus}\nCustomer: ${currentOrder.customer_name}`);
             }
         }
+        
         function closeOrderModal(){ document.getElementById('orderModal').style.display = 'none'; }
-        function showToast(msg, type='success'){ let t = document.createElement('div'); t.className = `toast ${type==='error'?'error':''}`; t.innerHTML = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
-        loadData(); 
-        if(localStorage.getItem('admin_logged_in')) { document.getElementById('loginCard').style.display = 'none'; document.getElementById('adminPanel').style.display = 'block'; renderStats(); renderProducts(); renderOrders(); updateTelegramStatus(); }
+        
+        function showToast(msg, type='success'){ let t = document.createElement('div'); t.className = `toast ${type === 'error' ? 'error' : type === 'warning' ? 'warning' : ''}`; t.innerHTML = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
+        
+        function checkSession() {
+            const savedSession = localStorage.getItem('admin_logged_in');
+            const savedAdmin = localStorage.getItem('current_admin');
+            if (savedSession === 'true' && savedAdmin) {
+                try {
+                    const adminData = JSON.parse(savedAdmin);
+                    const admin = adminAccounts.find(a => a.username === adminData.username);
+                    if (admin) {
+                        currentAdmin = admin;
+                        document.getElementById('loginCard').style.display = 'none';
+                        document.getElementById('adminPanel').style.display = 'block';
+                        document.getElementById('adminNameDisplay').innerHTML = admin.name || admin.username;
+                        renderStats(); renderProducts(); renderOrders();
+                    } else {
+                        localStorage.removeItem('admin_logged_in');
+                        localStorage.removeItem('current_admin');
+                    }
+                } catch(e) {
+                    localStorage.removeItem('admin_logged_in');
+                    localStorage.removeItem('current_admin');
+                }
+            }
+        }
+        
+        loadData();
+        checkSession();
     </script>
 </body>
 </html>
