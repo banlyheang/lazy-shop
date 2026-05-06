@@ -6,8 +6,6 @@
     <title>L@ZY SHOP - Customer Store</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -37,6 +35,7 @@
             cursor: pointer;
             transition: all 0.3s;
             color: white;
+            text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -49,12 +48,15 @@
             background: rgba(255,255,255,0.1);
             padding: 10px 15px;
             border-radius: 40px;
+            transition: all 0.3s;
         }
+        .cart-icon:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
         .cart-count {
             position: absolute;
             top: -5px;
             right: -5px;
             background: #ec4899;
+            color: white;
             border-radius: 50%;
             width: 20px;
             height: 20px;
@@ -63,6 +65,33 @@
             align-items: center;
             justify-content: center;
         }
+        .admin-link {
+            background: rgba(156,39,176,0.3);
+            padding: 10px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .admin-link:hover { background: #9C27B0; transform: translateY(-2px); }
+        .owner-link {
+            background: rgba(255,215,0,0.3);
+            padding: 10px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #FFD700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+        }
+        .owner-link:hover { background: #FFD700; color: #1e293b; transform: translateY(-2px); }
         .btn {
             padding: 12px 24px;
             border: none;
@@ -76,10 +105,10 @@
         }
         .btn-primary { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; }
         .btn-success { background: #10b981; color: white; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
         .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.3); color: white; }
         .btn-info { background: #06b6d4; color: white; }
-        .btn-secondary { background: #64748b; color: white; }
-        .btn-danger { background: #ef4444; color: white; }
         .products-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -117,7 +146,6 @@
             max-height: 85vh;
             overflow-y: auto;
         }
-        .modal-content.large { max-width: 800px; }
         .close { float: right; font-size: 1.5rem; cursor: pointer; }
         .close:hover { color: #f59e0b; }
         input, textarea {
@@ -143,6 +171,7 @@
             font-weight: bold;
             text-align: right;
             border-top: 2px solid rgba(255,255,255,0.2);
+            margin-top: 10px;
         }
         .toast {
             position: fixed;
@@ -168,119 +197,664 @@
             gap: 10px;
         }
         .empty-cart { text-align: center; padding: 40px; color: #94a3b8; }
-        #trackingMap { height: 400px; border-radius: 16px; margin: 15px 0; }
-        .status-timeline {
-            display: flex;
-            justify-content: space-between;
-            margin: 20px 0;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .status-step {
-            flex: 1;
-            text-align: center;
-            padding: 10px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.05);
-        }
-        .status-step.completed { background: rgba(16,185,129,0.3); border: 1px solid #10b981; }
-        .status-step.active { background: rgba(245,158,11,0.3); border: 1px solid #f59e0b; }
-        .order-card {
-            background: rgba(255,255,255,0.05);
-            border-radius: 16px;
-            padding: 15px;
-            margin-bottom: 15px;
-            cursor: pointer;
-        }
-        .secret-admin {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            width: 30px;
-            height: 30px;
-            opacity: 0.1;
-            cursor: pointer;
-            z-index: 999;
-        }
         @media (max-width: 768px) {
             .products-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
             .product-card { padding: 15px; }
+            .btn { padding: 8px 16px; font-size: 0.8rem; }
+            .nav-links { width: 100%; justify-content: center; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo"><h1>🛍️ L@ZY SHOP</h1><p>Premium Products</p></div>
+            <div class="logo">
+                <h1>🛍️ L@ZY SHOP</h1>
+                <p>Premium Products at Best Prices</p>
+            </div>
             <div class="nav-links">
                 <a href="#" class="nav-btn" onclick="showShop()"><i class="fas fa-store"></i> Shop</a>
                 <a href="#" class="nav-btn" onclick="showOrders()"><i class="fas fa-truck"></i> My Orders</a>
-                <div class="cart-icon" onclick="openCart()"><i class="fas fa-shopping-cart"></i><span class="cart-count" id="cartCount">0</span></div>
+                <div class="cart-icon" onclick="openCart()">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count" id="cartCount">0</span>
+                </div>
+                <a href="admin.html" class="admin-link"><i class="fas fa-shield-alt"></i> Admin</a>
+                <a href="owner.html" class="owner-link"><i class="fas fa-crown"></i> Owner</a>
             </div>
         </div>
-        <div id="userInfoSection" class="user-info-bar">
-            <div><i class="fas fa-user-circle"></i> <span id="userNameDisplay">Not logged in</span></div>
-            <button class="btn btn-outline" onclick="openRegister()" id="loginRegisterBtn"><i class="fas fa-sign-in-alt"></i> Register / Login</button>
-        </div>
-        <div id="shopSection"><h2>⭐ Featured Products</h2><div class="products-grid" id="productsGrid"></div></div>
-        <div id="ordersSection" style="display:none;"><h2>📦 My Orders</h2><div id="userOrdersList"></div></div>
-    </div>
-    <div class="secret-admin" ondblclick="openAdminLogin()"></div>
 
-    <!-- Modals (simplified for space - include all modals here) -->
-    <div id="adminLoginModal" class="modal"><div class="modal-content"><span class="close" onclick="closeAdminLogin()">&times;</span><h2>Admin Login</h2><input type="text" id="adminUsername" placeholder="Username"><input type="password" id="adminPassword" placeholder="Password"><button class="btn btn-primary" onclick="adminLogin()">Login</button></div></div>
-    <div id="registerModal" class="modal"><div class="modal-content"><span class="close" onclick="closeRegister()">&times;</span><h2>Register</h2><input type="text" id="userName" placeholder="Full Name"><input type="tel" id="userPhone" placeholder="Phone Number"><button class="btn btn-success" onclick="register()">Continue</button></div></div>
-    <div id="cartModal" class="modal"><div class="modal-content"><span class="close" onclick="closeCart()">&times;</span><h2>Your Cart</h2><div id="cartItems"></div><div class="cart-total" id="cartTotal"></div><button class="btn btn-primary" onclick="checkout()">Checkout</button></div></div>
+        <div id="userInfoSection" class="user-info-bar">
+            <div id="userStatus">
+                <i class="fas fa-user-circle"></i> 
+                <span id="userNameDisplay">Not logged in</span>
+            </div>
+            <button class="btn btn-outline" onclick="openRegister()" id="loginRegisterBtn">
+                <i class="fas fa-sign-in-alt"></i> Register / Login
+            </button>
+        </div>
+
+        <!-- Shop Section -->
+        <div id="shopSection">
+            <h2><i class="fas fa-fire"></i> Featured Products</h2>
+            <div class="products-grid" id="productsGrid"></div>
+        </div>
+
+        <!-- Orders Section -->
+        <div id="ordersSection" style="display: none;">
+            <h2><i class="fas fa-truck"></i> My Orders</h2>
+            <div id="ordersList"></div>
+        </div>
+    </div>
+
+    <!-- Owner Login Modal (Direct redirect option) -->
+    <div id="ownerLoginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeOwnerLogin()">&times;</span>
+            <h2><i class="fas fa-crown"></i> Owner Login</h2>
+            <label>Username</label>
+            <input type="text" id="ownerUsername" placeholder="lixing">
+            <label>Password</label>
+            <input type="password" id="ownerPassword" placeholder="password">
+            <button class="btn btn-primary" onclick="ownerLogin()" style="width:100%;">Login as Owner</button>
+            <p style="margin-top: 15px; font-size: 0.7rem; color: #94a3b8;">Demo: lixing / lixing26</p>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAdminLogin()">&times;</span>
+            <h2><i class="fas fa-shield-alt"></i> Admin Login</h2>
+            <label>Username</label>
+            <input type="text" id="adminUsername" placeholder="admin1 or lixing">
+            <label>Password</label>
+            <input type="password" id="adminPassword" placeholder="password">
+            <button class="btn btn-primary" onclick="adminLogin()" style="width:100%;">Login</button>
+            <p style="margin-top: 15px; font-size: 0.7rem; color: #94a3b8;">Demo: admin1 / admin123 or lixing / lixing26</p>
+        </div>
+    </div>
+
+    <!-- Registration Modal -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeRegister()">&times;</span>
+            <h2>📝 Register / Login</h2>
+            <label>Full Name</label>
+            <input type="text" id="userName" placeholder="Enter your full name">
+            <label>Phone Number *</label>
+            <input type="tel" id="userPhone" placeholder="e.g., 0123456789">
+            <label>Email (Optional)</label>
+            <input type="email" id="userEmail" placeholder="email@example.com">
+            <button class="btn btn-success" onclick="registerUser()" style="width:100%;">Continue to Shop</button>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cartModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCart()">&times;</span>
+            <h2><i class="fas fa-shopping-cart"></i> Your Cart</h2>
+            <div id="cartItemsList"></div>
+            <div class="cart-total" id="cartTotalAmount">Total: $0.00</div>
+            <button class="btn btn-primary" onclick="proceedToCheckout()" style="width:100%; margin-top:15px;">
+                <i class="fas fa-credit-card"></i> Proceed to Checkout
+            </button>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCheckout()">&times;</span>
+            <h2>📋 Order Summary</h2>
+            <div id="checkoutItems"></div>
+            <div class="cart-total" id="checkoutTotalAmount">Total: $0.00</div>
+            
+            <h3 style="margin-top: 20px;">📍 Delivery Information</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button class="btn btn-info" onclick="useCurrentLocation()" style="flex:1;">
+                    <i class="fas fa-location-dot"></i> Use My Location
+                </button>
+                <button class="btn btn-secondary" onclick="showAddressInput()" style="flex:1;">
+                    <i class="fas fa-pen"></i> Enter Address
+                </button>
+            </div>
+            <div id="addressInputDiv" style="display: none;">
+                <textarea id="manualAddress" rows="2" placeholder="Enter your full delivery address..."></textarea>
+                <button class="btn btn-primary" onclick="saveManualAddress()">Confirm Address</button>
+            </div>
+            <div id="locationStatus" style="margin: 10px 0; font-size: 0.8rem; color: #10b981;"></div>
+            
+            <button class="btn btn-success" onclick="placeOrder()" id="placeOrderBtn" style="width:100%; margin-top:15px;" disabled>
+                <i class="fas fa-check-circle"></i> Confirm & Place Order
+            </button>
+        </div>
+    </div>
+
+    <!-- Order Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content" style="text-align: center;">
+            <span class="close" onclick="closeSuccess()">&times;</span>
+            <div style="font-size: 4rem;">🎉</div>
+            <h2 style="color: #10b981;">Order Placed Successfully!</h2>
+            <div id="successOrderInfo" style="margin: 20px 0;"></div>
+            <button class="btn btn-primary" onclick="closeSuccessAndContinue()" style="width:100%;">
+                <i class="fas fa-shopping-bag"></i> Continue Shopping
+            </button>
+        </div>
+    </div>
 
     <script>
-        let products = [], currentUser = null, cart = [], selectedLocation = null;
-        const adminAccounts = [{ username: "admin1", password: "admin123" }, { username: "lixing", password: "lixing26" }];
+        // ==================== DATA ====================
+        let products = [];
+        let currentUser = null;
+        let cart = [];
+        let selectedLocation = null;
+        let currentOrder = null;
         
+        // Admin accounts (same as owner panel)
+        const adminAccounts = [
+            { username: "admin1", password: "admin123", name: "Admin User" },
+            { username: "lixing", password: "lixing26", name: "Lixing (Owner)" }
+        ];
+        
+        // Owner credentials
+        const OWNER_USERNAME = "lixing";
+        const OWNER_PASSWORD = "lixing26";
+        
+        // ==================== OWNER LOGIN ====================
+        function openOwnerLogin() {
+            document.getElementById('ownerUsername').value = '';
+            document.getElementById('ownerPassword').value = '';
+            document.getElementById('ownerLoginModal').style.display = 'flex';
+        }
+        
+        function closeOwnerLogin() {
+            document.getElementById('ownerLoginModal').style.display = 'none';
+        }
+        
+        function ownerLogin() {
+            let username = document.getElementById('ownerUsername').value.trim();
+            let password = document.getElementById('ownerPassword').value;
+            
+            if(username === OWNER_USERNAME && password === OWNER_PASSWORD) {
+                closeOwnerLogin();
+                localStorage.setItem('owner_authenticated', 'true');
+                window.location.href = 'owner.html';
+                showToast(`Welcome Owner! Redirecting...`, 'success');
+            } else {
+                showToast('Invalid owner credentials!', 'error');
+            }
+        }
+        
+        // ==================== ADMIN LOGIN ====================
+        function openAdminLogin() {
+            document.getElementById('adminUsername').value = '';
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('adminLoginModal').style.display = 'flex';
+        }
+        
+        function closeAdminLogin() {
+            document.getElementById('adminLoginModal').style.display = 'none';
+        }
+        
+        function adminLogin() {
+            let username = document.getElementById('adminUsername').value.trim();
+            let password = document.getElementById('adminPassword').value;
+            let admin = adminAccounts.find(a => a.username === username && a.password === password);
+            
+            if(admin) {
+                closeAdminLogin();
+                localStorage.setItem('admin_logged_in', 'true');
+                localStorage.setItem('current_admin', JSON.stringify({ username: admin.username, name: admin.name }));
+                window.location.href = 'owner.html';
+                showToast(`Welcome ${admin.name}! Redirecting...`, 'success');
+            } else {
+                showToast('Invalid admin credentials!', 'error');
+            }
+        }
+        
+        // ==================== LOAD PRODUCTS ====================
         function loadProducts() {
             let stored = localStorage.getItem('lazy_products');
-            if(stored) products = JSON.parse(stored);
-            else products = [
-                { id: 1, name: "Premium T-Shirt", price: 25.99, stock: 50, image: "👕" },
-                { id: 2, name: "Wireless Headphones", price: 49.99, stock: 30, image: "🎧" },
-                { id: 3, name: "Smart Watch", price: 89.99, stock: 20, image: "⌚" },
-                { id: 4, name: "Telegram Premium", price: 13.99, stock: 9, image: "🚀" }
-            ];
+            if(stored) {
+                products = JSON.parse(stored);
+            } else {
+                products = [
+                    { id: 1, name: "Premium T-Shirt", price: 25.99, stock: 50, image: "👕", description: "Cotton comfort", sales: 45 },
+                    { id: 2, name: "Wireless Headphones", price: 49.99, stock: 30, image: "🎧", description: "Noise cancelling", sales: 38 },
+                    { id: 3, name: "Smart Watch", price: 89.99, stock: 20, image: "⌚", description: "Fitness tracker", sales: 25 },
+                    { id: 4, name: "Telegram Premium", price: 13.99, stock: 9, image: "🚀", description: "Premium features", sales: 41 }
+                ];
+            }
             renderProducts();
         }
         
         function renderProducts() {
             let grid = document.getElementById('productsGrid');
-            if(grid) grid.innerHTML = products.map(p => `<div class="product-card"><div class="product-image">${p.image}</div><h3>${p.name}</h3><div class="product-price">$${p.price}</div><div class="product-stock">📦 ${p.stock} left</div><button class="btn btn-primary" onclick="addToCart(${p.id})">Add to Cart</button></div>`).join('');
+            if(!grid) return;
+            grid.innerHTML = products.map(p => `
+                <div class="product-card">
+                    <div class="product-image">${p.image || '📦'}</div>
+                    <h3>${p.name}</h3>
+                    <div class="product-price">$${p.price}</div>
+                    <div class="product-stock">📦 ${p.stock === -1 ? 'Unlimited' : p.stock + ' left'}</div>
+                    <button class="btn btn-primary" onclick="addToCart(${p.id})" ${p.stock === 0 ? 'disabled' : ''}>
+                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    </button>
+                </div>
+            `).join('');
         }
         
-        function addToCart(id) {
-            if(!currentUser) { openRegister(); return; }
-            let p = products.find(p => p.id === id);
-            if(p && p.stock > 0) {
-                let existing = cart.find(i => i.id === id);
-                existing ? existing.quantity++ : cart.push({ ...p, quantity: 1 });
+        // ==================== USER REGISTRATION ====================
+        function openRegister() {
+            document.getElementById('userName').value = '';
+            document.getElementById('userPhone').value = '';
+            document.getElementById('userEmail').value = '';
+            document.getElementById('registerModal').style.display = 'flex';
+        }
+        
+        function closeRegister() {
+            document.getElementById('registerModal').style.display = 'none';
+        }
+        
+        function registerUser() {
+            let name = document.getElementById('userName').value.trim();
+            let phone = document.getElementById('userPhone').value.trim();
+            let email = document.getElementById('userEmail').value.trim();
+            
+            if(!name || !phone) {
+                showToast('Please enter name and phone number', 'error');
+                return;
+            }
+            
+            let customers = JSON.parse(localStorage.getItem('lazy_customers') || '[]');
+            let existing = customers.find(c => c.phone === phone);
+            
+            if(existing) {
+                currentUser = existing;
+                showToast(`Welcome back, ${existing.name}!`, 'success');
+            } else {
+                let newUser = {
+                    id: Date.now(),
+                    name: name,
+                    phone: phone,
+                    email: email,
+                    registered: new Date().toISOString()
+                };
+                customers.push(newUser);
+                localStorage.setItem('lazy_customers', JSON.stringify(customers));
+                currentUser = newUser;
+                showToast(`Welcome, ${name}!`, 'success');
+            }
+            
+            document.getElementById('userNameDisplay').innerHTML = currentUser.name;
+            document.getElementById('loginRegisterBtn').innerHTML = '<i class="fas fa-user-check"></i> ' + currentUser.name;
+            
+            closeRegister();
+            loadCart();
+        }
+        
+        // ==================== CART FUNCTIONS ====================
+        function addToCart(productId) {
+            if(!currentUser) {
+                openRegister();
+                showToast('Please register first', 'warning');
+                return;
+            }
+            
+            let product = products.find(p => p.id === productId);
+            if(product && (product.stock > 0 || product.stock === -1)) {
+                let existing = cart.find(item => item.id === productId);
+                if(existing) {
+                    existing.quantity++;
+                } else {
+                    cart.push({ ...product, quantity: 1 });
+                }
                 saveCart();
-                showToast(`${p.name} added!`);
+                showToast(`${product.name} added to cart!`, 'success');
+            } else {
+                showToast('Out of stock!', 'error');
             }
         }
         
-        function saveCart() { if(currentUser) localStorage.setItem(`cart_${currentUser.phone}`, JSON.stringify(cart)); updateCartUI(); }
-        function updateCartUI() { document.getElementById('cartCount').innerHTML = cart.reduce((s,i) => s + i.quantity, 0); }
-        function openCart() { /* show cart modal */ }
-        function register() { let name = document.getElementById('userName').value, phone = document.getElementById('userPhone').value; if(name && phone) { currentUser = { name, phone }; document.getElementById('userNameDisplay').innerHTML = name; closeRegister(); showToast(`Welcome ${name}!`); } }
-        function openAdminLogin() { document.getElementById('adminLoginModal').style.display = 'flex'; }
-        function closeAdminLogin() { document.getElementById('adminLoginModal').style.display = 'none'; }
-        function adminLogin() { let u = document.getElementById('adminUsername').value, p = document.getElementById('adminPassword').value; if(adminAccounts.find(a => a.username === u && a.password === p)) { closeAdminLogin(); window.location.href = 'owner.html'; } else showToast('Invalid', 'error'); }
-        function showShop() { document.getElementById('shopSection').style.display = 'block'; document.getElementById('ordersSection').style.display = 'none'; }
-        function showOrders() { document.getElementById('shopSection').style.display = 'none'; document.getElementById('ordersSection').style.display = 'block'; }
-        function showToast(msg, type='success') { let t = document.createElement('div'); t.className = `toast ${type === 'error' ? 'error' : ''}`; t.innerHTML = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
-        function openRegister() { document.getElementById('registerModal').style.display = 'flex'; }
-        function closeRegister() { document.getElementById('registerModal').style.display = 'none'; }
-        function closeCart() { document.getElementById('cartModal').style.display = 'none'; }
-        function checkout() { /* checkout logic */ }
+        function saveCart() {
+            if(currentUser) {
+                localStorage.setItem(`cart_${currentUser.phone}`, JSON.stringify(cart));
+            }
+            updateCartCount();
+        }
         
+        function loadCart() {
+            if(currentUser) {
+                let saved = localStorage.getItem(`cart_${currentUser.phone}`);
+                cart = saved ? JSON.parse(saved) : [];
+            } else {
+                cart = [];
+            }
+            updateCartCount();
+        }
+        
+        function updateCartCount() {
+            let count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cartCount').innerHTML = count;
+        }
+        
+        function openCart() {
+            if(!currentUser) {
+                openRegister();
+                return;
+            }
+            
+            if(cart.length === 0) {
+                document.getElementById('cartItemsList').innerHTML = '<div class="empty-cart">🛒 Your cart is empty</div>';
+                document.getElementById('cartTotalAmount').innerHTML = 'Total: $0.00';
+            } else {
+                let total = 0;
+                let html = '';
+                cart.forEach(item => {
+                    let itemTotal = item.price * item.quantity;
+                    total += itemTotal;
+                    html += `
+                        <div class="cart-item">
+                            <div>
+                                <strong>${item.name}</strong><br>
+                                <small>$${item.price} x ${item.quantity}</small>
+                            </div>
+                            <div>
+                                <span style="color:#f59e0b;">$${itemTotal.toFixed(2)}</span>
+                                <button class="btn btn-danger" onclick="removeFromCart(${item.id})" style="padding:5px 10px; margin-left:10px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById('cartItemsList').innerHTML = html;
+                document.getElementById('cartTotalAmount').innerHTML = `Total: $${total.toFixed(2)}`;
+            }
+            document.getElementById('cartModal').style.display = 'flex';
+        }
+        
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            saveCart();
+            openCart();
+            showToast('Item removed', 'warning');
+        }
+        
+        function closeCart() {
+            document.getElementById('cartModal').style.display = 'none';
+        }
+        
+        // ==================== CHECKOUT ====================
+        function proceedToCheckout() {
+            if(cart.length === 0) {
+                showToast('Your cart is empty!', 'error');
+                return;
+            }
+            closeCart();
+            
+            let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            let html = '';
+            cart.forEach(item => {
+                html += `
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <span>${item.name} x${item.quantity}</span>
+                        <span>$${(item.price * item.quantity).toFixed(2)}</span>
+                    </div>
+                `;
+            });
+            document.getElementById('checkoutItems').innerHTML = html;
+            document.getElementById('checkoutTotalAmount').innerHTML = `Total: $${total.toFixed(2)}`;
+            
+            selectedLocation = null;
+            document.getElementById('addressInputDiv').style.display = 'none';
+            document.getElementById('locationStatus').innerHTML = '';
+            document.getElementById('placeOrderBtn').disabled = true;
+            document.getElementById('checkoutModal').style.display = 'flex';
+        }
+        
+        function closeCheckout() {
+            document.getElementById('checkoutModal').style.display = 'none';
+        }
+        
+        function useCurrentLocation() {
+            document.getElementById('locationStatus').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Getting your location...';
+            
+            if(navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        selectedLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                            address: null
+                        };
+                        document.getElementById('locationStatus').innerHTML = '<i class="fas fa-check-circle"></i> Location captured!';
+                        document.getElementById('placeOrderBtn').disabled = false;
+                    },
+                    (error) => {
+                        document.getElementById('locationStatus').innerHTML = '<span style="color:#ef4444;">Could not get location. Please enter address.</span>';
+                        showAddressInput();
+                    }
+                );
+            } else {
+                showAddressInput();
+            }
+        }
+        
+        function showAddressInput() {
+            document.getElementById('addressInputDiv').style.display = 'block';
+            document.getElementById('locationStatus').innerHTML = '';
+        }
+        
+        function saveManualAddress() {
+            let address = document.getElementById('manualAddress').value.trim();
+            if(!address) {
+                showToast('Please enter your delivery address', 'error');
+                return;
+            }
+            selectedLocation = {
+                lat: null,
+                lng: null,
+                address: address
+            };
+            document.getElementById('locationStatus').innerHTML = '<i class="fas fa-check-circle"></i> Address saved!';
+            document.getElementById('placeOrderBtn').disabled = false;
+        }
+        
+        // ==================== PLACE ORDER ====================
+        async function placeOrder() {
+            if(!selectedLocation) {
+                showToast('Please provide delivery location', 'error');
+                return;
+            }
+            
+            let totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            let orderNumber = 'ORD-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+            
+            let orderItems = cart.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                total: item.price * item.quantity
+            }));
+            
+            let newOrder = {
+                id: Date.now(),
+                order_number: orderNumber,
+                customer_name: currentUser.name,
+                customer_phone: currentUser.phone,
+                items: orderItems,
+                total_amount: totalAmount,
+                order_status: 'pending',
+                payment_status: 'pending',
+                location: selectedLocation,
+                order_date: new Date().toISOString(),
+                updates: [{ date: new Date().toISOString(), message: 'Order placed by customer' }]
+            };
+            
+            // Update stock
+            cart.forEach(item => {
+                let product = products.find(p => p.id === item.id);
+                if(product && product.stock !== -1) {
+                    product.stock -= item.quantity;
+                    product.sales = (product.sales || 0) + item.quantity;
+                }
+            });
+            
+            // Save order
+            let orders = JSON.parse(localStorage.getItem('lazy_orders') || '[]');
+            orders.unshift(newOrder);
+            localStorage.setItem('lazy_orders', JSON.stringify(orders));
+            localStorage.setItem('lazy_products', JSON.stringify(products));
+            
+            // Clear cart
+            cart = [];
+            saveCart();
+            
+            // Show success
+            currentOrder = newOrder;
+            let locationText = selectedLocation.address ? `📍 ${selectedLocation.address}` : `📍 https://maps.google.com/?q=${selectedLocation.lat},${selectedLocation.lng}`;
+            document.getElementById('successOrderInfo').innerHTML = `
+                <p><strong>Order #:</strong> ${orderNumber}</p>
+                <p><strong>Total:</strong> $${totalAmount.toFixed(2)}</p>
+                <p><strong>Delivery:</strong><br>${locationText}</p>
+                <p><strong>Status:</strong> <span style="color:#f59e0b;">Pending</span></p>
+            `;
+            
+            closeCheckout();
+            document.getElementById('successModal').style.display = 'flex';
+            renderProducts();
+            updateCartCount();
+            
+            // Send Telegram alert
+            await sendTelegramAlert(newOrder);
+        }
+        
+        async function sendTelegramAlert(order) {
+            let settings = JSON.parse(localStorage.getItem('lazy_telegram_settings') || '{}');
+            let botToken = settings.botToken;
+            let chatId = settings.chatId || "568280939";
+            
+            if(!botToken) return;
+            
+            let locationText = order.location.address ? 
+                `📍 Address: ${order.location.address}` : 
+                `📍 Location: https://maps.google.com/?q=${order.location.lat},${order.location.lng}`;
+            
+            let message = `🛒 *NEW ORDER FROM CUSTOMER*\n\n` +
+                `Order: ${order.order_number}\n` +
+                `Customer: ${order.customer_name}\n` +
+                `Phone: ${order.customer_phone}\n` +
+                `Total: $${order.total_amount.toFixed(2)}\n` +
+                `${locationText}\n\n` +
+                `Items:\n` +
+                order.items.map(i => `• ${i.name} x${i.quantity} = $${i.total.toFixed(2)}`).join('\n');
+            
+            try {
+                await fetch("https://telegram-alert.banlyheang849.workers.dev/send-alert", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ botToken, chatId, message })
+                });
+            } catch(e) { console.error(e); }
+        }
+        
+        // ==================== ORDERS SECTION ====================
+        function showShop() {
+            document.getElementById('shopSection').style.display = 'block';
+            document.getElementById('ordersSection').style.display = 'none';
+            renderProducts();
+        }
+        
+        function showOrders() {
+            if(!currentUser) {
+                openRegister();
+                return;
+            }
+            document.getElementById('shopSection').style.display = 'none';
+            document.getElementById('ordersSection').style.display = 'block';
+            
+            let allOrders = JSON.parse(localStorage.getItem('lazy_orders') || '[]');
+            let userOrders = allOrders.filter(o => o.customer_phone === currentUser.phone);
+            
+            if(userOrders.length === 0) {
+                document.getElementById('ordersList').innerHTML = '<div class="empty-cart"><i class="fas fa-box-open" style="font-size:3rem;"></i><p>No orders yet</p></div>';
+                return;
+            }
+            
+            document.getElementById('ordersList').innerHTML = userOrders.map(order => `
+                <div class="card" style="margin-bottom:15px; padding:15px; background:rgba(255,255,255,0.05); border-radius:16px;">
+                    <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                        <div><strong>${order.order_number}</strong><br><small>${new Date(order.order_date).toLocaleString()}</small></div>
+                        <div><span style="background:#f59e0b; padding:4px 12px; border-radius:20px;">${order.order_status}</span></div>
+                        <div><strong>$${order.total_amount.toFixed(2)}</strong></div>
+                    </div>
+                    <div style="margin-top:10px; font-size:0.8rem; color:#94a3b8;">
+                        Items: ${order.items.map(i => `${i.name} x${i.quantity}`).join(', ')}
+                    </div>
+                    <div style="margin-top:10px;">
+                        ${order.location?.address ? `📍 Delivery: ${order.location.address.substring(0, 50)}...` : '📍 Location shared'}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function closeSuccess() {
+            document.getElementById('successModal').style.display = 'none';
+        }
+        
+        function closeSuccessAndContinue() {
+            document.getElementById('successModal').style.display = 'none';
+            showShop();
+        }
+        
+        // ==================== UTILITIES ====================
+        function showToast(msg, type = 'success') {
+            let t = document.createElement('div');
+            t.className = `toast ${type === 'error' ? 'error' : ''}`;
+            t.innerHTML = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+        
+        // Check for existing user session
+        function checkSession() {
+            let savedUser = localStorage.getItem('current_shop_user');
+            if(savedUser) {
+                try {
+                    let user = JSON.parse(savedUser);
+                    let customers = JSON.parse(localStorage.getItem('lazy_customers') || '[]');
+                    let existing = customers.find(c => c.phone === user.phone);
+                    if(existing) {
+                        currentUser = existing;
+                        document.getElementById('userNameDisplay').innerHTML = currentUser.name;
+                        document.getElementById('loginRegisterBtn').innerHTML = '<i class="fas fa-user-check"></i> ' + currentUser.name;
+                        loadCart();
+                    }
+                } catch(e) {}
+            }
+        }
+        
+        function saveUserSession() {
+            if(currentUser) {
+                localStorage.setItem('current_shop_user', JSON.stringify({ phone: currentUser.phone, name: currentUser.name }));
+            }
+        }
+        
+        // Override register to save session
+        let originalRegister = registerUser;
+        registerUser = function() {
+            originalRegister();
+            saveUserSession();
+        };
+        
+        // Initialize
         loadProducts();
-        if(localStorage.getItem('current_user')) currentUser = JSON.parse(localStorage.getItem('current_user'));
+        checkSession();
     </script>
 </body>
 </html>
