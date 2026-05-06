@@ -109,7 +109,6 @@
         }
         .btn-primary { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; }
         .btn-success { background: #10b981; color: white; }
-        .btn-warning { background: #f59e0b; color: white; }
         .btn-outline { background: transparent; border: 1px solid #6366f1; color: #6366f1; }
         .btn-danger { background: #ef4444; color: white; }
         .cart-item {
@@ -303,209 +302,60 @@
         </div>
     </div>
     
-    <!-- Login Modal -->
     <div id="loginModal" class="modal">
         <div class="modal-content"><span class="close" onclick="closeLoginModal()">&times;</span><h2 style="color:#818cf8;">📞 Customer Login</h2><label>Phone Number</label><input type="tel" id="loginPhone" placeholder="85512345678"><label>Full Name</label><input type="text" id="loginName" placeholder="Your name"><button class="btn btn-success" onclick="loginUser()" style="width:100%;">Login / Register</button></div>
     </div>
     
-    <!-- Payment Modal -->
     <div id="paymentModal" class="modal">
         <div class="modal-content"><span class="close" onclick="closePaymentModal()">&times;</span><h2 style="color:#818cf8;">🧾 Complete Payment</h2><div id="paymentContent"></div><div id="paymentTimer" class="payment-timer"></div><button class="btn btn-primary" onclick="checkPaymentStatus()" style="width:100%; margin-top:16px;">🔄 Check Payment Status</button><button class="btn btn-outline" onclick="closePaymentModal()" style="width:100%; margin-top:8px;">Cancel</button></div>
     </div>
     
-    <!-- Order Details Modal -->
     <div id="orderDetailsModal" class="modal">
         <div class="modal-content"><span class="close" onclick="closeOrderDetailsModal()">&times;</span><h2 style="color:#818cf8;">📋 Order Details</h2><div id="orderDetailsContent"></div></div>
     </div>
 
     <script>
-        // KHPAY Configuration
         const KHPAY_API_KEY = "ak_9206f072a35196d022a0e8e2d9138b4e25b1d0f1de212589";
         const KHPAY_BASE_URL = "https://khpay.site/api/v1";
-        const QR_EXPIRY_SECONDS = 300; // 5 minutes
+        const QR_EXPIRY_SECONDS = 300;
 
-        // Store data
         let products = [], orders = [], users = [], cart = [], currentUser = null;
         let pendingPayments = {};
         let timerIntervals = {};
-
         const TELEGRAM_WORKER = "https://telegram-alert.banlyheang849.workers.dev";
         let telegramSettings = { botToken: "", chatId: "" };
 
-        // ==================== KHQR Generation Functions ====================
-        
-        // Method 1: Try KHPAY API
         async function createKHQRPayment(orderNumber, amount, description) {
             try {
-                console.log("Attempting KHPAY API for order:", orderNumber);
-                
-                // Try different endpoint formats that KHPAY might use
-                const endpoints = [
-                    `${KHPAY_BASE_URL}/khqr/create`,
-                    `${KHPAY_BASE_URL}/payment/qr`,
-                    `${KHPAY_BASE_URL}/qr/generate`,
-                    `${KHPAY_BASE_URL}/v1/khqr`
-                ];
-                
-                let lastError = null;
-                
-                for (const endpoint of endpoints) {
-                    try {
-                        const response = await fetch(endpoint, {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "Authorization": `Bearer ${KHPAY_API_KEY}`,
-                                "X-API-Key": KHPAY_API_KEY
-                            },
-                            body: JSON.stringify({
-                                amount: amount,
-                                currency: "USD",
-                                order_id: orderNumber,
-                                order_number: orderNumber,
-                                description: description || `L@ZY SHOP Order ${orderNumber}`,
-                                expire_seconds: QR_EXPIRY_SECONDS,
-                                merchant_id: "LazyShop",
-                                merchant_name: "L@ZY SHOP"
-                            })
-                        });
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            console.log("KHPAY success:", data);
-                            return {
-                                success: true,
-                                qrCode: data.qr_code_url || data.qr_image || data.qr_url || data.data?.qr_code,
-                                paymentId: data.payment_id || data.id || data.transaction_id,
-                                expiresAt: data.expires_at || Date.now() + (QR_EXPIRY_SECONDS * 1000)
-                            };
-                        }
-                    } catch (e) {
-                        lastError = e;
-                        console.log(`Endpoint ${endpoint} failed:`, e.message);
-                    }
-                }
-                
-                throw new Error(lastError?.message || "All KHPAY endpoints failed");
+                const response = await fetch(`${KHPAY_BASE_URL}/khqr/create`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${KHPAY_API_KEY}` },
+                    body: JSON.stringify({ amount: amount, currency: "USD", order_id: orderNumber, description: description, expire_seconds: QR_EXPIRY_SECONDS })
+                });
+                if (!response.ok) throw new Error(`KHPAY API error: ${response.status}`);
+                const data = await response.json();
+                return { success: true, qrCode: data.qr_code_url || data.qr_image, paymentId: data.payment_id || data.id, expiresAt: data.expires_at || Date.now() + (QR_EXPIRY_SECONDS * 1000) };
             } catch (error) {
                 console.error("KHPAY QR generation failed:", error);
-                // Fallback to QR code generation
-                return await generateFallbackQR(orderNumber, amount, description);
+                const encodedData = btoa(unescape(encodeURIComponent(JSON.stringify({ merchant: "Ban Lyheang", bank: "ABA", account: "001059172", amount: amount, orderId: orderNumber }))));
+                return { success: true, qrCode: `https://quickchart.io/qr?text=${encodeURIComponent(encodedData)}&size=300`, paymentId: `fallback_${orderNumber}`, expiresAt: Date.now() + (QR_EXPIRY_SECONDS * 1000), isFallback: true };
             }
-        }
-        
-        // Method 2: Generate QR Code using free QR API (Fallback)
-        async function generateFallbackQR(orderNumber, amount, description) {
-            console.log("Using fallback QR generation for order:", orderNumber);
-            
-            // Create KHQR format string (Cambodia QR standard)
-            // Format: KHQR|merchant_name|account_number|amount|currency|order_id
-            const merchantName = "Ban Lyheang";
-            const accountNumber = "001059172";
-            const bankCode = "ABA";
-            
-            // Create a payment string that can be scanned
-            const paymentString = JSON.stringify({
-                merchant: merchantName,
-                bank: bankCode,
-                account: accountNumber,
-                amount: amount,
-                currency: "USD",
-                orderId: orderNumber,
-                description: description,
-                timestamp: Date.now()
-            });
-            
-            // Encode to base64 for QR
-            const encodedData = btoa(unescape(encodeURIComponent(paymentString)));
-            
-            // Use multiple free QR APIs for redundancy
-            const qrApis = [
-                `https://quickchart.io/qr?text=${encodeURIComponent(encodedData)}&size=300`,
-                `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(encodedData)}`,
-                `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(encodedData)}`
-            ];
-            
-            // Try each QR API
-            for (const qrUrl of qrApis) {
-                try {
-                    // Test if the URL is reachable
-                    const testResponse = await fetch(qrUrl, { method: 'HEAD', mode: 'no-cors' });
-                    console.log("Using QR API:", qrUrl);
-                    return {
-                        success: true,
-                        qrCode: qrUrl,
-                        paymentId: `fallback_${orderNumber}`,
-                        expiresAt: Date.now() + (QR_EXPIRY_SECONDS * 1000),
-                        isFallback: true,
-                        paymentString: encodedData
-                    };
-                } catch (e) {
-                    console.log("QR API failed:", qrUrl);
-                }
-            }
-            
-            // Last resort: return static payment info
-            return {
-                success: false,
-                error: "QR generation failed - please use manual transfer",
-                fallback: true
-            };
         }
 
-        async function checkKHQRPaymentStatus(paymentId, orderNumber) {
+        async function checkKHQRPaymentStatus(paymentId) {
             try {
-                // If it's a fallback payment, we need manual confirmation
-                if (paymentId && paymentId.startsWith('fallback_')) {
-                    console.log("Fallback payment - needs manual confirmation");
-                    return { success: true, status: 'pending', isFallback: true };
-                }
-                
-                // Try checking status with KHPAY
-                const endpoints = [
-                    `${KHPAY_BASE_URL}/khqr/status/${paymentId}`,
-                    `${KHPAY_BASE_URL}/payment/status/${paymentId}`,
-                    `${KHPAY_BASE_URL}/v1/khqr/status?payment_id=${paymentId}`
-                ];
-                
-                for (const endpoint of endpoints) {
-                    try {
-                        const response = await fetch(endpoint, {
-                            method: "GET",
-                            headers: { "Authorization": `Bearer ${KHPAY_API_KEY}` }
-                        });
-                        if (response.ok) {
-                            const data = await response.json();
-                            return { 
-                                success: true, 
-                                status: data.status || data.payment_status || 'pending',
-                                amount: data.amount,
-                                paidAt: data.paid_at
-                            };
-                        }
-                    } catch (e) {
-                        console.log(`Status check endpoint ${endpoint} failed`);
-                    }
-                }
-                
-                throw new Error("Unable to check payment status");
+                const response = await fetch(`${KHPAY_BASE_URL}/khqr/status/${paymentId}`, { method: "GET", headers: { "Authorization": `Bearer ${KHPAY_API_KEY}` } });
+                if (!response.ok) throw new Error(`Status check error: ${response.status}`);
+                const data = await response.json();
+                return { success: true, status: data.status, amount: data.amount, paidAt: data.paid_at };
             } catch (error) {
-                console.error("Payment status check failed:", error);
                 return { success: false, error: error.message };
             }
         }
 
-        // ==================== Data Management ====================
         function loadData() {
-            let p = localStorage.getItem('lazy_products'); 
-            if(p) products = JSON.parse(p);
-            else products = [
-                { id: 1, name: "Premium T-Shirt", price: 25.99, stock: 50, sales: 45, image: "👕" },
-                { id: 2, name: "Wireless Headphones", price: 49.99, stock: 30, sales: 38, image: "🎧" },
-                { id: 3, name: "Smart Watch", price: 89.99, stock: 20, sales: 25, image: "⌚" },
-                { id: 4, name: "Leather Backpack", price: 39.99, stock: 40, sales: 32, image: "🎒" },
-                { id: 5, name: "Sunglasses", price: 19.99, stock: 60, sales: 55, image: "🕶️" }
-            ];
+            let p = localStorage.getItem('lazy_products'); if(p) products = JSON.parse(p);
+            else products = [{ id: 1, name: "Premium T-Shirt", price: 25.99, stock: 50, sales: 45, image: "👕" },{ id: 2, name: "Wireless Headphones", price: 49.99, stock: 30, sales: 38, image: "🎧" },{ id: 3, name: "Smart Watch", price: 89.99, stock: 20, sales: 25, image: "⌚" },{ id: 4, name: "Leather Backpack", price: 39.99, stock: 40, sales: 32, image: "🎒" },{ id: 5, name: "Sunglasses", price: 19.99, stock: 60, sales: 55, image: "🕶️" }];
             let o = localStorage.getItem('lazy_orders'); if(o) orders = JSON.parse(o); else orders = [];
             let u = localStorage.getItem('lazy_users'); if(u) users = JSON.parse(u); else users = [];
             let c = localStorage.getItem('lazy_cart'); if(c) cart = JSON.parse(c); else cart = [];
@@ -521,124 +371,40 @@
             localStorage.setItem('lazy_pending_payments', JSON.stringify(pendingPayments));
         }
 
-        // ==================== Telegram Alert ====================
         async function sendTelegramAlert(message) {
             if(!telegramSettings.botToken || !telegramSettings.chatId) return false;
             try {
-                let res = await fetch(TELEGRAM_WORKER, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ botToken: telegramSettings.botToken, chatId: telegramSettings.chatId, message: message })
-                });
+                let res = await fetch(TELEGRAM_WORKER, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ botToken: telegramSettings.botToken, chatId: telegramSettings.chatId, message: message }) });
                 return (await res.json()).success;
             } catch(e) { return false; }
         }
 
-        // ==================== Checkout with KHQR ====================
         async function checkout() {
-            if(!currentUser) { showToast('Please login first!', 'warning'); openLoginModal(); return; } 
-            if(!cart.length) { showToast('Cart is empty!', 'error'); return; } 
-            
-            let total = cart.reduce((s,i) => s + (i.price * i.quantity), 0); 
+            if(!currentUser) { showToast('Please login first!', 'warning'); openLoginModal(); return; }
+            if(!cart.length) { showToast('Cart is empty!', 'error'); return; }
+            let total = cart.reduce((s,i) => s + (i.price * i.quantity), 0);
             let orderNumber = `ORD${Date.now()}${Math.floor(Math.random() * 1000)}`;
             let description = `L@ZY SHOP - ${currentUser.name} - ${orderNumber}`;
-            
-            showToast('Generating KHQR code...', 'info');
-            
-            // Show loading in payment modal
+            showToast('Generating QR code...', 'info');
             document.getElementById('paymentContent').innerHTML = `<div style="text-align:center; padding:40px;"><div class="loading-spinner"></div><p>Generating QR Code...</p></div>`;
             document.getElementById('paymentModal').style.display = 'flex';
-            
             let khqrResult = await createKHQRPayment(orderNumber, total, description);
-            
-            let newOrder = { 
-                id: Date.now(), 
-                order_number: orderNumber, 
-                customer_name: currentUser.name, 
-                customer_phone: currentUser.phone, 
-                total_amount: total, 
-                payment_status: "pending", 
-                order_status: "pending", 
-                created_at: new Date().toISOString(), 
-                items: [...cart], 
-                updates: [{ date: new Date().toISOString(), message: "Order placed - awaiting payment" }],
-                khqr_payment_id: khqrResult.paymentId || null,
-                qr_expires_at: khqrResult.expiresAt || null,
-                qr_is_fallback: khqrResult.isFallback || false
-            };
-            
+            let newOrder = { id: Date.now(), order_number: orderNumber, customer_name: currentUser.name, customer_phone: currentUser.phone, total_amount: total, payment_status: "pending", order_status: "pending", created_at: new Date().toISOString(), items: [...cart], updates: [{ date: new Date().toISOString(), message: "Order placed - awaiting payment" }], khqr_payment_id: khqrResult.paymentId || null, qr_expires_at: khqrResult.expiresAt || null };
             orders.unshift(newOrder);
-            
-            pendingPayments[orderNumber] = {
-                paymentId: khqrResult.paymentId,
-                amount: total,
-                qrCode: khqrResult.qrCode,
-                expiresAt: khqrResult.expiresAt,
-                createdAt: Date.now(),
-                khqrSuccess: khqrResult.success,
-                isFallback: khqrResult.isFallback || false,
-                paymentString: khqrResult.paymentString
-            };
-            
-            cart = [];
-            saveAll();
-            updateCart();
-            updateCartBadge();
-            renderUserOrders();
-            updateStats();
-            
+            pendingPayments[orderNumber] = { paymentId: khqrResult.paymentId, amount: total, qrCode: khqrResult.qrCode, expiresAt: khqrResult.expiresAt, createdAt: Date.now(), khqrSuccess: khqrResult.success, isFallback: khqrResult.isFallback || false };
+            cart = []; saveAll(); updateCart(); updateCartBadge(); renderUserOrders(); updateStats();
             showPaymentModal(orderNumber, total, khqrResult);
-            
-            let alertMsg = `🛍️ *NEW ORDER*\nOrder: ${orderNumber}\nCustomer: ${currentUser.name}\nTotal: $${total.toFixed(2)}\nQR: ${khqrResult.success ? 'Generated' : 'Fallback mode'}`;
-            await sendTelegramAlert(alertMsg);
+            await sendTelegramAlert(`🛍️ *NEW ORDER*\nOrder: ${orderNumber}\nCustomer: ${currentUser.name}\nTotal: $${total.toFixed(2)}`);
         }
 
         function showPaymentModal(orderNumber, amount, khqrResult) {
             let expiryTime = khqrResult.expiresAt || Date.now() + (QR_EXPIRY_SECONDS * 1000);
-            
-            let qrHtml = '';
-            if (khqrResult.success && khqrResult.qrCode) {
-                qrHtml = `<div class="qr-display">
-                    <img src="${khqrResult.qrCode}" alt="KHQR Code" style="max-width:280px; width:100%; cursor:pointer;" onclick="window.open(this.src)" onerror="this.onerror=null; this.src='https://quickchart.io/qr?text=Payment%20${orderNumber}&size=300'">
-                    <p style="margin-top:15px; color:#10b981;">✅ ${khqrResult.isFallback ? 'QR Code Generated' : 'KHQR Code Generated'}</p>
-                    <p style="font-size:0.8rem; color:#94a3b8;">Scan with ABA Mobile or any banking app</p>
-                    <p style="font-size:0.7rem; color:#f59e0b; margin-top:8px;"><i class="fas fa-download"></i> Click QR to enlarge</p>
-                </div>`;
-            } else {
-                qrHtml = `<div class="qr-display" style="background:#1e293b;">
-                    <div style="font-size:60px;">💳</div>
-                    <p><strong>🏦 ABA Bank</strong></p>
-                    <p><strong>📱 001059172</strong></p>
-                    <p><strong>👤 Ban Lyheang</strong></p>
-                    <p style="font-size:0.8rem; color:#f59e0b;">⚠️ Please transfer manually to above account</p>
-                    <button class="btn btn-outline" onclick="copyBankInfo()" style="margin-top:10px;">📋 Copy Bank Info</button>
-                </div>`;
-            }
-            
-            const isFallbackNote = khqrResult.isFallback ? `<p style="font-size:0.7rem; color:#f59e0b; margin-top:8px;">ℹ️ Using fallback QR generator - please screenshot and scan</p>` : '';
-            
-            document.getElementById('paymentContent').innerHTML = `
-                <div style="text-align:center;">
-                    <h3>Order: ${orderNumber}</h3>
-                    <p>Amount: <strong style="color:#10b981;">$${amount.toFixed(2)}</strong></p>
-                    ${qrHtml}
-                    ${isFallbackNote}
-                    <div style="margin-top:15px; padding:10px; background:rgba(255,255,255,0.05); border-radius:12px;">
-                        <p><strong>📌 Instructions:</strong></p>
-                        <p>1. ${khqrResult.success ? 'Scan QR code with your banking app' : 'Transfer to ABA account above'}</p>
-                        <p>2. Make payment of <strong>$${amount.toFixed(2)}</strong></p>
-                        <p>3. Click "Check Payment Status" after paying</p>
-                    </div>
-                </div>
-            `;
-            
+            let qrHtml = khqrResult.success && khqrResult.qrCode ? `<div class="qr-display"><img src="${khqrResult.qrCode}" alt="KHQR Code" style="max-width:280px; width:100%; cursor:pointer;" onclick="window.open(this.src)"><p style="margin-top:15px; color:#10b981;">✅ QR Code Generated</p><p style="font-size:0.8rem; color:#94a3b8;">Scan with ABA Mobile or any banking app</p></div>` : `<div class="qr-display" style="background:#1e293b;"><div style="font-size:60px;">💳</div><p><strong>🏦 ABA Bank</strong></p><p><strong>📱 001059172</strong></p><p><strong>👤 Ban Lyheang</strong></p><p style="font-size:0.8rem; color:#f59e0b;">⚠️ Please transfer manually</p><button class="btn btn-outline" onclick="copyBankInfo()" style="margin-top:10px;">📋 Copy Bank Info</button></div>`;
+            document.getElementById('paymentContent').innerHTML = `<div style="text-align:center;"><h3>Order: ${orderNumber}</h3><p>Amount: <strong style="color:#10b981;">$${amount.toFixed(2)}</strong></p>${qrHtml}<div style="margin-top:15px; padding:10px; background:rgba(255,255,255,0.05); border-radius:12px;"><p><strong>📌 Instructions:</strong></p><p>1. ${khqrResult.success ? 'Scan QR code' : 'Transfer to ABA account'}</p><p>2. Make payment of <strong>$${amount.toFixed(2)}</strong></p><p>3. Click "Check Payment Status" after paying</p></div></div>`;
             startPaymentTimer(expiryTime, orderNumber);
         }
 
-        function copyBankInfo() {
-            const bankInfo = `ABA Bank\nAccount: 001059172\nName: Ban Lyheang`;
-            navigator.clipboard.writeText(bankInfo);
-            showToast('✅ Bank info copied!', 'success');
-        }
+        function copyBankInfo() { navigator.clipboard.writeText(`ABA Bank\nAccount: 001059172\nName: Ban Lyheang`); showToast('✅ Bank info copied!', 'success'); }
 
         function startPaymentTimer(expiryTime, orderNumber) {
             if (timerIntervals[orderNumber]) clearInterval(timerIntervals[orderNumber]);
@@ -647,13 +413,8 @@
                 const remaining = Math.max(0, expiryTime - Date.now());
                 const minutes = Math.floor(remaining / 60000);
                 const seconds = Math.floor((remaining % 60000) / 1000);
-                if (remaining <= 0) {
-                    timerElement.innerHTML = '⏰ QR Code Expired! Please contact support for manual payment.';
-                    timerElement.style.color = '#ef4444';
-                    if (timerIntervals[orderNumber]) clearInterval(timerIntervals[orderNumber]);
-                } else {
-                    timerElement.innerHTML = `⏱️ QR Code expires in: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-                }
+                if (remaining <= 0) { timerElement.innerHTML = '⏰ QR Code Expired! Please contact support.'; timerElement.style.color = '#ef4444'; if (timerIntervals[orderNumber]) clearInterval(timerIntervals[orderNumber]); }
+                else { timerElement.innerHTML = `⏱️ QR Code expires in: ${minutes}:${seconds.toString().padStart(2, '0')}`; }
             }
             updateTimer();
             timerIntervals[orderNumber] = setInterval(updateTimer, 1000);
@@ -661,42 +422,22 @@
 
         async function checkPaymentStatus() {
             let pendingOrder = orders.find(o => o.payment_status === 'pending' && o.customer_phone === currentUser?.phone);
-            if (!pendingOrder) {
-                showToast('No pending order found', 'error');
-                return;
-            }
-            
+            if (!pendingOrder) { showToast('No pending order found', 'error'); return; }
             let paymentInfo = pendingPayments[pendingOrder.order_number];
-            
-            // For fallback or manual payments
-            if (!paymentInfo || !paymentInfo.paymentId || paymentInfo.isFallback) {
-                showToast('📞 Manual payment - Please send screenshot to admin for confirmation', 'warning');
-                return;
-            }
-            
+            if (!paymentInfo || !paymentInfo.paymentId || paymentInfo.isFallback) { showToast('📞 Manual payment - Please contact admin', 'warning'); return; }
             showToast('Checking payment status...', 'info');
-            let statusResult = await checkKHQRPaymentStatus(paymentInfo.paymentId, pendingOrder.order_number);
-            
+            let statusResult = await checkKHQRPaymentStatus(paymentInfo.paymentId);
             if (statusResult.success && statusResult.status === 'paid') {
-                pendingOrder.payment_status = "paid";
-                pendingOrder.order_status = "processing";
+                pendingOrder.payment_status = "paid"; pendingOrder.order_status = "processing";
                 pendingOrder.updates.unshift({ date: new Date().toISOString(), message: `Payment confirmed - $${pendingOrder.total_amount}` });
-                saveAll();
-                renderUserOrders();
-                updateStats();
+                saveAll(); renderUserOrders(); updateStats();
                 if (timerIntervals[pendingOrder.order_number]) clearInterval(timerIntervals[pendingOrder.order_number]);
-                
-                document.getElementById('paymentContent').innerHTML = `<div style="text-align:center;"><div style="font-size:60px;">✅</div><h3 style="color:#10b981;">Payment Confirmed!</h3><p>Order #${pendingOrder.order_number}</p><p>Amount: $${pendingOrder.total_amount}</p><p>Thank you for your purchase!</p><button class="btn btn-success" onclick="closePaymentModal()" style="margin-top:15px;">Continue Shopping</button></div>`;
-                await sendTelegramAlert(`💰 *PAYMENT CONFIRMED*\nOrder: ${pendingOrder.order_number}\nAmount: $${pendingOrder.total_amount}\nCustomer: ${pendingOrder.customer_name}`);
-                showToast('✅ Payment confirmed! Thank you!', 'success');
-            } else if (statusResult.status === 'expired') {
-                showToast('❌ QR Code expired. Please contact support.', 'error');
-            } else {
-                showToast('⏳ Payment still pending. Please complete the transfer.', 'warning');
-            }
+                document.getElementById('paymentContent').innerHTML = `<div style="text-align:center;"><div style="font-size:60px;">✅</div><h3 style="color:#10b981;">Payment Confirmed!</h3><p>Order #${pendingOrder.order_number}</p><p>Amount: $${pendingOrder.total_amount}</p><button class="btn btn-success" onclick="closePaymentModal()" style="margin-top:15px;">Continue Shopping</button></div>`;
+                await sendTelegramAlert(`💰 *PAYMENT CONFIRMED*\nOrder: ${pendingOrder.order_number}\nAmount: $${pendingOrder.total_amount}`);
+                showToast('✅ Payment confirmed!', 'success');
+            } else { showToast('⏳ Payment still pending. Please complete the transfer.', 'warning'); }
         }
 
-        // ==================== UI Functions ====================
         function updateStats() {
             document.getElementById('statOrders').innerHTML = orders.filter(o => o.payment_status === 'paid').length;
             document.getElementById('statProducts').innerHTML = products.length;
@@ -706,23 +447,14 @@
         }
 
         function renderProducts() {
-            document.getElementById('productsGrid').innerHTML = products.map(p => `
-                <div class="product-card">
-                    <div class="product-image">${p.image}</div>
-                    <h3>${p.name}</h3>
-                    <div class="product-price">$${p.price}</div>
-                    <div class="product-meta">⭐ ${p.sales||0} sold | 📦 ${p.stock} left</div>
-                    <button class="btn btn-primary" onclick="addToCart(${p.id})">🛒 Add to Cart</button>
-                </div>
-            `).join('');
+            document.getElementById('productsGrid').innerHTML = products.map(p => `<div class="product-card"><div class="product-image">${p.image}</div><h3>${p.name}</h3><div class="product-price">$${p.price}</div><div class="product-meta">⭐ ${p.sales||0} sold | 📦 ${p.stock} left</div><button class="btn btn-primary" onclick="addToCart(${p.id})">🛒 Add to Cart</button></div>`).join('');
         }
 
         function addToCart(id) { 
             let p = products.find(p => p.id === id); 
             if(!p || p.stock <= 0) { showToast('Out of stock!', 'error'); return; } 
             let e = cart.find(i => i.id === id); 
-            if(e) e.quantity++; 
-            else cart.push({...p, quantity: 1}); 
+            if(e) e.quantity++; else cart.push({...p, quantity: 1}); 
             saveAll(); updateCart(); updateCartBadge(); showToast(`✅ ${p.name} added!`); 
         }
 
@@ -738,16 +470,9 @@
         function updateQty(id, qty) { if(qty <= 0) removeFromCart(id); else { let i = cart.find(i => i.id === id); if(i) i.quantity = qty; saveAll(); updateCart(); updateCartBadge(); } }
         function removeFromCart(id) { cart = cart.filter(i => i.id !== id); saveAll(); updateCart(); updateCartBadge(); }
         function updateCartBadge() { document.getElementById('cartBadge').innerHTML = cart.reduce((s,i) => s + i.quantity, 0); }
-
         function openLoginModal() { document.getElementById('loginModal').style.display = 'flex'; }
         function closeLoginModal() { document.getElementById('loginModal').style.display = 'none'; }
-        
-        function closePaymentModal() { 
-            document.getElementById('paymentModal').style.display = 'none';
-            for (let id in timerIntervals) { clearInterval(timerIntervals[id]); }
-            timerIntervals = {};
-        }
-        
+        function closePaymentModal() { document.getElementById('paymentModal').style.display = 'none'; for (let id in timerIntervals) { clearInterval(timerIntervals[id]); } timerIntervals = {}; }
         function closeOrderDetailsModal() { document.getElementById('orderDetailsModal').style.display = 'none'; }
 
         function loginUser() { 
@@ -760,19 +485,10 @@
             closeLoginModal(); renderUserOrders(); showToast(`✨ Welcome ${user.name}!`); 
         }
 
-        function checkUserSession() { 
-            let saved = localStorage.getItem('currentUser'); 
-            if(saved) { currentUser = JSON.parse(saved); renderUserOrders(); } 
-        }
+        function checkUserSession() { let saved = localStorage.getItem('currentUser'); if(saved) { currentUser = JSON.parse(saved); renderUserOrders(); } }
 
         function getStatusClass(status) {
-            const classes = {
-                'pending': 'status-pending',
-                'processing': 'status-processing',
-                'shipped': 'status-shipped',
-                'delivered': 'status-delivered',
-                'cancelled': 'status-cancelled'
-            };
+            const classes = { 'pending': 'status-pending', 'processing': 'status-processing', 'shipped': 'status-shipped', 'delivered': 'status-delivered', 'cancelled': 'status-cancelled' };
             return classes[status] || 'status-pending';
         }
 
@@ -781,79 +497,22 @@
             if(!currentUser) { container.innerHTML = '<p style="text-align:center; padding:40px;">🔐 Login to view orders</p><button class="btn btn-primary" onclick="openLoginModal()" style="display:block; margin:0 auto;">Login Now</button>'; return; } 
             let userOrders = orders.filter(o => o.customer_phone === currentUser.phone); 
             if(!userOrders.length) { container.innerHTML = '<p style="text-align:center; padding:40px;">📭 No orders yet. Start shopping!</p>'; return; } 
-            container.innerHTML = userOrders.map(o => `
-                <div style="background:rgba(255,255,255,0.05); border-radius:16px; padding:16px; margin-bottom:12px;">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
-                        <div>
-                            <strong>${o.order_number}</strong><br>
-                            <span style="color:#94a3b8;">$${o.total_amount} | ${new Date(o.created_at).toLocaleDateString()}</span>
-                        </div>
-                        <div style="text-align:right;">
-                            <span class="order-status-badge ${getStatusClass(o.order_status)}">${o.order_status.toUpperCase()}</span><br>
-                            ${o.payment_status === 'pending' ? `<button class="btn btn-primary" style="margin-top:8px; padding:6px 12px; font-size:0.75rem;" onclick="resumePayment('${o.order_number}')">💳 Pay Now</button>` : `<span style="color:#10b981; font-size:0.75rem;">✅ Paid</span>`}
-                            <button class="btn btn-outline" style="margin-top:8px; padding:6px 12px; font-size:0.75rem;" onclick="viewOrderDetails('${o.order_number}')">📋 Details</button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+            container.innerHTML = userOrders.map(o => `<div style="background:rgba(255,255,255,0.05); border-radius:16px; padding:16px; margin-bottom:12px;"><div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;"><div><strong>${o.order_number}</strong><br><span style="color:#94a3b8;">$${o.total_amount} | ${new Date(o.created_at).toLocaleDateString()}</span></div><div style="text-align:right;"><span class="order-status-badge ${getStatusClass(o.order_status)}">${o.order_status.toUpperCase()}</span><br>${o.payment_status === 'pending' ? `<button class="btn btn-primary" style="margin-top:8px; padding:6px 12px; font-size:0.75rem;" onclick="resumePayment('${o.order_number}')">💳 Pay Now</button>` : `<span style="color:#10b981; font-size:0.75rem;">✅ Paid</span>`}<button class="btn btn-outline" style="margin-top:8px; padding:6px 12px; font-size:0.75rem;" onclick="viewOrderDetails('${o.order_number}')">📋 Details</button></div></div></div>`).join('');
         }
 
         function resumePayment(orderNumber) {
             let order = orders.find(o => o.order_number === orderNumber);
             if (order && order.payment_status === 'pending') {
                 let paymentInfo = pendingPayments[orderNumber];
-                if (paymentInfo && paymentInfo.qrCode) {
-                    showPaymentModal(orderNumber, order.total_amount, {
-                        success: true,
-                        qrCode: paymentInfo.qrCode,
-                        paymentId: paymentInfo.paymentId,
-                        expiresAt: paymentInfo.expiresAt,
-                        isFallback: paymentInfo.isFallback || false
-                    });
-                    if (paymentInfo.expiresAt) startPaymentTimer(paymentInfo.expiresAt, orderNumber);
-                } else {
-                    // Generate new QR for existing order
-                    showToast('Generating new QR code...', 'info');
-                    createKHQRPayment(orderNumber, order.total_amount, `L@ZY SHOP Order ${orderNumber}`).then(khqrResult => {
-                        if (khqrResult.success) {
-                            pendingPayments[orderNumber] = {
-                                paymentId: khqrResult.paymentId,
-                                amount: order.total_amount,
-                                qrCode: khqrResult.qrCode,
-                                expiresAt: khqrResult.expiresAt,
-                                createdAt: Date.now(),
-                                khqrSuccess: true,
-                                isFallback: khqrResult.isFallback || false
-                            };
-                            saveAll();
-                            showPaymentModal(orderNumber, order.total_amount, khqrResult);
-                            if (khqrResult.expiresAt) startPaymentTimer(khqrResult.expiresAt, orderNumber);
-                        } else {
-                            showPaymentModal(orderNumber, order.total_amount, { success: false });
-                        }
-                    });
-                }
+                if (paymentInfo && paymentInfo.qrCode) { showPaymentModal(orderNumber, order.total_amount, { success: true, qrCode: paymentInfo.qrCode, paymentId: paymentInfo.paymentId, expiresAt: paymentInfo.expiresAt, isFallback: paymentInfo.isFallback || false }); if (paymentInfo.expiresAt) startPaymentTimer(paymentInfo.expiresAt, orderNumber); }
+                else { createKHQRPayment(orderNumber, order.total_amount, `L@ZY SHOP Order ${orderNumber}`).then(khqrResult => { if (khqrResult.success) { pendingPayments[orderNumber] = { paymentId: khqrResult.paymentId, amount: order.total_amount, qrCode: khqrResult.qrCode, expiresAt: khqrResult.expiresAt, createdAt: Date.now(), khqrSuccess: true, isFallback: khqrResult.isFallback || false }; saveAll(); showPaymentModal(orderNumber, order.total_amount, khqrResult); if (khqrResult.expiresAt) startPaymentTimer(khqrResult.expiresAt, orderNumber); } else { showPaymentModal(orderNumber, order.total_amount, { success: false }); } }); }
             }
         }
 
         function viewOrderDetails(orderNumber) {
             let order = orders.find(o => o.order_number === orderNumber);
             if (!order) return;
-            document.getElementById('orderDetailsContent').innerHTML = `
-                <div>
-                    <p><strong>Order #:</strong> ${order.order_number}</p>
-                    <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
-                    <p><strong>Status:</strong> <span class="order-status-badge ${getStatusClass(order.order_status)}">${order.order_status}</span></p>
-                    <p><strong>Payment:</strong> ${order.payment_status === 'paid' ? '✅ Paid' : '⏳ Pending'}</p>
-                    <p><strong>Total:</strong> <strong style="color:#10b981;">$${order.total_amount}</strong></p>
-                    <hr style="margin:15px 0; border-color:rgba(255,255,255,0.1);">
-                    <p><strong>Items:</strong></p>
-                    ${order.items.map(i => `<p>• ${i.name} x${i.quantity} = $${(i.price * i.quantity).toFixed(2)}</p>`).join('')}
-                    <hr style="margin:15px 0; border-color:rgba(255,255,255,0.1);">
-                    <p><strong>Order Updates:</strong></p>
-                    ${order.updates ? order.updates.slice(0,5).map(u => `<p style="font-size:0.8rem; color:#94a3b8;">📅 ${new Date(u.date).toLocaleString()}<br>📝 ${u.message}</p>`).join('') : '<p>No updates</p>'}
-                </div>
-            `;
+            document.getElementById('orderDetailsContent').innerHTML = `<div><p><strong>Order #:</strong> ${order.order_number}</p><p><strong>Date:</strong> ${new Date(order.created_at).toLocaleString()}</p><p><strong>Status:</strong> <span class="order-status-badge ${getStatusClass(order.order_status)}">${order.order_status}</span></p><p><strong>Payment:</strong> ${order.payment_status === 'paid' ? '✅ Paid' : '⏳ Pending'}</p><p><strong>Total:</strong> <strong style="color:#10b981;">$${order.total_amount}</strong></p><hr style="margin:15px 0; border-color:rgba(255,255,255,0.1);"><p><strong>Items:</strong></p>${order.items.map(i => `<p>• ${i.name} x${i.quantity} = $${(i.price * i.quantity).toFixed(2)}</p>`).join('')}<hr style="margin:15px 0; border-color:rgba(255,255,255,0.1);"><p><strong>Order Updates:</strong></p>${order.updates ? order.updates.slice(0,5).map(u => `<p style="font-size:0.8rem; color:#94a3b8;">📅 ${new Date(u.date).toLocaleString()}<br>📝 ${u.message}</p>`).join('') : '<p>No updates</p>'}</div>`;
             document.getElementById('orderDetailsModal').style.display = 'flex';
         }
 
@@ -862,61 +521,31 @@
             let phone = document.getElementById('trackPhoneNumber').value.trim(); 
             let order = orders.find(o => o.order_number === orderNum && o.customer_phone === phone); 
             let resultDiv = document.getElementById('trackResult'); 
-            if(!order) { resultDiv.innerHTML = '<div style="background:#ef444420; border-radius:16px; padding:16px;"><p>❌ Order not found! Check order number and phone number.</p></div>'; return; } 
-            resultDiv.innerHTML = `<div style="background:rgba(255,255,255,0.05); border-radius:16px; padding:16px;">
-                <h3>📦 ${order.order_number}</h3>
-                <p><strong>Status:</strong> <span class="order-status-badge ${getStatusClass(order.order_status)}">${order.order_status}</span></p>
-                <p><strong>Payment:</strong> ${order.payment_status === 'paid' ? '✅ Paid' : '⏳ Pending'}</p>
-                <p><strong>Total:</strong> $${order.total_amount}</p>
-                ${order.order_status === 'shipped' ? '<p><strong>📦 Your order has been shipped!</strong></p>' : ''}
-                ${order.order_status === 'delivered' ? '<p><strong>✅ Delivered! Thank you for shopping!</strong></p>' : ''}
-                ${order.payment_status === 'pending' ? `<button class="btn btn-primary" style="margin-top:15px;" onclick="resumePayment('${order.order_number}')">💳 Pay Now</button>` : ''}
-                <button class="btn btn-outline" style="margin-top:15px;" onclick="viewOrderDetails('${order.order_number}')">📋 View Details</button>
-            </div>`; 
+            if(!order) { resultDiv.innerHTML = '<div style="background:#ef444420; border-radius:16px; padding:16px;"><p>❌ Order not found!</p></div>'; return; } 
+            resultDiv.innerHTML = `<div style="background:rgba(255,255,255,0.05); border-radius:16px; padding:16px;"><h3>📦 ${order.order_number}</h3><p><strong>Status:</strong> <span class="order-status-badge ${getStatusClass(order.order_status)}">${order.order_status}</span></p><p><strong>Payment:</strong> ${order.payment_status === 'paid' ? '✅ Paid' : '⏳ Pending'}</p><p><strong>Total:</strong> $${order.total_amount}</p>${order.payment_status === 'pending' ? `<button class="btn btn-primary" style="margin-top:15px;" onclick="resumePayment('${order.order_number}')">💳 Pay Now</button>` : ''}<button class="btn btn-outline" style="margin-top:15px;" onclick="viewOrderDetails('${order.order_number}')">📋 View Details</button></div>`; 
         }
 
-        function showToast(msg, type = 'success') { 
-            let t = document.createElement('div'); 
-            t.className = `toast ${type === 'error' ? 'error' : type === 'warning' ? 'warning' : ''}`; 
-            t.innerHTML = msg; 
-            document.body.appendChild(t); 
-            setTimeout(() => t.remove(), 3000); 
-        }
+        function showToast(msg, type = 'success') { let t = document.createElement('div'); t.className = `toast ${type === 'error' ? 'error' : type === 'warning' ? 'warning' : ''}`; t.innerHTML = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
 
         function switchTab(tab) { 
             let tabs = ['shop', 'cart', 'orders', 'track'];
-            tabs.forEach(t => {
-                let tabEl = document.getElementById(`${t}-tab`);
-                if(tabEl) tabEl.classList.remove('active');
-            });
+            tabs.forEach(t => { let tabEl = document.getElementById(`${t}-tab`); if(tabEl) tabEl.classList.remove('active'); });
             document.querySelectorAll('.desktop-tabs .tab-btn').forEach(b => b.classList.remove('active')); 
-            let activeTab = document.getElementById(`${tab}-tab`);
-            if(activeTab) activeTab.classList.add('active');
+            document.getElementById(`${tab}-tab`).classList.add('active');
             if(event && event.target) event.target.classList.add('active'); 
             if(tab === 'orders') renderUserOrders(); 
         }
 
         function switchTabMobile(tab) { 
             let tabs = ['shop', 'cart', 'orders', 'track'];
-            tabs.forEach(t => {
-                let tabEl = document.getElementById(`${t}-tab`);
-                if(tabEl) tabEl.classList.remove('active');
-            });
+            tabs.forEach(t => { let tabEl = document.getElementById(`${t}-tab`); if(tabEl) tabEl.classList.remove('active'); });
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); 
-            let activeTab = document.getElementById(`${tab}-tab`);
-            if(activeTab) activeTab.classList.add('active');
+            document.getElementById(`${tab}-tab`).classList.add('active');
             if(event && event.target) event.target.closest('.nav-item').classList.add('active'); 
             if(tab === 'orders') renderUserOrders(); 
         }
 
-        // Initialize
-        loadData(); 
-        checkUserSession(); 
-        renderProducts(); 
-        updateCart(); 
-        updateCartBadge(); 
-        renderUserOrders(); 
-        updateStats();
+        loadData(); checkUserSession(); renderProducts(); updateCart(); updateCartBadge(); renderUserOrders(); updateStats();
     </script>
 </body>
 </html>
