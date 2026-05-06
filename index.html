@@ -6,6 +6,9 @@
     <title>L@ZY SHOP - Premium Products</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <!-- Leaflet.js for OpenStreetMap (Free alternative to Google Maps) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -27,6 +30,24 @@
             gap: 15px;
         }
         .logo h1 { font-size: 1.8rem; background: linear-gradient(135deg, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .nav-btn {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
         .cart-icon {
             position: relative;
             cursor: pointer;
@@ -110,6 +131,7 @@
             max-height: 85vh;
             overflow-y: auto;
         }
+        .modal-content.large { max-width: 800px; }
         .close {
             float: right;
             font-size: 1.5rem;
@@ -167,18 +189,63 @@
             gap: 10px;
         }
         .empty-cart { text-align: center; padding: 40px; color: #94a3b8; }
-        .order-success {
-            text-align: center;
-            padding: 20px;
-            background: rgba(16,185,129,0.2);
+        
+        /* Map Styles */
+        #trackingMap {
+            height: 400px;
             border-radius: 16px;
-            margin: 20px 0;
+            margin: 15px 0;
+            z-index: 1;
         }
+        .status-timeline {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .status-step {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.05);
+            position: relative;
+        }
+        .status-step.completed { background: rgba(16,185,129,0.3); border: 1px solid #10b981; }
+        .status-step.active { background: rgba(245,158,11,0.3); border: 1px solid #f59e0b; }
+        .status-step .step-icon { font-size: 1.5rem; margin-bottom: 5px; }
+        .status-step .step-label { font-size: 0.7rem; color: #94a3b8; }
+        .status-step.completed .step-label { color: #10b981; }
+        .status-step.active .step-label { color: #f59e0b; }
+        .order-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .order-card:hover { background: rgba(255,255,255,0.1); transform: translateX(5px); }
+        .order-card .order-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+        }
+        .status-pending { background: #f59e0b; }
+        .status-processing { background: #06b6d4; }
+        .status-shipped { background: #8b5cf6; }
+        .status-delivered { background: #10b981; }
+        .status-cancelled { background: #ef4444; }
+        
         @media (max-width: 768px) {
             .products-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
             .product-card { padding: 15px; }
             .product-card .product-image { font-size: 2.5rem; }
             .btn { padding: 8px 16px; font-size: 0.8rem; }
+            .status-timeline { flex-direction: column; }
+            .nav-links { width: 100%; justify-content: center; }
         }
     </style>
 </head>
@@ -189,9 +256,17 @@
                 <h1>🛍️ L@ZY SHOP</h1>
                 <p>Premium Products at Best Prices</p>
             </div>
-            <div class="cart-icon" onclick="openCartModal()">
-                <i class="fas fa-shopping-cart"></i>
-                <span class="cart-count" id="cartCount">0</span>
+            <div class="nav-links">
+                <a href="#" class="nav-btn" onclick="showShopSection()">
+                    <i class="fas fa-store"></i> Shop
+                </a>
+                <a href="#" class="nav-btn" onclick="showOrdersSection()">
+                    <i class="fas fa-truck"></i> My Orders
+                </a>
+                <div class="cart-icon" onclick="openCartModal()">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count" id="cartCount">0</span>
+                </div>
             </div>
         </div>
 
@@ -206,9 +281,17 @@
             </button>
         </div>
 
-        <!-- Products Grid -->
-        <h2><i class="fas fa-fire"></i> Featured Products</h2>
-        <div class="products-grid" id="productsGrid"></div>
+        <!-- Shop Section -->
+        <div id="shopSection">
+            <h2><i class="fas fa-fire"></i> Featured Products</h2>
+            <div class="products-grid" id="productsGrid"></div>
+        </div>
+
+        <!-- Orders Section (My Orders) -->
+        <div id="ordersSection" style="display: none;">
+            <h2><i class="fas fa-truck"></i> My Orders</h2>
+            <div id="userOrdersList"></div>
+        </div>
     </div>
 
     <!-- Registration / Login Modal -->
@@ -269,12 +352,34 @@
             </div>
             <div id="locationPreview" style="margin: 10px 0; font-size: 0.8rem; color: #10b981;"></div>
             
-            <div id="selectedLocation" style="display: none;">
-                <p><i class="fas fa-check-circle" style="color:#10b981;"></i> Location selected!</p>
-            </div>
-            
             <button class="btn btn-success" onclick="placeOrder()" id="placeOrderBtn" style="width:100%; margin-top:15px;" disabled>
                 <i class="fas fa-check-circle"></i> Confirm & Place Order
+            </button>
+        </div>
+    </div>
+
+    <!-- Order Tracking Modal with Live Map -->
+    <div id="trackingModal" class="modal">
+        <div class="modal-content large">
+            <span class="close" onclick="closeTrackingModal()">&times;</span>
+            <h2 id="trackingOrderTitle">📍 Track Your Order</h2>
+            <div id="trackingOrderInfo"></div>
+            
+            <!-- Status Timeline -->
+            <div class="status-timeline" id="statusTimeline"></div>
+            
+            <!-- Live Map -->
+            <div id="trackingMap"></div>
+            <p style="font-size: 0.7rem; color: #94a3b8; text-align: center; margin-top: 10px;">
+                <i class="fas fa-map-marker-alt"></i> Delivery location shown on map
+            </p>
+            
+            <!-- Order Updates -->
+            <h3 style="margin-top: 20px;">📋 Order Updates</h3>
+            <div id="orderUpdatesList" style="max-height: 200px; overflow-y: auto;"></div>
+            
+            <button class="btn btn-primary" onclick="closeTrackingModal()" style="width:100%; margin-top:15px;">
+                Close
             </button>
         </div>
     </div>
@@ -286,9 +391,14 @@
             <div style="font-size: 4rem;">🎉</div>
             <h2 style="color: #10b981;">Order Placed Successfully!</h2>
             <div id="successOrderInfo" style="margin: 20px 0;"></div>
-            <button class="btn btn-primary" onclick="closeSuccessModalAndReset()" style="width:100%;">
-                <i class="fas fa-shopping-bag"></i> Continue Shopping
-            </button>
+            <div class="button-group" style="display: flex; gap: 10px;">
+                <button class="btn btn-info" onclick="viewOrderTracking()" style="flex:1;">
+                    <i class="fas fa-map-marked-alt"></i> Track Order
+                </button>
+                <button class="btn btn-primary" onclick="closeSuccessModalAndReset()" style="flex:1;">
+                    <i class="fas fa-shopping-bag"></i> Continue Shopping
+                </button>
+            </div>
         </div>
     </div>
 
@@ -299,10 +409,46 @@
         let userCart = [];
         let selectedLocation = null;
         let currentOrderDetails = null;
+        let trackingMap = null;
+        let trackingMarker = null;
         
         const TELEGRAM_WORKER_URL = "https://telegram-alert.banlyheang849.workers.dev";
-        const TELEGRAM_BOT_TOKEN = ""; // Admin will fill this
         const ADMIN_CHAT_ID = "568280939";
+        
+        // Order status order for timeline
+        const statusOrder = ['pending', 'processing', 'shipped', 'delivered'];
+        const statusNames = {
+            pending: 'Order Placed',
+            processing: 'Processing',
+            shipped: 'Shipped',
+            delivered: 'Delivered',
+            cancelled: 'Cancelled'
+        };
+        const statusIcons = {
+            pending: '📝',
+            processing: '⚙️',
+            shipped: '🚚',
+            delivered: '✅',
+            cancelled: '❌'
+        };
+        
+        // ==================== SECTION NAVIGATION ====================
+        function showShopSection() {
+            document.getElementById('shopSection').style.display = 'block';
+            document.getElementById('ordersSection').style.display = 'none';
+            renderProducts();
+        }
+        
+        function showOrdersSection() {
+            if(!currentUser) {
+                openRegistrationModal();
+                showToast('Please login to view your orders', 'warning');
+                return;
+            }
+            document.getElementById('shopSection').style.display = 'none';
+            document.getElementById('ordersSection').style.display = 'block';
+            renderUserOrders();
+        }
         
         // ==================== LOAD PRODUCTS ====================
         function loadProducts() {
@@ -337,6 +483,203 @@
             `).join('');
         }
         
+        // ==================== USER ORDERS ====================
+        function renderUserOrders() {
+            let allOrders = JSON.parse(localStorage.getItem('lazy_orders') || '[]');
+            let userOrders = allOrders.filter(o => o.customer_phone === currentUser?.phone);
+            
+            let container = document.getElementById('userOrdersList');
+            if(!container) return;
+            
+            if(userOrders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-cart">
+                        <i class="fas fa-box-open" style="font-size: 3rem;"></i>
+                        <p>You haven't placed any orders yet</p>
+                        <button class="btn btn-primary" onclick="showShopSection()">Start Shopping</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = userOrders.map(order => `
+                <div class="order-card" onclick="openTrackingModal('${order.order_number}')">
+                    <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <strong>${order.order_number}</strong><br>
+                            <small>${new Date(order.order_date).toLocaleString()}</small>
+                        </div>
+                        <div>
+                            <span class="order-status status-${order.order_status}">
+                                ${statusIcons[order.order_status]} ${statusNames[order.order_status]}
+                            </span>
+                        </div>
+                        <div>
+                            <strong>$${order.total_amount.toFixed(2)}</strong>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 0.8rem; color: #94a3b8;">
+                        ${order.items.length} item(s) • 
+                        ${order.location?.address ? '📮 Delivery address provided' : '📍 Location shared'}
+                    </div>
+                    <button class="btn btn-info" style="margin-top: 10px; padding: 5px 15px;" onclick="event.stopPropagation(); openTrackingModal('${order.order_number}')">
+                        <i class="fas fa-map-marked-alt"></i> Track Order
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        // ==================== TRACKING WITH MAP ====================
+        function openTrackingModal(orderNumber) {
+            let allOrders = JSON.parse(localStorage.getItem('lazy_orders') || '[]');
+            let order = allOrders.find(o => o.order_number === orderNumber);
+            
+            if(!order) {
+                showToast('Order not found', 'error');
+                return;
+            }
+            
+            currentOrderDetails = order;
+            document.getElementById('trackingOrderTitle').innerHTML = `📍 Order #${order.order_number}`;
+            
+            // Build order info
+            document.getElementById('trackingOrderInfo').innerHTML = `
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; margin: 15px 0;">
+                    <p><strong>Customer:</strong> ${order.customer_name}</p>
+                    <p><strong>Phone:</strong> ${order.customer_phone}</p>
+                    <p><strong>Total:</strong> $${order.total_amount.toFixed(2)}</p>
+                    <p><strong>Items:</strong> ${order.items.map(i => `${i.name} x${i.quantity}`).join(', ')}</p>
+                </div>
+            `;
+            
+            // Build status timeline
+            let timelineHtml = '';
+            for(let status of statusOrder) {
+                let isCompleted = getStatusOrder(order.order_status) >= getStatusOrder(status);
+                let isActive = order.order_status === status;
+                timelineHtml += `
+                    <div class="status-step ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}">
+                        <div class="step-icon">${statusIcons[status]}</div>
+                        <div class="step-label">${statusNames[status]}</div>
+                        ${isCompleted ? '<div style="font-size: 0.6rem; color:#10b981;">✓</div>' : ''}
+                    </div>
+                `;
+            }
+            document.getElementById('statusTimeline').innerHTML = timelineHtml;
+            
+            // Build updates list
+            let updatesHtml = '';
+            if(order.updates && order.updates.length > 0) {
+                updatesHtml = order.updates.map(u => `
+                    <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <strong>${new Date(u.date).toLocaleString()}</strong><br>
+                        <small>${u.message}</small>
+                    </div>
+                `).join('');
+            } else {
+                updatesHtml = '<p style="color: #94a3b8;">No updates yet</p>';
+            }
+            document.getElementById('orderUpdatesList').innerHTML = updatesHtml;
+            
+            // Show modal
+            document.getElementById('trackingModal').style.display = 'flex';
+            
+            // Initialize map after modal is shown
+            setTimeout(() => {
+                initTrackingMap(order);
+            }, 100);
+        }
+        
+        function getStatusOrder(status) {
+            const order = ['pending', 'processing', 'shipped', 'delivered'];
+            return order.indexOf(status);
+        }
+        
+        function initTrackingMap(order) {
+            const mapContainer = document.getElementById('trackingMap');
+            if(!mapContainer) return;
+            
+            // Clear previous map
+            if(trackingMap) {
+                trackingMap.remove();
+                trackingMap = null;
+            }
+            
+            // Default center (will update if we have coordinates)
+            let center = [0, 0];
+            let hasLocation = false;
+            
+            // Check if order has location
+            if(order.location && order.location.lat && order.location.lng) {
+                center = [order.location.lat, order.location.lng];
+                hasLocation = true;
+            } else if(order.location && order.location.address) {
+                // Try to geocode address (using Nominatim - free)
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(order.location.address)}&limit=1`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data && data[0]) {
+                            center = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+                            trackingMap.setView(center, 13);
+                            if(trackingMarker) trackingMarker.remove();
+                            trackingMarker = L.marker(center).addTo(trackingMap)
+                                .bindPopup(`<b>Delivery Address</b><br>${order.location.address}`)
+                                .openPopup();
+                        }
+                    })
+                    .catch(err => console.error('Geocoding error:', err));
+            }
+            
+            // Initialize map
+            trackingMap = L.map('trackingMap').setView(center, 13);
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 19,
+                minZoom: 3
+            }).addTo(trackingMap);
+            
+            // Add marker if location exists
+            if(hasLocation) {
+                trackingMarker = L.marker(center).addTo(trackingMap)
+                    .bindPopup(`
+                        <b>Delivery Location</b><br>
+                        Lat: ${order.location.lat.toFixed(4)}<br>
+                        Lng: ${order.location.lng.toFixed(4)}<br>
+                        <a href="https://www.google.com/maps?q=${order.location.lat},${order.location.lng}" target="_blank">Open in Google Maps</a>
+                    `)
+                    .openPopup();
+            } else if(order.location?.address) {
+                // Show info that map will update when geocoding completes
+                L.popup()
+                    .setLatLng(center)
+                    .setContent('Loading address location...')
+                    .openOn(trackingMap);
+            } else {
+                L.popup()
+                    .setLatLng([20, 0])
+                    .setContent('No delivery location saved for this order')
+                    .openOn(trackingMap);
+                trackingMap.setView([20, 0], 2);
+            }
+        }
+        
+        function closeTrackingModal() {
+            document.getElementById('trackingModal').style.display = 'none';
+            if(trackingMap) {
+                trackingMap.remove();
+                trackingMap = null;
+            }
+        }
+        
+        function viewOrderTracking() {
+            if(currentOrderDetails) {
+                closeSuccessModal();
+                openTrackingModal(currentOrderDetails.order_number);
+            }
+        }
+        
         // ==================== USER REGISTRATION ====================
         function openRegistrationModal() {
             document.getElementById('userFullName').value = '';
@@ -359,7 +702,6 @@
                 return;
             }
             
-            // Check if user exists
             let customers = JSON.parse(localStorage.getItem('lazy_customers') || '[]');
             let existing = customers.find(c => c.phone === phone);
             
@@ -380,7 +722,6 @@
                 showToast(`Welcome, ${name}!`, 'success');
             }
             
-            // Update UI
             document.getElementById('userNameDisplay').innerHTML = currentUser.name;
             document.getElementById('loginRegisterBtn').innerHTML = '<i class="fas fa-user-check"></i> My Account';
             document.getElementById('loginRegisterBtn').classList.remove('btn-outline');
@@ -388,8 +729,6 @@
             document.getElementById('loginRegisterBtn').onclick = () => showUserProfile();
             
             closeRegistrationModal();
-            
-            // Load user's cart
             loadUserCart();
         }
         
@@ -483,7 +822,7 @@
         function removeFromCart(productId) {
             userCart = userCart.filter(item => item.id !== productId);
             saveUserCart();
-            openCartModal(); // Refresh cart view
+            openCartModal();
             showToast('Item removed from cart', 'warning');
         }
         
@@ -499,7 +838,6 @@
             }
             closeCartModal();
             
-            // Prepare checkout summary
             let total = userCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             let summaryHtml = '<div style="max-height: 300px; overflow-y: auto;">';
             userCart.forEach(item => {
@@ -514,7 +852,6 @@
             document.getElementById('checkoutSummary').innerHTML = summaryHtml;
             document.getElementById('checkoutTotal').innerHTML = `Total: $${total.toFixed(2)}`;
             
-            // Reset location
             selectedLocation = null;
             document.getElementById('addressInput').style.display = 'none';
             document.getElementById('locationPreview').innerHTML = '';
@@ -538,7 +875,7 @@
                         };
                         document.getElementById('locationPreview').innerHTML = `
                             <i class="fas fa-check-circle" style="color:#10b981;"></i> 
-                            Location captured! (${selectedLocation.lat.toFixed(4)}, ${selectedLocation.lng.toFixed(4)})
+                            Location captured! 
                             <br><small><a href="https://maps.google.com/?q=${selectedLocation.lat},${selectedLocation.lng}" target="_blank" style="color:#06b6d4;">View on map</a></small>
                         `;
                         document.getElementById('addressInput').style.display = 'none';
@@ -558,7 +895,6 @@
         function showManualAddressInput() {
             document.getElementById('addressInput').style.display = 'block';
             document.getElementById('locationPreview').innerHTML = '';
-            // Don't auto-enable button - wait for address entry
         }
         
         function useManualAddress() {
@@ -617,7 +953,6 @@
                 updates: [{ date: new Date().toISOString(), message: 'Order placed by customer' }]
             };
             
-            // Update product stock
             userCart.forEach(item => {
                 let product = products.find(p => p.id === item.id);
                 if(product && product.stock !== -1) {
@@ -626,20 +961,16 @@
                 }
             });
             
-            // Save order
             let orders = JSON.parse(localStorage.getItem('lazy_orders') || '[]');
             orders.unshift(newOrder);
             localStorage.setItem('lazy_orders', JSON.stringify(orders));
             localStorage.setItem('lazy_products', JSON.stringify(products));
             
-            // Clear user's cart
             userCart = [];
             saveUserCart();
             
-            // Send Telegram alert to admin
             await sendTelegramAlert(newOrder);
             
-            // Show success modal
             currentOrderDetails = newOrder;
             document.getElementById('successOrderInfo').innerHTML = `
                 <p><strong>Order #:</strong> ${orderNumber}</p>
@@ -647,13 +978,11 @@
                 <p><strong>Delivery to:</strong><br>
                 ${selectedLocation.address || `📍 https://maps.google.com/?q=${selectedLocation.lat},${selectedLocation.lng}`}</p>
                 <p><strong>Status:</strong> <span style="color:#f59e0b;">Pending</span></p>
-                <p>You will receive updates via this page.</p>
             `;
             
             closeCheckoutModal();
             document.getElementById('successModal').style.display = 'flex';
             
-            // Refresh products display
             renderProducts();
             updateCartUI();
         }
@@ -672,7 +1001,6 @@
                 `Items:\n` +
                 order.items.map(i => `• ${i.name} x${i.quantity} = $${i.total.toFixed(2)}`).join('\n');
             
-            // Get bot token from localStorage (set by admin)
             let settings = JSON.parse(localStorage.getItem('lazy_telegram_settings') || '{}');
             let botToken = settings.botToken;
             let chatId = settings.chatId || "568280939";
@@ -700,8 +1028,8 @@
         
         function closeSuccessModalAndReset() {
             document.getElementById('successModal').style.display = 'none';
-            // Refresh products
             renderProducts();
+            showShopSection();
         }
         
         // ==================== UTILITIES ====================
@@ -713,7 +1041,6 @@
             setTimeout(() => t.remove(), 3000);
         }
         
-        // Check for existing user session
         function checkUserSession() {
             let savedUser = localStorage.getItem('current_shop_user');
             if(savedUser) {
@@ -734,21 +1061,18 @@
             }
         }
         
-        // Save user session
         function saveUserSession() {
             if(currentUser) {
                 localStorage.setItem('current_shop_user', JSON.stringify({ phone: currentUser.phone, name: currentUser.name }));
             }
         }
         
-        // Override registerOrLogin to save session
         let originalRegister = registerOrLogin;
         registerOrLogin = function() {
             originalRegister();
             saveUserSession();
         };
         
-        // Initialize
         loadProducts();
         checkUserSession();
     </script>
