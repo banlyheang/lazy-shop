@@ -32,7 +32,7 @@
         .danger-zone { border: 1px solid #ef4444; background: rgba(239,68,68,0.1); }
         input, select, textarea { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 12px; color: white; width: 100%; margin-bottom: 15px; font-family: 'Inter', sans-serif; }
         label { display: block; margin-bottom: 8px; color: #94a3b8; }
-        .admin-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 16px; margin-bottom: 12px; }
+        .admin-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 16px; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
         .product-card { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; text-align: center; }
         .product-card .product-image { font-size: 3rem; }
@@ -51,14 +51,13 @@
         .telegram-status { padding: 10px; border-radius: 12px; margin-top: 10px; font-size: 0.85rem; }
         .telegram-status.active { background: rgba(16,185,129,0.2); color: #10b981; }
         .telegram-status.inactive { background: rgba(239,68,68,0.2); color: #ef4444; }
-        .code-preview { background: #0f172a; padding: 15px; border-radius: 12px; font-family: monospace; font-size: 0.8rem; overflow-x: auto; margin-top: 10px; max-height: 400px; overflow-y: auto; }
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .products-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
             .product-card { padding: 12px; }
             .container { padding: 15px; }
             .card { padding: 20px; }
-            .admin-item { flex-direction: column; gap: 10px; text-align: center; }
+            .admin-item { flex-direction: column; text-align: center; }
         }
     </style>
 </head>
@@ -72,7 +71,7 @@
             <div><a href="index.html" class="back-link">← Back to Shop</a> <a href="admin.html" class="back-link">Admin Panel</a></div>
         </div>
 
-        <!-- Login Card - No Owner ID shown -->
+        <!-- Login Card -->
         <div id="loginCard" class="card" style="max-width:400px; margin:50px auto; text-align:center;">
             <h2>👑 Owner Login</h2>
             <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 15px;">Enter your secure owner password to access</p>
@@ -90,7 +89,7 @@
                 <div class="stat-card"><div class="stat-value" id="totalAdmins">0</div><div class="stat-label">Admins</div></div>
             </div>
 
-            <!-- Owner Info Card - No Owner ID shown -->
+            <!-- Owner Info Card -->
             <div class="card" style="background: linear-gradient(135deg, rgba(156,39,176,0.2), rgba(99,102,241,0.2));">
                 <h2>👤 Owner Information</h2>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -101,7 +100,7 @@
                 <button class="btn btn-info" onclick="setOwnerTelegramId()" style="margin-top: 10px;">📱 Set My Telegram Chat ID</button>
             </div>
 
-            <!-- Permanent Admin Section - Works on ALL Devices -->
+            <!-- Permanent Admin Section -->
             <div class="card" style="border: 2px solid #10b981;">
                 <h2 style="color: #10b981;">🌟 Add Permanent Admin (Works on ALL Devices)</h2>
                 <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 15px;">These admins are hardcoded and will work on ANY device, any browser, anywhere!</p>
@@ -115,6 +114,7 @@
                 <div id="permanentAdminResult" style="margin-top:15px;"></div>
             </div>
 
+            <!-- Admin Management -->
             <div class="card">
                 <h2>🔑 Admin Management</h2>
                 <button class="btn btn-warning" onclick="openResetAdminPasswordModal()">🔐 Reset Admin Password (Local)</button>
@@ -122,7 +122,7 @@
                 <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 10px;">Reset password for locally stored admins OR download updated admin.html with hardcoded admins</p>
             </div>
 
-            <!-- Telegram Alert Configuration Card -->
+            <!-- Telegram Settings -->
             <div class="card">
                 <h2>🤖 Telegram Bot Settings</h2>
                 <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 15px;">Configure bot to send alerts to Owner (@lixing26) and Admins via Worker</p>
@@ -139,12 +139,14 @@
                 <div id="telegramStatus" class="telegram-status inactive" style="margin-top:10px;">⚠️ Telegram not configured</div>
             </div>
 
+            <!-- Product Management -->
             <div class="card">
                 <h2>📦 Product Management</h2>
                 <button class="btn btn-success" onclick="openAddProductModal()">➕ Add New Product</button>
                 <div class="products-grid" id="productsGrid"></div>
             </div>
 
+            <!-- Local Admin Creation -->
             <div class="card">
                 <h2>👑 Create Local Admin Account (This device only)</h2>
                 <p style="color: #f59e0b; font-size: 0.75rem;">⚠️ This admin will ONLY work on this device. Use "Permanent Admin" above for cross-device access.</p>
@@ -158,11 +160,13 @@
                 <div id="adminCreateResult" style="margin-top:15px;"></div>
             </div>
 
+            <!-- Existing Admins List -->
             <div class="card">
                 <h3>👑 Existing Admin Accounts</h3>
                 <div id="adminsList"></div>
             </div>
 
+            <!-- All Orders -->
             <div class="card">
                 <h3>📋 All Orders</h3>
                 <div class="orders-table">
@@ -175,6 +179,7 @@
                 </div>
             </div>
 
+            <!-- Database Management -->
             <div class="card">
                 <h2>💾 Database Management</h2>
                 <div style="display:flex; gap:15px; flex-wrap:wrap;">
@@ -194,6 +199,7 @@
                 </div>
             </div>
 
+            <!-- Danger Zone -->
             <div class="card danger-zone">
                 <h3 style="color:#ef4444;">⚠️ Danger Zone</h3>
                 <div style="display:flex; gap:15px; flex-wrap:wrap;">
@@ -206,29 +212,51 @@
     </div>
 
     <!-- Product Modal -->
-    <div id="productModal" class="modal"><div class="modal-content"><span class="close" onclick="closeProductModal()">&times;</span><h2 id="modalTitle">Add/Edit Product</h2><input type="hidden" id="editProductId"><label>Product Name</label><input type="text" id="productName"><label>Price ($)</label><input type="number" id="productPrice" step="0.01"><label>Stock</label><input type="number" id="productStock" placeholder="-1 for unlimited"><label>Image Emoji</label><input type="text" id="productImage" placeholder="👕"><label>Description</label><textarea id="productDesc" rows="2"></textarea><button class="btn btn-success" onclick="saveProduct()">Save Product</button><button class="btn btn-danger" id="deleteProductBtn" style="display:none;" onclick="deleteProductFromModal()">Delete Product</button></div></div>
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeProductModal()">&times;</span>
+            <h2 id="modalTitle">Add/Edit Product</h2>
+            <input type="hidden" id="editProductId">
+            <label>Product Name</label><input type="text" id="productName">
+            <label>Price ($)</label><input type="number" id="productPrice" step="0.01">
+            <label>Stock</label><input type="number" id="productStock" placeholder="-1 for unlimited">
+            <label>Image Emoji</label><input type="text" id="productImage" placeholder="👕">
+            <label>Description</label><textarea id="productDesc" rows="2"></textarea>
+            <button class="btn btn-success" onclick="saveProduct()">Save Product</button>
+            <button class="btn btn-danger" id="deleteProductBtn" style="display:none;" onclick="deleteProductFromModal()">Delete Product</button>
+        </div>
+    </div>
     
     <!-- Restore Backup Modal -->
-    <div id="restoreModal" class="modal"><div class="modal-content"><span class="close" onclick="closeRestoreModal()">&times;</span><h2>Restore Backup</h2><input type="file" id="restoreFile" accept=".json"><button class="btn btn-primary" onclick="restoreBackup()">Restore</button></div></div>
+    <div id="restoreModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeRestoreModal()">&times;</span>
+            <h2>Restore Backup</h2>
+            <input type="file" id="restoreFile" accept=".json">
+            <button class="btn btn-primary" onclick="restoreBackup()">Restore</button>
+        </div>
+    </div>
     
     <!-- Order Update Modal -->
-    <div id="orderModal" class="modal"><div class="modal-content"><span class="close" onclick="closeOrderModal()">&times;</span><h2>Update Order Status</h2><div id="orderInfo"></div><select id="orderStatusSelect"><option value="pending">Pending</option><option value="processing">Processing</option><option value="shipped">Shipped</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option></select><textarea id="orderUpdateMessage" rows="2" placeholder="Status update message..."></textarea><button class="btn btn-primary" onclick="updateOrderStatus()">Update Order</button></div></div>
-
-    <!-- Code Preview Modal for Permanent Admin -->
-    <div id="codePreviewModal" class="modal">
-        <div class="modal-content" style="max-width: 700px;">
-            <span class="close" onclick="closeCodePreviewModal()">&times;</span>
-            <h2 style="color: #10b981;">📋 Updated admin.html Code</h2>
-            <p>Copy this code and replace your existing <strong>admin.html</strong> file on GitHub:</p>
-            <div class="code-preview" id="codePreviewContent"></div>
-            <button class="btn btn-success" onclick="copyCodeToClipboard()" style="margin-top: 15px; width: 100%;">📋 Copy Code</button>
-            <button class="btn btn-primary" onclick="downloadUpdatedAdminFile()" style="margin-top: 10px; width: 100%;">💾 Download admin.html</button>
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeOrderModal()">&times;</span>
+            <h2>Update Order Status</h2>
+            <div id="orderInfo"></div>
+            <select id="orderStatusSelect">
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+            <textarea id="orderUpdateMessage" rows="2" placeholder="Status update message..."></textarea>
+            <button class="btn btn-primary" onclick="updateOrderStatus()">Update Order</button>
         </div>
     </div>
 
     <script>
-        // ==================== OWNER CREDENTIALS (HIDDEN - Not displayed anywhere) ====================
-        // This is the secret Owner ID - Never displayed on the page
+        // ==================== OWNER CREDENTIALS ====================
         const OWNER_ID = "568280939";
         const OWNER_TELEGRAM_USERNAME = "@lixing26";
         const OWNER_NAME = "Lixing";
@@ -236,19 +264,20 @@
         // Telegram Worker URL
         const TELEGRAM_WORKER_URL = "https://telegram-alert.banlyheang849.workers.dev";
         
-        let ownerAuthenticated = false;
-        
-        // These are the HARDCODED admins that work on ALL devices
+        // Hardcoded admins that work on ALL devices
         let hardcodedAdmins = [
             { username: "admin1", password: "admin123", name: "Admin", telegram: "" },
             { username: "lixing", password: "lixing26", name: "Lixing (Owner)", telegram: "568280939", isOwner: true }
         ];
         
         let localAdmins = [];
-        let products = [], orders = [], users = [];
+        let products = [];
+        let orders = [];
+        let users = [];
         let currentOrderForUpdate = null;
         let telegramSettings = { botToken: "", chatId: "568280939" };
 
+        // ==================== LOAD DATA ====================
         function loadAllData() {
             let p = localStorage.getItem('lazy_products'); 
             if(p) products = JSON.parse(p);
@@ -267,10 +296,6 @@
             if(telegramSettings.botToken) document.getElementById('telegramBotToken').value = telegramSettings.botToken;
             if(telegramSettings.chatId) document.getElementById('telegramChatId').value = telegramSettings.chatId;
             document.getElementById('ownerChatIdDisplay').innerHTML = telegramSettings.chatId || "Not set";
-            renderAdminsList();
-            renderProductsGrid();
-            renderOrdersTable();
-            updateStatsUI();
         }
         
         function getAllAdmins() {
@@ -301,7 +326,17 @@
         function renderProductsGrid() {
             const grid = document.getElementById('productsGrid');
             if (grid) {
-                grid.innerHTML = products.map(p => `<div class="product-card"><div class="product-image">${p.image || '📦'}</div><h3>${escapeHtml(p.name)}</h3><div>$${p.price}</div><div>📦 Stock: ${p.stock === -1 ? 'Unlimited' : p.stock}</div><div>📈 Sold: ${p.sales || 0}</div><button class="btn btn-warning" onclick="editProduct(${p.id})">✏️ Edit</button><button class="btn btn-danger" onclick="deleteProductById(${p.id})">🗑️ Delete</button></div>`).join('');
+                grid.innerHTML = products.map(p => `
+                    <div class="product-card">
+                        <div class="product-image">${p.image || '📦'}</div>
+                        <h3>${escapeHtml(p.name)}</h3>
+                        <div>$${p.price}</div>
+                        <div>📦 Stock: ${p.stock === -1 ? 'Unlimited' : p.stock}</div>
+                        <div>📈 Sold: ${p.sales || 0}</div>
+                        <button class="btn btn-warning" onclick="editProduct(${p.id})">✏️ Edit</button>
+                        <button class="btn btn-danger" onclick="deleteProductById(${p.id})">🗑️ Delete</button>
+                    </div>
+                `).join('');
             }
         }
         
@@ -347,14 +382,19 @@
             return div.innerHTML;
         }
         
-        // ==================== Telegram Alert via Worker ====================
+        function refreshAllData() { 
+            loadAllData(); 
+            updateStatsUI(); 
+            renderProductsGrid(); 
+            renderAdminsList(); 
+            renderOrdersTable(); 
+        }
+
+        // ==================== TELEGRAM ALERT ====================
         async function sendTelegramAlert(message, targetChatId = null) {
             const botToken = telegramSettings.botToken;
             const chatId = targetChatId || telegramSettings.chatId;
-            if(!botToken || !chatId) {
-                console.warn("Telegram credentials missing");
-                return false;
-            }
+            if(!botToken || !chatId) return false;
             try {
                 const response = await fetch(TELEGRAM_WORKER_URL, {
                     method: 'POST',
@@ -362,10 +402,8 @@
                     body: JSON.stringify({ botToken: botToken, chatId: chatId, message: message })
                 });
                 const result = await response.json();
-                console.log("Telegram alert result:", result);
                 return result.success === true;
             } catch(error) {
-                console.error("Failed to send Telegram alert:", error);
                 return false;
             }
         }
@@ -446,34 +484,24 @@
             }
         }
         
-        // ==================== OWNER LOGIN (FIXED) ====================
+        // ==================== OWNER LOGIN ====================
         function ownerLogin() {
-            console.log("ownerLogin called");
-            const passwordInput = document.getElementById('ownerPassword');
-            const pwd = passwordInput ? passwordInput.value : '';
-            console.log("Entered password:", pwd);
-            console.log("Expected password:", OWNER_ID);
-            
+            const pwd = document.getElementById('ownerPassword').value;
             if(pwd === OWNER_ID) {
-                console.log("Login successful!");
-                ownerAuthenticated = true;
                 localStorage.setItem('owner_authenticated', 'true');
-                const loginCard = document.getElementById('loginCard');
-                const ownerPanel = document.getElementById('ownerPanel');
-                if(loginCard) loginCard.style.display = 'none';
-                if(ownerPanel) ownerPanel.style.display = 'block';
+                document.getElementById('loginCard').style.display = 'none';
+                document.getElementById('ownerPanel').style.display = 'block';
                 refreshAllData();
                 updateTelegramStatusUI();
                 showToast(`👑 Welcome, Owner ${OWNER_NAME}! Full control granted.`, "success");
                 sendOwnerAlert(`👑 Owner ${OWNER_NAME} (${OWNER_TELEGRAM_USERNAME}) logged into dashboard`);
             } else { 
-                const errorDiv = document.getElementById('ownerError');
-                if(errorDiv) errorDiv.innerHTML = "❌ Invalid Owner Password!";
+                document.getElementById('ownerError').innerHTML = "❌ Invalid Owner Password!";
                 showToast("❌ Invalid Owner Password!", "error");
             }
         }
         
-        // ==================== PERMANENT ADMIN (Works on ALL Devices) ====================
+        // ==================== PERMANENT ADMIN ====================
         function addPermanentAdmin() {
             const username = document.getElementById('permanentAdminUser').value.trim();
             const password = document.getElementById('permanentAdminPass').value.trim();
@@ -491,9 +519,8 @@
             }
             
             hardcodedAdmins.push({ username, password, name, telegram, isOwner: false });
-            generateUpdatedAdminCode();
             
-            document.getElementById('permanentAdminResult').innerHTML = '<span style="color:#10b981;">✅ Permanent admin added! Download the updated admin.html file below and upload to GitHub.</span>';
+            document.getElementById('permanentAdminResult').innerHTML = '<span style="color:#10b981;">✅ Permanent admin added! Please update your admin.html file manually with the new admin list.</span>';
             
             document.getElementById('permanentAdminUser').value = '';
             document.getElementById('permanentAdminPass').value = '';
@@ -505,50 +532,11 @@
             sendCriticalAlert("PERMANENT ADMIN ADDED", `New global admin: ${username} (${name}) - Works on ALL devices`);
         }
         
-        function generateUpdatedAdminCode() {
-            // Simplified version - in production this would generate the full admin.html
-            const defaultAdminsJson = JSON.stringify(hardcodedAdmins, null, 12);
-            const previewText = `// Updated admin.html would be generated here with ${hardcodedAdmins.length} admins\n// Please click "Download admin.html" to get the full file`;
-            document.getElementById('codePreviewContent').innerHTML = `<pre style="margin:0; white-space:pre-wrap; word-break:break-all;">${escapeHtml(previewText)}</pre>`;
-            window.generatedAdminCode = previewText;
-            document.getElementById('codePreviewModal').style.display = 'flex';
+        function downloadAdminCode() {
+            showToast("📋 Please manually update the hardcodedAdmins array in admin.html", "info");
         }
         
-        function copyCodeToClipboard() {
-            if (window.generatedAdminCode) {
-                navigator.clipboard.writeText(window.generatedAdminCode);
-                showToast("✅ Code copied!", "success");
-            }
-        }
-        
-        function downloadUpdatedAdminFile() {
-            // Create a download for the updated admin.html
-            const defaultAdminsJson = JSON.stringify(hardcodedAdmins, null, 12);
-            const adminHtmlContent = `<!DOCTYPE html>
-<html>
-<head><title>Admin Panel</title></head>
-<body>
-<h1>Admin Panel - L@ZY SHOP</h1>
-<p>Hardcoded Admins: ${hardcodedAdmins.length}</p>
-<script>
-const HARDCODED_ADMINS = ${defaultAdminsJson};
-console.log("Admins loaded:", HARDCODED_ADMINS);
-</script>
-</body>
-</html>`;
-            const blob = new Blob([adminHtmlContent], {type: "text/html"});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = "admin.html";
-            a.click();
-            showToast("✅ admin.html downloaded!", "success");
-        }
-        
-        function closeCodePreviewModal() {
-            document.getElementById('codePreviewModal').style.display = 'none';
-        }
-        
-        // ==================== LOCAL ADMIN (This device only) ====================
+        // ==================== LOCAL ADMIN ====================
         async function createLocalAdmin() {
             let username = document.getElementById('newAdminUsername').value.trim();
             let password = document.getElementById('newAdminPassword').value.trim();
@@ -609,7 +597,7 @@ console.log("Admins loaded:", HARDCODED_ADMINS);
                 } else {
                     const hardcodedAdmin = hardcodedAdmins.find(a => a.username === username && !a.isOwner);
                     if (hardcodedAdmin) {
-                        showToast(`⚠️ ${username} is a PERMANENT admin. To change password, edit and re-upload admin.html`, "warning");
+                        showToast(`⚠️ ${username} is a PERMANENT admin. To change password, edit hardcodedAdmins array in code`, "warning");
                     } else {
                         showToast(`❌ Admin "${username}" not found`, "error");
                     }
@@ -617,18 +605,7 @@ console.log("Admins loaded:", HARDCODED_ADMINS);
             }
         }
         
-        function downloadAdminCode() {
-            generateUpdatedAdminCode();
-        }
-        
-        function refreshAllData() { 
-            loadAllData(); 
-            updateStatsUI(); 
-            renderProductsGrid(); 
-            renderAdminsList(); 
-            renderOrdersTable(); 
-        }
-        
+        // ==================== PRODUCT MANAGEMENT ====================
         function openAddProductModal() {
             document.getElementById('modalTitle').innerHTML = "Add New Product";
             document.getElementById('editProductId').value = "";
@@ -702,6 +679,7 @@ console.log("Admins loaded:", HARDCODED_ADMINS);
             } 
         }
         
+        // ==================== ORDER MANAGEMENT ====================
         function openOrderUpdateModal(orderId) { 
             currentOrderForUpdate = orders.find(o => o.id === orderId); 
             if(currentOrderForUpdate) { 
@@ -728,6 +706,7 @@ console.log("Admins loaded:", HARDCODED_ADMINS);
             } 
         }
         
+        // ==================== DATABASE MANAGEMENT ====================
         function backupDatabase() { 
             let data = { products, orders, users, localAdmins, telegramSettings }; 
             let blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"}); 
@@ -812,6 +791,7 @@ console.log("Admins loaded:", HARDCODED_ADMINS);
             } 
         }
         
+        // ==================== UTILITIES ====================
         function closeProductModal() { document.getElementById('productModal').style.display = "none"; }
         function closeRestoreModal() { document.getElementById('restoreModal').style.display = "none"; }
         function closeOrderModal() { document.getElementById('orderModal').style.display = "none"; }
@@ -825,19 +805,12 @@ console.log("Admins loaded:", HARDCODED_ADMINS);
         }
         
         // ==================== INITIALIZATION ====================
-        // Set up event listener for login button
+        // Setup login button event listener
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("DOM loaded, setting up event listeners");
             const loginBtn = document.getElementById('loginButton');
             if (loginBtn) {
-                // Remove any existing listeners to avoid duplicates
-                const newBtn = loginBtn.cloneNode(true);
-                loginBtn.parentNode.replaceChild(newBtn, loginBtn);
-                newBtn.addEventListener('click', ownerLogin);
-                console.log("Login button event listener attached");
+                loginBtn.addEventListener('click', ownerLogin);
             }
-            
-            // Also allow Enter key to submit
             const passwordInput = document.getElementById('ownerPassword');
             if (passwordInput) {
                 passwordInput.addEventListener('keypress', function(e) {
@@ -852,11 +825,8 @@ console.log("Admins loaded:", HARDCODED_ADMINS);
         
         // Check for existing session
         if(localStorage.getItem('owner_authenticated') === 'true') { 
-            ownerAuthenticated = true; 
-            const loginCard = document.getElementById('loginCard');
-            const ownerPanel = document.getElementById('ownerPanel');
-            if(loginCard) loginCard.style.display = 'none';
-            if(ownerPanel) ownerPanel.style.display = 'block';
+            document.getElementById('loginCard').style.display = 'none';
+            document.getElementById('ownerPanel').style.display = 'block';
             refreshAllData(); 
             updateTelegramStatusUI(); 
         }
