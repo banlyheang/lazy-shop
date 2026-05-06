@@ -132,6 +132,8 @@
         }
         .telegram-status.active { background: rgba(16,185,129,0.2); color: #10b981; }
         .telegram-status.inactive { background: rgba(239,68,68,0.2); color: #ef4444; }
+        /* Hidden class for sensitive info */
+        .hidden-id { display: none; }
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .products-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -148,15 +150,14 @@
             <div>
                 <h1>👑 Owner Dashboard</h1>
                 <p><span class="owner-badge">Owner Only - Full Control</span></p>
-                <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 5px;">Owner ID: 568280939 | Telegram: @lixing26</p>
             </div>
             <div><a href="index.html" class="back-link">← Back to Shop</a> <a href="admin.html" class="back-link">Admin Panel</a></div>
         </div>
 
         <div id="loginCard" class="card" style="max-width:400px; margin:50px auto; text-align:center;">
             <h2>👑 Owner Login</h2>
-            <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 15px;">Use your Owner ID: <strong style="color:#9C27B0;">568280939</strong></p>
-            <input type="password" id="ownerPassword" placeholder="Enter Owner ID (568280939)">
+            <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 15px;">Enter your owner password to access</p>
+            <input type="password" id="ownerPassword" placeholder="Enter Owner Password">
             <button class="btn btn-purple" onclick="ownerLogin()" style="width:100%;">Login</button>
             <div id="ownerError" style="color:#ef4444; margin-top:15px;"></div>
         </div>
@@ -170,15 +171,21 @@
                 <div class="stat-card"><div class="stat-value" id="totalAdmins">0</div><div class="stat-label">Admins</div></div>
             </div>
 
-            <!-- Owner Info Card -->
+            <!-- Owner Info Card (Only visible after login) -->
             <div class="card" style="background: linear-gradient(135deg, rgba(156,39,176,0.2), rgba(99,102,241,0.2));">
                 <h2>👤 Owner Information</h2>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                    <div><strong>Owner ID:</strong> 568280939</div>
                     <div><strong>Telegram Username:</strong> @lixing26</div>
                     <div><strong>Telegram Chat ID:</strong> <span id="ownerChatIdDisplay">Not set</span></div>
                 </div>
                 <button class="btn btn-info" onclick="setOwnerTelegramId()" style="margin-top: 10px;">📱 Set My Telegram Chat ID</button>
+            </div>
+
+            <!-- Reset Admin Password Button -->
+            <div class="card">
+                <h2>🔑 Admin Management</h2>
+                <button class="btn btn-warning" onclick="openResetAdminPasswordModal()">🔐 Reset Admin Password</button>
+                <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 10px;">Reset any admin account password (except owner account)</p>
             </div>
 
             <!-- Telegram Alert Configuration Card -->
@@ -307,7 +314,7 @@
     </div>
 
     <script>
-        // ==================== OWNER CREDENTIALS ====================
+        // ==================== OWNER CREDENTIALS (Hidden from UI) ====================
         const OWNER_ID = "568280939";
         const OWNER_TELEGRAM_USERNAME = "@lixing26";
         const OWNER_NAME = "Lixing";
@@ -331,7 +338,7 @@
             chatId: "568280939"  // Default owner chat ID
         };
         
-        const TELEGRAM_WORKER_URL = "https://telegram-alert.banlyheang849.workers.dev/";
+        const TELEGRAM_WORKER_URL = "https://telegram-alert.banlyheang849.workers.dev";
         
         // ==================== INIT & LOAD ====================
         function loadAllData() {
@@ -497,7 +504,7 @@
         }
         
         async function sendCriticalAlert(action, details) {
-            const msg = `🚨 *OWNER CRITICAL ALERT* 🚨\n\n👑 Owner: ${OWNER_NAME} (@${OWNER_TELEGRAM_USERNAME})\nAction: ${action}\nDetails: ${details}\nTime: ${new Date().toLocaleString()}`;
+            const msg = `🚨 *OWNER CRITICAL ALERT* 🚨\n\n👑 Owner: ${OWNER_NAME} (${OWNER_TELEGRAM_USERNAME})\nAction: ${action}\nDetails: ${details}\nTime: ${new Date().toLocaleString()}`;
             await sendOwnerAlert(msg);
             await broadcastToAllAdmins(`⚠️ Admin Alert: ${action} performed by Owner`);
         }
@@ -533,7 +540,7 @@
                 showToast("❌ Please enter Bot Token and Chat ID first", "error");
                 return;
             }
-            const success = await sendOwnerAlert("🔔 *Test Alert from Owner Panel* \n\n✅ Your Telegram integration is working!\n\n👑 Owner: " + OWNER_NAME + " (" + OWNER_TELEGRAM_USERNAME + ")\n🆔 Owner ID: " + OWNER_ID);
+            const success = await sendOwnerAlert("🔔 *Test Alert from Owner Panel* \n\n✅ Your Telegram integration is working!\n\n👑 Owner: " + OWNER_NAME + " (" + OWNER_TELEGRAM_USERNAME + ")");
             if(success) {
                 showToast("✅ Test alert sent to Owner!", "success");
                 updateTelegramStatusUI();
@@ -544,7 +551,6 @@
         
         async function getTelegramChatId() {
             showToast("📱 Send any message to @userinfobot on Telegram to get your Chat ID", "info");
-            // Open Telegram bot link
             window.open("https://t.me/userinfobot", "_blank");
         }
         
@@ -560,19 +566,42 @@
             }
         }
         
+        // ==================== RESET ADMIN PASSWORD ====================
+        function openResetAdminPasswordModal() {
+            const username = prompt("Enter admin username to reset password:", "");
+            if (username && username.trim()) {
+                const admin = adminAccounts.find(a => a.username === username && !a.isOwner);
+                if (admin) {
+                    const newPassword = prompt(`Enter new password for admin "${username}":`, "admin123");
+                    if (newPassword && newPassword.length >= 4) {
+                        admin.password = newPassword;
+                        saveAllData();
+                        renderAdminsList();
+                        showToast(`✅ Password for ${username} has been reset!`, "success");
+                        sendCriticalAlert("ADMIN PASSWORD RESET", `Password reset for admin: ${username}`);
+                    } else if (newPassword) {
+                        showToast("❌ Password must be at least 4 characters", "error");
+                    }
+                } else {
+                    showToast(`❌ Admin "${username}" not found or is owner account`, "error");
+                }
+            }
+        }
+        
         // ==================== OWNER AUTH ====================
         function ownerLogin() {
             let pwd = document.getElementById('ownerPassword').value;
             if(pwd === OWNER_ID) {
                 ownerAuthenticated = true;
+                localStorage.setItem('owner_authenticated', 'true');
                 document.getElementById('loginCard').style.display = 'none';
                 document.getElementById('ownerPanel').style.display = 'block';
                 refreshAllData();
                 updateTelegramStatusUI();
                 showToast(`👑 Welcome, Owner ${OWNER_NAME}! Full control granted.`);
-                sendOwnerAlert(`👑 Owner ${OWNER_NAME} (@${OWNER_TELEGRAM_USERNAME}) logged into dashboard`);
+                sendOwnerAlert(`👑 Owner ${OWNER_NAME} (${OWNER_TELEGRAM_USERNAME}) logged into dashboard`);
             } else {
-                document.getElementById('ownerError').innerHTML = "❌ Invalid Owner ID! Use: 568280939";
+                document.getElementById('ownerError').innerHTML = "❌ Invalid Owner Password!";
             }
         }
         
@@ -761,7 +790,6 @@
                     if(data.orders) orders = data.orders;
                     if(data.users) users = data.users;
                     if(data.adminAccounts) {
-                        // Preserve owner account
                         const ownerExists = data.adminAccounts.find(a => a.username === "lixing");
                         if (!ownerExists) {
                             data.adminAccounts.push({ username: "lixing", password: "lixing26", name: "Lixing (Owner)", telegram: "568280939", isOwner: true });
