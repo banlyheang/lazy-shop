@@ -315,16 +315,20 @@
     </div>
 
     <script>
+        // KHPAY Configuration
         const KHPAY_API_KEY = "ak_9206f072a35196d022a0e8e2d9138b4e25b1d0f1de212589";
         const KHPAY_BASE_URL = "https://khpay.site/api/v1";
         const QR_EXPIRY_SECONDS = 300;
 
+        // Telegram Worker URL
+        const TELEGRAM_WORKER_URL = "https://telegram-alert.banlyheang849.workers.dev";
+
         let products = [], orders = [], users = [], cart = [], currentUser = null;
         let pendingPayments = {};
         let timerIntervals = {};
-        const TELEGRAM_WORKER = "https://telegram-alert.banlyheang849.workers.dev";
         let telegramSettings = { botToken: "", chatId: "" };
 
+        // ==================== KHQR Functions ====================
         async function createKHQRPayment(orderNumber, amount, description) {
             try {
                 const response = await fetch(`${KHPAY_BASE_URL}/khqr/create`, {
@@ -353,9 +357,17 @@
             }
         }
 
+        // ==================== Data Management ====================
         function loadData() {
-            let p = localStorage.getItem('lazy_products'); if(p) products = JSON.parse(p);
-            else products = [{ id: 1, name: "Premium T-Shirt", price: 25.99, stock: 50, sales: 45, image: "👕" },{ id: 2, name: "Wireless Headphones", price: 49.99, stock: 30, sales: 38, image: "🎧" },{ id: 3, name: "Smart Watch", price: 89.99, stock: 20, sales: 25, image: "⌚" },{ id: 4, name: "Leather Backpack", price: 39.99, stock: 40, sales: 32, image: "🎒" },{ id: 5, name: "Sunglasses", price: 19.99, stock: 60, sales: 55, image: "🕶️" }];
+            let p = localStorage.getItem('lazy_products'); 
+            if(p) products = JSON.parse(p);
+            else products = [
+                { id: 1, name: "Premium T-Shirt", price: 25.99, stock: 50, sales: 45, image: "👕" },
+                { id: 2, name: "Wireless Headphones", price: 49.99, stock: 30, sales: 38, image: "🎧" },
+                { id: 3, name: "Smart Watch", price: 89.99, stock: 20, sales: 25, image: "⌚" },
+                { id: 4, name: "Leather Backpack", price: 39.99, stock: 40, sales: 32, image: "🎒" },
+                { id: 5, name: "Sunglasses", price: 19.99, stock: 60, sales: 55, image: "🕶️" }
+            ];
             let o = localStorage.getItem('lazy_orders'); if(o) orders = JSON.parse(o); else orders = [];
             let u = localStorage.getItem('lazy_users'); if(u) users = JSON.parse(u); else users = [];
             let c = localStorage.getItem('lazy_cart'); if(c) cart = JSON.parse(c); else cart = [];
@@ -369,37 +381,103 @@
             localStorage.setItem('lazy_users', JSON.stringify(users));
             localStorage.setItem('lazy_cart', JSON.stringify(cart));
             localStorage.setItem('lazy_pending_payments', JSON.stringify(pendingPayments));
+            localStorage.setItem('lazy_telegram_settings', JSON.stringify(telegramSettings));
         }
 
-        async function sendTelegramAlert(message) {
-            if(!telegramSettings.botToken || !telegramSettings.chatId) return false;
+        // ==================== Telegram Alert via Worker ====================
+        async function sendTelegramAlert(message, targetChatId = null) {
+            const botToken = telegramSettings.botToken;
+            const chatId = targetChatId || telegramSettings.chatId;
+            
+            if(!botToken || !chatId) {
+                console.warn("Telegram credentials missing - configure in Owner Panel");
+                return false;
+            }
+            
             try {
-                let res = await fetch(TELEGRAM_WORKER, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ botToken: telegramSettings.botToken, chatId: telegramSettings.chatId, message: message }) });
-                return (await res.json()).success;
-            } catch(e) { return false; }
+                const response = await fetch(TELEGRAM_WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        botToken: botToken,
+                        chatId: chatId,
+                        message: message
+                    })
+                });
+                
+                const result = await response.json();
+                if(result.success) {
+                    console.log("Telegram alert sent successfully");
+                    return true;
+                } else {
+                    console.error("Telegram error:", result.error);
+                    return false;
+                }
+            } catch(error) {
+                console.error("Failed to send Telegram alert:", error);
+                return false;
+            }
         }
 
+        // ==================== Checkout ====================
         async function checkout() {
             if(!currentUser) { showToast('Please login first!', 'warning'); openLoginModal(); return; }
             if(!cart.length) { showToast('Cart is empty!', 'error'); return; }
+            
             let total = cart.reduce((s,i) => s + (i.price * i.quantity), 0);
             let orderNumber = `ORD${Date.now()}${Math.floor(Math.random() * 1000)}`;
             let description = `L@ZY SHOP - ${currentUser.name} - ${orderNumber}`;
+            
             showToast('Generating QR code...', 'info');
             document.getElementById('paymentContent').innerHTML = `<div style="text-align:center; padding:40px;"><div class="loading-spinner"></div><p>Generating QR Code...</p></div>`;
             document.getElementById('paymentModal').style.display = 'flex';
+            
             let khqrResult = await createKHQRPayment(orderNumber, total, description);
-            let newOrder = { id: Date.now(), order_number: orderNumber, customer_name: currentUser.name, customer_phone: currentUser.phone, total_amount: total, payment_status: "pending", order_status: "pending", created_at: new Date().toISOString(), items: [...cart], updates: [{ date: new Date().toISOString(), message: "Order placed - awaiting payment" }], khqr_payment_id: khqrResult.paymentId || null, qr_expires_at: khqrResult.expiresAt || null };
+            
+            let newOrder = { 
+                id: Date.now(), 
+                order_number: orderNumber, 
+                customer_name: currentUser.name, 
+                customer_phone: currentUser.phone, 
+                total_amount: total, 
+                payment_status: "pending", 
+                order_status: "pending", 
+                created_at: new Date().toISOString(), 
+                items: [...cart], 
+                updates: [{ date: new Date().toISOString(), message: "Order placed - awaiting payment" }],
+                khqr_payment_id: khqrResult.paymentId || null,
+                qr_expires_at: khqrResult.expiresAt || null
+            };
+            
             orders.unshift(newOrder);
-            pendingPayments[orderNumber] = { paymentId: khqrResult.paymentId, amount: total, qrCode: khqrResult.qrCode, expiresAt: khqrResult.expiresAt, createdAt: Date.now(), khqrSuccess: khqrResult.success, isFallback: khqrResult.isFallback || false };
-            cart = []; saveAll(); updateCart(); updateCartBadge(); renderUserOrders(); updateStats();
+            pendingPayments[orderNumber] = {
+                paymentId: khqrResult.paymentId,
+                amount: total,
+                qrCode: khqrResult.qrCode,
+                expiresAt: khqrResult.expiresAt,
+                createdAt: Date.now(),
+                khqrSuccess: khqrResult.success,
+                isFallback: khqrResult.isFallback || false
+            };
+            
+            cart = []; 
+            saveAll(); 
+            updateCart(); 
+            updateCartBadge(); 
+            renderUserOrders(); 
+            updateStats();
             showPaymentModal(orderNumber, total, khqrResult);
-            await sendTelegramAlert(`🛍️ *NEW ORDER*\nOrder: ${orderNumber}\nCustomer: ${currentUser.name}\nTotal: $${total.toFixed(2)}`);
+            
+            // Send Telegram Alert via Worker
+            await sendTelegramAlert(`🛍️ *NEW ORDER*\nOrder: ${orderNumber}\nCustomer: ${currentUser.name}\nPhone: ${currentUser.phone}\nTotal: $${total.toFixed(2)}`);
         }
 
         function showPaymentModal(orderNumber, amount, khqrResult) {
             let expiryTime = khqrResult.expiresAt || Date.now() + (QR_EXPIRY_SECONDS * 1000);
-            let qrHtml = khqrResult.success && khqrResult.qrCode ? `<div class="qr-display"><img src="${khqrResult.qrCode}" alt="KHQR Code" style="max-width:280px; width:100%; cursor:pointer;" onclick="window.open(this.src)"><p style="margin-top:15px; color:#10b981;">✅ QR Code Generated</p><p style="font-size:0.8rem; color:#94a3b8;">Scan with ABA Mobile or any banking app</p></div>` : `<div class="qr-display" style="background:#1e293b;"><div style="font-size:60px;">💳</div><p><strong>🏦 ABA Bank</strong></p><p><strong>📱 001059172</strong></p><p><strong>👤 Ban Lyheang</strong></p><p style="font-size:0.8rem; color:#f59e0b;">⚠️ Please transfer manually</p><button class="btn btn-outline" onclick="copyBankInfo()" style="margin-top:10px;">📋 Copy Bank Info</button></div>`;
+            let qrHtml = khqrResult.success && khqrResult.qrCode ? 
+                `<div class="qr-display"><img src="${khqrResult.qrCode}" alt="KHQR Code" style="max-width:280px; width:100%; cursor:pointer;" onclick="window.open(this.src)"><p style="margin-top:15px; color:#10b981;">✅ QR Code Generated</p><p style="font-size:0.8rem; color:#94a3b8;">Scan with ABA Mobile or any banking app</p></div>` : 
+                `<div class="qr-display" style="background:#1e293b;"><div style="font-size:60px;">💳</div><p><strong>🏦 ABA Bank</strong></p><p><strong>📱 001059172</strong></p><p><strong>👤 Ban Lyheang</strong></p><p style="font-size:0.8rem; color:#f59e0b;">⚠️ Please transfer manually</p><button class="btn btn-outline" onclick="copyBankInfo()" style="margin-top:10px;">📋 Copy Bank Info</button></div>`;
+            
             document.getElementById('paymentContent').innerHTML = `<div style="text-align:center;"><h3>Order: ${orderNumber}</h3><p>Amount: <strong style="color:#10b981;">$${amount.toFixed(2)}</strong></p>${qrHtml}<div style="margin-top:15px; padding:10px; background:rgba(255,255,255,0.05); border-radius:12px;"><p><strong>📌 Instructions:</strong></p><p>1. ${khqrResult.success ? 'Scan QR code' : 'Transfer to ABA account'}</p><p>2. Make payment of <strong>$${amount.toFixed(2)}</strong></p><p>3. Click "Check Payment Status" after paying</p></div></div>`;
             startPaymentTimer(expiryTime, orderNumber);
         }
@@ -413,8 +491,13 @@
                 const remaining = Math.max(0, expiryTime - Date.now());
                 const minutes = Math.floor(remaining / 60000);
                 const seconds = Math.floor((remaining % 60000) / 1000);
-                if (remaining <= 0) { timerElement.innerHTML = '⏰ QR Code Expired! Please contact support.'; timerElement.style.color = '#ef4444'; if (timerIntervals[orderNumber]) clearInterval(timerIntervals[orderNumber]); }
-                else { timerElement.innerHTML = `⏱️ QR Code expires in: ${minutes}:${seconds.toString().padStart(2, '0')}`; }
+                if (remaining <= 0) { 
+                    timerElement.innerHTML = '⏰ QR Code Expired! Please contact support.'; 
+                    timerElement.style.color = '#ef4444'; 
+                    if (timerIntervals[orderNumber]) clearInterval(timerIntervals[orderNumber]); 
+                } else { 
+                    timerElement.innerHTML = `⏱️ QR Code expires in: ${minutes}:${seconds.toString().padStart(2, '0')}`; 
+                }
             }
             updateTimer();
             timerIntervals[orderNumber] = setInterval(updateTimer, 1000);
@@ -423,21 +506,36 @@
         async function checkPaymentStatus() {
             let pendingOrder = orders.find(o => o.payment_status === 'pending' && o.customer_phone === currentUser?.phone);
             if (!pendingOrder) { showToast('No pending order found', 'error'); return; }
+            
             let paymentInfo = pendingPayments[pendingOrder.order_number];
-            if (!paymentInfo || !paymentInfo.paymentId || paymentInfo.isFallback) { showToast('📞 Manual payment - Please contact admin', 'warning'); return; }
+            if (!paymentInfo || !paymentInfo.paymentId || paymentInfo.isFallback) { 
+                showToast('📞 Manual payment - Please contact admin', 'warning'); 
+                return; 
+            }
+            
             showToast('Checking payment status...', 'info');
             let statusResult = await checkKHQRPaymentStatus(paymentInfo.paymentId);
+            
             if (statusResult.success && statusResult.status === 'paid') {
-                pendingOrder.payment_status = "paid"; pendingOrder.order_status = "processing";
+                pendingOrder.payment_status = "paid"; 
+                pendingOrder.order_status = "processing";
                 pendingOrder.updates.unshift({ date: new Date().toISOString(), message: `Payment confirmed - $${pendingOrder.total_amount}` });
-                saveAll(); renderUserOrders(); updateStats();
+                saveAll(); 
+                renderUserOrders(); 
+                updateStats();
                 if (timerIntervals[pendingOrder.order_number]) clearInterval(timerIntervals[pendingOrder.order_number]);
+                
                 document.getElementById('paymentContent').innerHTML = `<div style="text-align:center;"><div style="font-size:60px;">✅</div><h3 style="color:#10b981;">Payment Confirmed!</h3><p>Order #${pendingOrder.order_number}</p><p>Amount: $${pendingOrder.total_amount}</p><button class="btn btn-success" onclick="closePaymentModal()" style="margin-top:15px;">Continue Shopping</button></div>`;
-                await sendTelegramAlert(`💰 *PAYMENT CONFIRMED*\nOrder: ${pendingOrder.order_number}\nAmount: $${pendingOrder.total_amount}`);
+                
+                // Send payment confirmation alert
+                await sendTelegramAlert(`💰 *PAYMENT CONFIRMED*\nOrder: ${pendingOrder.order_number}\nAmount: $${pendingOrder.total_amount}\nCustomer: ${pendingOrder.customer_name}`);
                 showToast('✅ Payment confirmed!', 'success');
-            } else { showToast('⏳ Payment still pending. Please complete the transfer.', 'warning'); }
+            } else { 
+                showToast('⏳ Payment still pending. Please complete the transfer.', 'warning'); 
+            }
         }
 
+        // ==================== UI Functions ====================
         function updateStats() {
             document.getElementById('statOrders').innerHTML = orders.filter(o => o.payment_status === 'paid').length;
             document.getElementById('statProducts').innerHTML = products.length;
@@ -504,8 +602,21 @@
             let order = orders.find(o => o.order_number === orderNumber);
             if (order && order.payment_status === 'pending') {
                 let paymentInfo = pendingPayments[orderNumber];
-                if (paymentInfo && paymentInfo.qrCode) { showPaymentModal(orderNumber, order.total_amount, { success: true, qrCode: paymentInfo.qrCode, paymentId: paymentInfo.paymentId, expiresAt: paymentInfo.expiresAt, isFallback: paymentInfo.isFallback || false }); if (paymentInfo.expiresAt) startPaymentTimer(paymentInfo.expiresAt, orderNumber); }
-                else { createKHQRPayment(orderNumber, order.total_amount, `L@ZY SHOP Order ${orderNumber}`).then(khqrResult => { if (khqrResult.success) { pendingPayments[orderNumber] = { paymentId: khqrResult.paymentId, amount: order.total_amount, qrCode: khqrResult.qrCode, expiresAt: khqrResult.expiresAt, createdAt: Date.now(), khqrSuccess: true, isFallback: khqrResult.isFallback || false }; saveAll(); showPaymentModal(orderNumber, order.total_amount, khqrResult); if (khqrResult.expiresAt) startPaymentTimer(khqrResult.expiresAt, orderNumber); } else { showPaymentModal(orderNumber, order.total_amount, { success: false }); } }); }
+                if (paymentInfo && paymentInfo.qrCode) { 
+                    showPaymentModal(orderNumber, order.total_amount, { success: true, qrCode: paymentInfo.qrCode, paymentId: paymentInfo.paymentId, expiresAt: paymentInfo.expiresAt, isFallback: paymentInfo.isFallback || false }); 
+                    if (paymentInfo.expiresAt) startPaymentTimer(paymentInfo.expiresAt, orderNumber); 
+                } else { 
+                    createKHQRPayment(orderNumber, order.total_amount, `L@ZY SHOP Order ${orderNumber}`).then(khqrResult => { 
+                        if (khqrResult.success) { 
+                            pendingPayments[orderNumber] = { paymentId: khqrResult.paymentId, amount: order.total_amount, qrCode: khqrResult.qrCode, expiresAt: khqrResult.expiresAt, createdAt: Date.now(), khqrSuccess: true, isFallback: khqrResult.isFallback || false }; 
+                            saveAll(); 
+                            showPaymentModal(orderNumber, order.total_amount, khqrResult); 
+                            if (khqrResult.expiresAt) startPaymentTimer(khqrResult.expiresAt, orderNumber); 
+                        } else { 
+                            showPaymentModal(orderNumber, order.total_amount, { success: false }); 
+                        } 
+                    }); 
+                }
             }
         }
 
@@ -545,7 +656,13 @@
             if(tab === 'orders') renderUserOrders(); 
         }
 
-        loadData(); checkUserSession(); renderProducts(); updateCart(); updateCartBadge(); renderUserOrders(); updateStats();
+        loadData(); 
+        checkUserSession(); 
+        renderProducts(); 
+        updateCart(); 
+        updateCartBadge(); 
+        renderUserOrders(); 
+        updateStats();
     </script>
 </body>
 </html>
