@@ -30,6 +30,17 @@
         .owner-badge { background: #9C27B0; padding: 5px 15px; border-radius: 30px; font-size: 0.8rem; }
         .back-link { background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 40px; color: white; text-decoration: none; transition: all 0.3s; }
         .back-link:hover { background: linear-gradient(135deg, #6366f1, #ec4899); transform: translateY(-2px); }
+        .sync-status {
+            background: rgba(6,182,212,0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .sync-status.synced { background: rgba(16,185,129,0.2); color: #10b981; }
+        .sync-status.syncing { background: rgba(245,158,11,0.2); color: #f59e0b; }
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -65,6 +76,7 @@
         .btn-purple { background: #9C27B0; color: white; }
         .btn-info { background: #06b6d4; color: white; }
         .btn-secondary { background: #64748b; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
         .btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
         .danger-zone { border: 1px solid #ef4444; background: rgba(239,68,68,0.1); }
         input, select, textarea {
@@ -76,6 +88,27 @@
             width: 100%;
             margin-bottom: 15px;
         }
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .password-wrapper input {
+            padding-right: 45px;
+            margin-bottom: 0;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #94a3b8;
+            transition: all 0.3s;
+            background: none;
+            border: none;
+            font-size: 1rem;
+        }
+        .toggle-password:hover { color: #9C27B0; }
         label { display: block; margin-bottom: 8px; color: #94a3b8; }
         .admin-item {
             display: flex;
@@ -88,6 +121,8 @@
             flex-wrap: wrap;
             gap: 10px;
         }
+        .admin-info { flex: 2; }
+        .admin-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .products-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -112,13 +147,21 @@
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.9);
             backdrop-filter: blur(8px);
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
-        .modal-content { background: #1e293b; border-radius: 28px; padding: 32px; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto; }
+        .modal-content {
+            background: #1e293b;
+            border-radius: 28px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
         .close { float: right; font-size: 1.5rem; cursor: pointer; }
         .close:hover { color: #9C27B0; }
         .toast {
@@ -132,6 +175,7 @@
             z-index: 2000;
         }
         .toast.error { background: #ef4444; }
+        .toast.warning { background: #f59e0b; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .telegram-status {
             padding: 10px;
@@ -141,10 +185,11 @@
         }
         .telegram-status.active { background: rgba(16,185,129,0.2); color: #10b981; }
         .telegram-status.inactive { background: rgba(239,68,68,0.2); color: #ef4444; }
-        .status-pending { background: #f59e0b; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; }
-        .status-processing { background: #06b6d4; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; }
-        .status-shipped { background: #8b5cf6; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; }
-        .status-delivered { background: #10b981; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; }
+        .status-pending { background: #f59e0b; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; display: inline-block; }
+        .status-processing { background: #06b6d4; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; display: inline-block; }
+        .status-shipped { background: #8b5cf6; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; display: inline-block; }
+        .status-delivered { background: #10b981; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; display: inline-block; }
+        .status-cancelled { background: #ef4444; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; display: inline-block; }
         .permission-badge {
             display: inline-block;
             padding: 4px 10px;
@@ -155,25 +200,42 @@
         .permission-full { background: #10b981; }
         .permission-products { background: #3b82f6; }
         .permission-orders { background: #f59e0b; }
+        .permission-customers { background: #8b5cf6; }
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .products-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
             .btn { padding: 8px 12px; font-size: 0.7rem; }
+            .admin-item { flex-direction: column; text-align: center; }
+            .admin-actions { justify-content: center; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div><h1>👑 Owner Dashboard</h1><p><span class="owner-badge">Owner Only - Full Control</span></p></div>
-            <div><a href="index.html" class="back-link">← Back to Shop</a> <a href="admin.html" class="back-link">Admin Panel</a></div>
+            <div>
+                <h1>👑 Owner Dashboard</h1>
+                <p><span class="owner-badge">Owner Only - Full Control</span></p>
+            </div>
+            <div>
+                <span id="cloudSyncStatus" class="sync-status synced">
+                    <i class="fas fa-cloud"></i> Synced
+                </span>
+                <a href="index.html" class="back-link">← Back to Shop</a>
+                <a href="admin.html" class="back-link">Admin Panel</a>
+            </div>
         </div>
 
         <div id="loginCard" class="card" style="max-width:400px; margin:50px auto; text-align:center;">
             <h2>👑 Owner Login</h2>
             <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 15px;">Enter your owner password to access</p>
-            <input type="password" id="ownerPassword" placeholder="Enter Owner Password">
-            <button class="btn btn-purple" onclick="ownerLogin()" style="width:100%;">Login</button>
+            <div class="password-wrapper">
+                <input type="password" id="ownerPassword" placeholder="Enter Owner Password">
+                <button type="button" class="toggle-password" onclick="togglePassword('ownerPassword', this)">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+            <button class="btn btn-purple" onclick="ownerLogin()" style="width:100%; margin-top:15px;">Login</button>
             <div id="ownerError" style="color:#ef4444; margin-top:15px;"></div>
         </div>
 
@@ -204,7 +266,15 @@
                     <i class="fas fa-link"></i> Webhook URL: https://telegram-alert.banlyheang849.workers.dev/send-alert
                 </p>
                 <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:15px;">
-                    <div><label>Bot Token (from @BotFather)</label><input type="text" id="telegramBotToken" placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"></div>
+                    <div>
+                        <label>Bot Token (from @BotFather)</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="telegramBotToken" placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz">
+                            <button type="button" class="toggle-password" onclick="togglePassword('telegramBotToken', this)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div><label>Owner Chat ID</label><input type="text" id="telegramChatId" placeholder="Enter your numeric chat ID"></div>
                 </div>
                 <div style="margin-top:15px;">
@@ -216,9 +286,8 @@
 
             <!-- Admin Management -->
             <div class="card">
-                <h2>👑 Admin Management</h2>
+                <h2>👑 Admin Management <button class="btn btn-info btn-sm" onclick="syncAdminsFromCloud()" style="margin-left:10px;"><i class="fas fa-sync-alt"></i> Sync</button></h2>
                 <button class="btn btn-success" onclick="openAddAdminModal()">➕ Add Global Admin</button>
-                <button class="btn btn-warning" onclick="openResetAdminPasswordModal()">🔐 Reset Admin Password</button>
                 <div id="adminsList" style="margin-top: 20px;"></div>
             </div>
 
@@ -264,7 +333,13 @@
             <span class="close" onclick="closeAddAdminModal()">&times;</span>
             <h2>➕ Add Global Admin</h2>
             <label>Username *</label><input type="text" id="newAdminUsername" placeholder="admin_username">
-            <label>Password *</label><input type="password" id="newAdminPassword" placeholder="password">
+            <label>Password *</label>
+            <div class="password-wrapper">
+                <input type="password" id="newAdminPassword" placeholder="password">
+                <button type="button" class="toggle-password" onclick="togglePassword('newAdminPassword', this)">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
             <label>Full Name</label><input type="text" id="newAdminName" placeholder="Full Name">
             <label>Telegram Chat ID (for alerts)</label><input type="text" id="newAdminTelegram" placeholder="Numeric chat ID">
             <div class="permission-group" style="margin: 15px 0;">
@@ -275,6 +350,30 @@
                 <label><input type="checkbox" id="permCustomers"> 👥 Manage Customers</label>
             </div>
             <button class="btn btn-success" onclick="createGlobalAdmin()" style="width:100%;">✅ Create Global Admin</button>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div id="resetPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeResetPasswordModal()">&times;</span>
+            <h2>🔐 Reset Admin Password</h2>
+            <p id="resetAdminName" style="margin-bottom: 15px;"></p>
+            <label>New Password</label>
+            <div class="password-wrapper">
+                <input type="password" id="resetNewPassword" placeholder="Enter new password">
+                <button type="button" class="toggle-password" onclick="togglePassword('resetNewPassword', this)">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+            <label>Confirm Password</label>
+            <div class="password-wrapper">
+                <input type="password" id="resetConfirmPassword" placeholder="Confirm new password">
+                <button type="button" class="toggle-password" onclick="togglePassword('resetConfirmPassword', this)">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+            <button class="btn btn-primary" onclick="confirmResetPassword()" style="width:100%; margin-top:15px;">Reset Password</button>
         </div>
     </div>
 
@@ -323,7 +422,144 @@
     </div>
 
     <script>
-        // Telegram Webhook URL
+        // ==================== CLOUD API CONFIGURATION ====================
+        // IMPORTANT: Replace with your actual Worker URL and Secret Token
+        const API_URL = "https://telegram-alert.banlyheang849.workers.dev";
+        const API_TOKEN = "YOUR_SECRET_TOKEN_HERE"; // MUST match your Worker's SECRET_TOKEN
+        
+        // ==================== PASSWORD TOGGLE FUNCTION ====================
+        function togglePassword(inputId, buttonElement) {
+            const input = document.getElementById(inputId);
+            const icon = buttonElement.querySelector('i');
+            if(input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+        
+        // ==================== CLOUD SYNC FUNCTIONS ====================
+        let isSyncing = false;
+        
+        function updateSyncStatus(status, message) {
+            const statusEl = document.getElementById('cloudSyncStatus');
+            if(status === 'syncing') {
+                statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+                statusEl.className = 'sync-status syncing';
+            } else if(status === 'synced') {
+                statusEl.innerHTML = '<i class="fas fa-cloud"></i> Synced';
+                statusEl.className = 'sync-status synced';
+            } else if(status === 'error') {
+                statusEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Offline';
+                statusEl.className = 'sync-status';
+            }
+            if(message) showToast(message, 'info');
+        }
+        
+        async function syncAdminsFromCloud() {
+            if(isSyncing) return;
+            isSyncing = true;
+            updateSyncStatus('syncing', 'Syncing admins from cloud...');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/admins`, {
+                    headers: { 'X-API-Token': API_TOKEN }
+                });
+                const data = await response.json();
+                
+                if(data.success && data.admins) {
+                    adminAccounts = data.admins;
+                    saveAllData();
+                    renderAdminsList();
+                    updateStatsUI();
+                    updateSyncStatus('synced', 'Admins synced successfully!');
+                    await sendCriticalAlert("ADMINS SYNCED", "Owner synced admin accounts from cloud");
+                } else {
+                    throw new Error(data.error || 'Sync failed');
+                }
+            } catch (error) {
+                console.error('Sync failed:', error);
+                updateSyncStatus('error', 'Sync failed. Using local cache.');
+                showToast('Failed to sync from cloud. Check your connection.', 'error');
+            } finally {
+                isSyncing = false;
+            }
+        }
+        
+        async function createAdminInCloud(admin) {
+            try {
+                const response = await fetch(`${API_URL}/api/admins`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-API-Token': API_TOKEN
+                    },
+                    body: JSON.stringify(admin)
+                });
+                const data = await response.json();
+                if(data.success) {
+                    await syncAdminsFromCloud();
+                    return true;
+                }
+                throw new Error(data.error);
+            } catch (error) {
+                console.error('Failed to create admin in cloud:', error);
+                showToast('Failed to save to cloud. Admin saved locally only.', 'warning');
+                return false;
+            }
+        }
+        
+        async function deleteAdminFromCloud(username) {
+            try {
+                const response = await fetch(`${API_URL}/api/admins`, {
+                    method: 'DELETE',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-API-Token': API_TOKEN
+                    },
+                    body: JSON.stringify({ username })
+                });
+                const data = await response.json();
+                if(data.success) {
+                    await syncAdminsFromCloud();
+                    return true;
+                }
+                throw new Error(data.error);
+            } catch (error) {
+                console.error('Failed to delete admin from cloud:', error);
+                showToast('Failed to delete from cloud. Deleted locally only.', 'warning');
+                return false;
+            }
+        }
+        
+        async function resetAdminPasswordInCloud(username, newPassword) {
+            try {
+                const response = await fetch(`${API_URL}/api/reset-password`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-API-Token': API_TOKEN
+                    },
+                    body: JSON.stringify({ username, newPassword })
+                });
+                const data = await response.json();
+                if(data.success) {
+                    await syncAdminsFromCloud();
+                    return true;
+                }
+                throw new Error(data.error);
+            } catch (error) {
+                console.error('Failed to reset password in cloud:', error);
+                showToast('Failed to update cloud. Password reset locally only.', 'warning');
+                return false;
+            }
+        }
+        
+        // ==================== TELEGRAM WEBHOOK ====================
         const TELEGRAM_WORKER_URL = "https://telegram-alert.banlyheang849.workers.dev/send-alert";
         
         // Owner credentials
@@ -331,12 +567,10 @@
         const OWNER_NAME = "Lixing";
         
         let ownerAuthenticated = false;
+        let currentResetAdmin = null;
         
-        // Admin accounts
-        let adminAccounts = [
-            { username: "admin1", password: "admin123", name: "Admin User", telegramId: "", isOwner: false, permissions: { fullAccess: false, products: true, orders: true, customers: false } },
-            { username: "lixing", password: "lixing26", name: "Lixing (Owner)", telegramId: "568280939", isOwner: true, permissions: { fullAccess: true, products: true, orders: true, customers: true } }
-        ];
+        // Admin accounts (will be synced from cloud)
+        let adminAccounts = [];
         
         let products = [], orders = [], users = [];
         let currentOrderForUpdate = null;
@@ -350,39 +584,23 @@
         // ==================== TELEGRAM FUNCTIONS ====================
         async function sendTelegramAlert(message, targetChatId = null) {
             const chatId = targetChatId || telegramSettings.chatId;
-            
-            if(!telegramSettings.botToken) {
-                console.warn("Telegram bot token not configured");
-                return false;
-            }
-            
+            if(!telegramSettings.botToken) return false;
             try {
                 const response = await fetch(TELEGRAM_WORKER_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        botToken: telegramSettings.botToken,
-                        chatId: chatId,
-                        message: message
-                    })
+                    body: JSON.stringify({ botToken: telegramSettings.botToken, chatId: chatId, message: message })
                 });
                 const result = await response.json();
                 return result.success === true;
-            } catch(error) {
-                console.error("Telegram alert failed:", error);
-                return false;
-            }
+            } catch(error) { return false; }
         }
         
-        async function sendOwnerAlert(message) {
-            return await sendTelegramAlert(message, telegramSettings.chatId);
-        }
+        async function sendOwnerAlert(message) { return await sendTelegramAlert(message, telegramSettings.chatId); }
         
         async function sendCriticalAlert(action, details) {
             const msg = `🚨 *OWNER CRITICAL ALERT* 🚨\n\n👑 Owner: ${OWNER_NAME}\nAction: ${action}\nDetails: ${details}\nTime: ${new Date().toLocaleString()}`;
             await sendOwnerAlert(msg);
-            
-            // Also notify all admins
             for(const admin of adminAccounts) {
                 if(admin.telegramId && !admin.isOwner) {
                     await sendTelegramAlert(`⚠️ Admin Alert: ${action} performed by Owner`, admin.telegramId);
@@ -406,7 +624,7 @@
                 statusDiv.innerHTML = `✅ Telegram Active! Bot configured, sending to Owner ID: ${telegramSettings.chatId}`;
                 statusDiv.className = "telegram-status active";
             } else if(telegramSettings.botToken) {
-                statusDiv.innerHTML = `⚠️ Bot token set, but Owner Chat ID missing. Current: ${telegramSettings.chatId || 'none'}`;
+                statusDiv.innerHTML = `⚠️ Bot token set, but Owner Chat ID missing.`;
                 statusDiv.className = "telegram-status inactive";
             } else {
                 statusDiv.innerHTML = '⚠️ Telegram not configured. Add Bot Token and Chat ID to receive alerts.';
@@ -421,24 +639,18 @@
                 showToast("❌ Please enter Bot Token and Chat ID first", "error");
                 return;
             }
-            const success = await sendOwnerAlert("🔔 *Test Alert from Owner Panel* \n\n✅ Your Telegram integration is working!\n\n👑 Owner: " + OWNER_NAME);
-            if(success) {
-                showToast("✅ Test alert sent to Owner!", "success");
-                updateTelegramStatusUI();
-            } else {
-                showToast("❌ Failed to send test alert. Check bot token and chat ID", "error");
-            }
+            const success = await sendOwnerAlert("🔔 *Test Alert from Owner Panel* \n\n✅ Your Telegram integration is working!");
+            if(success) showToast("✅ Test alert sent to Owner!", "success");
+            else showToast("❌ Failed to send test alert", "error");
         }
         
         function setOwnerTelegramId() {
-            const chatId = prompt("Enter your numeric Telegram Chat ID (e.g., 568280939):", telegramSettings.chatId || "568280939");
+            const chatId = prompt("Enter your numeric Telegram Chat ID:", telegramSettings.chatId || "568280939");
             if (chatId && !isNaN(parseInt(chatId))) {
                 telegramSettings.chatId = chatId;
                 localStorage.setItem('lazy_telegram_settings', JSON.stringify(telegramSettings));
                 updateTelegramStatusUI();
                 showToast("✅ Owner Chat ID updated!", "success");
-            } else if (chatId) {
-                showToast("❌ Please enter a valid numeric Chat ID", "error");
             }
         }
         
@@ -462,25 +674,24 @@
             else users = [];
             
             let a = localStorage.getItem('lazy_admin_accounts');
-            if(a) adminAccounts = JSON.parse(a);
-            else {
-                if (!adminAccounts.find(acc => acc.username === "lixing")) {
-                    adminAccounts.push({ username: "lixing", password: "lixing26", name: "Lixing (Owner)", telegramId: "568280939", isOwner: true, permissions: { fullAccess: true, products: true, orders: true, customers: true } });
-                }
-                saveAllData();
+            if(a && !isSyncing) {
+                adminAccounts = JSON.parse(a);
+            }
+            
+            // Ensure owner exists
+            if (!adminAccounts.find(acc => acc.username === "lixing")) {
+                adminAccounts.push({ username: "lixing", password: "lixing26", name: "Lixing (Owner)", telegramId: "568280939", isOwner: true, permissions: { fullAccess: true, products: true, orders: true, customers: true } });
             }
             
             let tg = localStorage.getItem('lazy_telegram_settings');
             if(tg) telegramSettings = JSON.parse(tg);
-            else {
-                telegramSettings = { botToken: "", chatId: "568280939" };
-                saveAllData();
-            }
+            else { telegramSettings = { botToken: "", chatId: "568280939" }; }
             
             if(telegramSettings.botToken) document.getElementById('telegramBotToken').value = telegramSettings.botToken;
             if(telegramSettings.chatId) document.getElementById('telegramChatId').value = telegramSettings.chatId;
-            
             document.getElementById('ownerChatIdDisplay').innerHTML = telegramSettings.chatId || "Not set";
+            
+            saveAllData();
         }
         
         function saveAllData() {
@@ -500,7 +711,42 @@
             document.getElementById('totalAdmins').innerHTML = adminAccounts.length;
         }
         
-        // ==================== ADMIN MANAGEMENT ====================
+        // ==================== ADMIN MANAGEMENT WITH CLOUD SYNC ====================
+        function openResetPasswordModal(admin) {
+            currentResetAdmin = admin;
+            document.getElementById('resetAdminName').innerHTML = `<strong>${admin.username}</strong> (${admin.name || 'No name'})`;
+            document.getElementById('resetNewPassword').value = '';
+            document.getElementById('resetConfirmPassword').value = '';
+            document.getElementById('resetPasswordModal').style.display = 'flex';
+        }
+        
+        function closeResetPasswordModal() {
+            document.getElementById('resetPasswordModal').style.display = 'none';
+            currentResetAdmin = null;
+        }
+        
+        async function confirmResetPassword() {
+            if(!currentResetAdmin) return;
+            const newPassword = document.getElementById('resetNewPassword').value.trim();
+            const confirmPassword = document.getElementById('resetConfirmPassword').value.trim();
+            
+            if(!newPassword) { showToast('Please enter a new password', 'error'); return; }
+            if(newPassword !== confirmPassword) { showToast('Passwords do not match!', 'error'); return; }
+            if(newPassword.length < 4) { showToast('Password must be at least 4 characters', 'error'); return; }
+            
+            // Update locally
+            currentResetAdmin.password = newPassword;
+            saveAllData();
+            renderAdminsList();
+            
+            // Sync to cloud
+            await resetAdminPasswordInCloud(currentResetAdmin.username, newPassword);
+            
+            closeResetPasswordModal();
+            showToast(`✅ Password for ${currentResetAdmin.username} has been reset!`, "success");
+            await sendCriticalAlert("ADMIN PASSWORD RESET", `Password reset for admin: ${currentResetAdmin.username}`);
+        }
+        
         function openAddAdminModal() {
             document.getElementById('newAdminUsername').value = '';
             document.getElementById('newAdminPassword').value = '';
@@ -525,7 +771,6 @@
                 showToast("Username and password required", "error");
                 return;
             }
-            
             if(adminAccounts.find(a => a.username === username)) {
                 showToast("Admin already exists!", "error");
                 return;
@@ -537,49 +782,34 @@
                 orders: document.getElementById('permOrders').checked,
                 customers: document.getElementById('permCustomers').checked
             };
+            if(permissions.fullAccess) permissions.products = permissions.orders = permissions.customers = true;
             
-            if(permissions.fullAccess) {
-                permissions.products = permissions.orders = permissions.customers = true;
-            }
-            
-            adminAccounts.push({ username, password, name: name || username, telegramId, isOwner: false, permissions });
+            const newAdmin = { username, password, name: name || username, telegramId, isOwner: false, permissions };
+            adminAccounts.push(newAdmin);
             saveAllData();
             renderAdminsList();
             updateStatsUI();
+            
+            // Sync to cloud
+            await createAdminInCloud(newAdmin);
+            
             closeAddAdminModal();
-            showToast(`✅ Admin ${username} created!`, "success");
-            await sendCriticalAlert("ADMIN CREATED", `New admin: ${username} (${name}) created with permissions: ${JSON.stringify(permissions)}`);
+            showToast(`✅ Admin ${username} created globally!`, "success");
+            await sendCriticalAlert("ADMIN CREATED", `New global admin: ${username} (${name}) created`);
         }
         
         async function deleteAdmin(username) {
-            if(confirm(`Remove admin "${username}"? This cannot be undone.`)) {
+            if(confirm(`Remove admin "${username}"? This will affect all devices.`)) {
                 adminAccounts = adminAccounts.filter(a => a.username !== username);
                 saveAllData();
                 renderAdminsList();
                 updateStatsUI();
-                await sendCriticalAlert("ADMIN REMOVED", `Admin ${username} was removed`);
-                showToast(`Admin ${username} removed`);
-            }
-        }
-        
-        function openResetAdminPasswordModal() {
-            const username = prompt("Enter admin username to reset password:", "");
-            if (username && username.trim()) {
-                const admin = adminAccounts.find(a => a.username === username && !a.isOwner);
-                if (admin) {
-                    const newPassword = prompt(`Enter new password for admin "${username}":`, "admin123");
-                    if (newPassword && newPassword.length >= 4) {
-                        admin.password = newPassword;
-                        saveAllData();
-                        renderAdminsList();
-                        showToast(`✅ Password for ${username} has been reset!`, "success");
-                        sendCriticalAlert("ADMIN PASSWORD RESET", `Password reset for admin: ${username}`);
-                    } else if (newPassword) {
-                        showToast("❌ Password must be at least 4 characters", "error");
-                    }
-                } else {
-                    showToast(`❌ Admin "${username}" not found or is owner account`, "error");
-                }
+                
+                // Sync to cloud
+                await deleteAdminFromCloud(username);
+                
+                await sendCriticalAlert("ADMIN REMOVED", `Global admin ${username} was removed`);
+                showToast(`Admin ${username} removed globally`);
             }
         }
         
@@ -588,13 +818,22 @@
             if(!container) return;
             container.innerHTML = adminAccounts.map(adm => `
                 <div class="admin-item">
-                    <div>
+                    <div class="admin-info">
                         <strong>${adm.username}</strong> (${adm.name || 'No name'})<br>
                         ${adm.telegramId ? `📱 Telegram ID: ${adm.telegramId}` : '⚠️ No Telegram ID'}
                         ${adm.isOwner ? ' <span style="background:#9C27B0; padding:2px 8px; border-radius:12px; font-size:0.7rem;">OWNER</span>' : ''}
                         ${!adm.isOwner ? `<div style="margin-top:5px;">${getPermissionBadges(adm)}</div>` : ''}
                     </div>
-                    ${!adm.isOwner ? `<button class="btn btn-danger" onclick="deleteAdmin('${adm.username}')">Remove</button>` : '<span style="color:#94a3b8;">Protected</span>'}
+                    <div class="admin-actions">
+                        ${!adm.isOwner ? `
+                            <button class="btn btn-warning btn-sm" onclick='openResetPasswordModal(${JSON.stringify(adm).replace(/'/g, "\\'")})'>
+                                <i class="fas fa-key"></i> Reset Password
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteAdmin('${adm.username}')">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                        ` : '<span style="color:#94a3b8;">🔒 Protected Account</span>'}
+                    </div>
                 </div>
             `).join('');
         }
@@ -604,7 +843,7 @@
             let badges = [];
             if(admin.permissions?.products) badges.push('<span class="permission-badge permission-products">📦 Products</span>');
             if(admin.permissions?.orders) badges.push('<span class="permission-badge permission-orders">📋 Orders</span>');
-            if(admin.permissions?.customers) badges.push('<span class="permission-badge permission-products">👥 Customers</span>');
+            if(admin.permissions?.customers) badges.push('<span class="permission-badge permission-customers">👥 Customers</span>');
             return badges.join(' ') || '<span class="permission-badge">👀 View Only</span>';
         }
         
@@ -619,8 +858,8 @@
                     <div>$${p.price}</div>
                     <div>📦 Stock: ${p.stock === -1 ? 'Unlimited' : p.stock}</div>
                     <div>📈 Sold: ${p.sales || 0}</div>
-                    <button class="btn btn-warning" onclick="editProduct(${p.id})">✏️ Edit</button>
-                    <button class="btn btn-danger" onclick="deleteProductById(${p.id})">🗑️ Delete</button>
+                    <button class="btn btn-warning btn-sm" onclick="editProduct(${p.id})">✏️ Edit</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteProductById(${p.id})">🗑️ Delete</button>
                 </div>
             `).join('');
         }
@@ -660,17 +899,12 @@
             let image = document.getElementById('productImage').value.trim() || "🛍️";
             let desc = document.getElementById('productDesc').value.trim();
             
-            if(!name || isNaN(price)) {
-                showToast("Please fill all fields", "error");
-                return;
-            }
+            if(!name || isNaN(price)) { showToast("Please fill all fields", "error"); return; }
             
             if(id) {
                 let idx = products.findIndex(p => p.id === id);
-                if(idx !== -1) {
-                    products[idx] = { ...products[idx], name, price, stock, image, description: desc };
-                    await sendCriticalAlert("PRODUCT UPDATED", `Product ID ${id} - ${name} updated`);
-                }
+                if(idx !== -1) { products[idx] = { ...products[idx], name, price, stock, image, description: desc }; }
+                await sendCriticalAlert("PRODUCT UPDATED", `Product ID ${id} - ${name} updated`);
             } else {
                 let newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
                 products.push({ id: newId, name, price, stock, image, description: desc, sales: 0 });
@@ -697,10 +931,7 @@
         
         function deleteProductFromModal() {
             let id = parseInt(document.getElementById('editProductId').value);
-            if(id && confirm("Delete this product?")) {
-                deleteProductById(id);
-                closeProductModal();
-            }
+            if(id && confirm("Delete this product?")) { deleteProductById(id); closeProductModal(); }
         }
         
         function closeProductModal() { document.getElementById('productModal').style.display = "none"; }
@@ -712,11 +943,10 @@
             tbody.innerHTML = orders.map(o => `
                 <tr>
                     <td><strong>${o.order_number}</strong><br><small>${new Date(o.order_date).toLocaleDateString()}</small></td>
-                    <td>${o.customer_name}</td>
-                    <td>${o.customer_phone}</td>
+                    <td>${o.customer_name}</td><td>${o.customer_phone}</td>
                     <td>$${(o.total_amount || 0).toFixed(2)}</td>
                     <td><span class="status-${o.order_status}">${o.order_status}</span></td>
-                    <td><button class="btn btn-primary" onclick="openOrderUpdateModal(${o.id})">Update</button></td>
+                    <td><button class="btn btn-primary btn-sm" onclick="openOrderUpdateModal(${o.id})">Update</button></td>
                 </tr>
             `).join('');
         }
@@ -735,16 +965,15 @@
                 let oldStatus = currentOrderForUpdate.order_status;
                 let newStatus = document.getElementById('orderStatusSelect').value;
                 let message = document.getElementById('orderUpdateMessage').value.trim() || `Order status changed from ${oldStatus} to ${newStatus} by Owner`;
-                
                 currentOrderForUpdate.order_status = newStatus;
                 if(!currentOrderForUpdate.updates) currentOrderForUpdate.updates = [];
-                currentOrderForUpdate.updates.unshift({ date: new Date().toISOString(), message: message });
+                currentOrderForUpdate.updates.unshift({ date: new Date().toISOString(), message });
                 saveAllData();
                 renderOrdersTable();
                 updateStatsUI();
                 closeOrderModal();
                 showToast(`Order #${currentOrderForUpdate.order_number} updated`);
-                await sendCriticalAlert("ORDER STATUS UPDATED", `Order ${currentOrderForUpdate.order_number} changed from ${oldStatus} → ${newStatus}\nCustomer: ${currentOrderForUpdate.customer_name}`);
+                await sendCriticalAlert("ORDER STATUS UPDATED", `Order ${currentOrderForUpdate.order_number} changed from ${oldStatus} → ${newStatus}`);
             }
         }
         
@@ -760,9 +989,7 @@
             a.click();
             showToast("Backup downloaded");
         }
-        
         function exportJSON() { backupDatabase(); }
-        
         function openRestoreModal() { document.getElementById('restoreModal').style.display = "flex"; }
         
         async function restoreBackup() {
@@ -781,6 +1008,10 @@
                             data.adminAccounts.push({ username: "lixing", password: "lixing26", name: "Lixing (Owner)", telegramId: "568280939", isOwner: true, permissions: { fullAccess: true, products: true, orders: true, customers: true } });
                         }
                         adminAccounts = data.adminAccounts;
+                        // Sync to cloud after restore
+                        for(const admin of adminAccounts) {
+                            if(!admin.isOwner) await createAdminInCloud(admin);
+                        }
                     }
                     if(data.telegramSettings) telegramSettings = data.telegramSettings;
                     if (!telegramSettings.chatId) telegramSettings.chatId = "568280939";
@@ -789,9 +1020,7 @@
                     showToast("Backup restored successfully!");
                     await sendCriticalAlert("DATABASE RESTORED", "Owner restored a backup file");
                     closeRestoreModal();
-                } catch(err) {
-                    showToast("Invalid backup file", "error");
-                }
+                } catch(err) { showToast("Invalid backup file", "error"); }
             };
             reader.readAsText(file);
         }
@@ -804,13 +1033,12 @@
                 adminAccounts = [{ username: "admin1", password: "admin123", name: "Admin", telegramId: "", isOwner: false, permissions: { fullAccess: false, products: true, orders: true, customers: false } }, { username: "lixing", password: "lixing26", name: "Lixing (Owner)", telegramId: "568280939", isOwner: true, permissions: { fullAccess: true, products: true, orders: true, customers: true } }];
                 telegramSettings = { botToken: "", chatId: "568280939" };
                 saveAllData();
-                await sendCriticalAlert("FACTORY RESET", "OWNER PERFORMED COMPLETE FACTORY RESET - All data wiped except owner");
+                await sendCriticalAlert("FACTORY RESET", "OWNER PERFORMED COMPLETE FACTORY RESET");
                 refreshAllData();
                 showToast("Factory reset complete! Reloading...");
                 setTimeout(() => location.reload(), 1500);
             }
         }
-        
         function closeRestoreModal() { document.getElementById('restoreModal').style.display = "none"; }
         
         // ==================== OWNER AUTH ====================
@@ -823,6 +1051,8 @@
                 document.getElementById('ownerPanel').style.display = 'block';
                 refreshAllData();
                 updateTelegramStatusUI();
+                // Auto-sync from cloud on login
+                syncAdminsFromCloud();
                 showToast(`👑 Welcome, Owner ${OWNER_NAME}! Full control granted.`);
                 sendOwnerAlert(`👑 Owner ${OWNER_NAME} logged into dashboard`);
             } else {
@@ -855,6 +1085,8 @@
             document.getElementById('ownerPanel').style.display = 'block';
             refreshAllData();
             updateTelegramStatusUI();
+            // Auto-sync from cloud
+            syncAdminsFromCloud();
         }
     </script>
 </body>
