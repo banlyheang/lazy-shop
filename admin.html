@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - L@ZY SHOP</title>
+    <title>Admin Panel - L@ZY SHOP</title>
     <style>
         * {
             margin: 0;
@@ -12,21 +12,74 @@
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
-        }
-        .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
+            min-height: 100vh;
         }
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
+        }
+        /* Login styles */
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .login-container h2 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .login-container .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .login-container input {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .login-container button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .message {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .error { background: #fee; color: #c00; }
+        .success { background: #e8f5e9; color: #2e7d32; }
+        
+        /* Dashboard styles */
+        .dashboard-header {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .stats {
             display: grid;
@@ -81,189 +134,197 @@
             cursor: pointer;
             font-size: 14px;
         }
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-        .btn-danger {
+        .btn-primary { background: #667eea; color: white; }
+        .logout-btn {
             background: #dc3545;
             color: white;
-        }
-        .btn-warning {
-            background: #ffc107;
-            color: #333;
-        }
-        .logout-btn {
-            background: rgba(255,255,255,0.2);
             border: none;
-            color: white;
             padding: 8px 16px;
             border-radius: 6px;
             cursor: pointer;
         }
-        .logout-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
-        .admin-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
+        .hidden {
+            display: none;
         }
         @media (max-width: 768px) {
-            .stats {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            table {
-                font-size: 12px;
-            }
-            th, td {
-                padding: 8px;
-            }
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            table { font-size: 12px; }
+            th, td { padding: 8px; }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🛍️ L@ZY SHOP - Admin Dashboard</h1>
-        <div class="admin-info">
-            <span>👋 Welcome, <span id="adminName">Admin</span></span>
-            <button class="logout-btn" onclick="logout()">🚪 Logout</button>
-        </div>
-    </div>
-
     <div class="container">
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-value" id="totalRevenue">$0</div>
-                <div class="stat-label">Total Revenue</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="totalOrders">0</div>
-                <div class="stat-label">Orders</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="totalProducts">0</div>
-                <div class="stat-label">Products</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="totalCustomers">0</div>
-                <div class="stat-label">Customers</div>
+        <!-- Login Section -->
+        <div id="loginSection">
+            <div class="login-container">
+                <h2>🔐 Admin Login</h2>
+                <p class="subtitle">Enter your credentials to access the admin panel</p>
+                <input type="text" id="username" placeholder="Username">
+                <input type="password" id="password" placeholder="Password">
+                <button onclick="login()">Login</button>
+                <div id="message" class="message"></div>
             </div>
         </div>
 
-        <div class="card">
-            <h2>📋 Recent Orders</h2>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Order #</th>
-                            <th>Customer</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ordersTable">
-                        <tr><td colspan="5">Loading orders...</td></tr>
-                    </tbody>
-                </table>
+        <!-- Dashboard Section (hidden until login) -->
+        <div id="dashboardSection" class="hidden">
+            <div class="dashboard-header">
+                <h1>🛍️ L@ZY SHOP - Admin Dashboard</h1>
+                <div>
+                    <span id="adminNameDisplay" style="margin-right: 15px;">👋 Admin</span>
+                    <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+                </div>
             </div>
-        </div>
 
-        <div class="card">
-            <h2>📦 Products</h2>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Sold</th>
-                        </tr>
-                    </thead>
-                    <tbody id="productsTable">
-                        <tr><td colspan="4">Loading products...</td></tr>
-                    </tbody>
-                </table>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalRevenue">$0</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalOrders">0</div>
+                    <div class="stat-label">Orders</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalProducts">0</div>
+                    <div class="stat-label">Products</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalCustomers">0</div>
+                    <div class="stat-label">Customers</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📋 Recent Orders</h2>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr><th>Order #</th><th>Customer</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="ordersTable"><tr><td colspan="5">Loading orders...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📦 Products</h2>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead><tr><th>Product</th><th>Price</th><th>Stock</th><th>Sold</th></tr></thead>
+                        <tbody id="productsTable"><tr><td colspan="4">Loading products...</td></tr></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Check authentication
-        if (localStorage.getItem('admin_logged_in') !== 'true') {
-            window.location.href = "admin-login.html";
+        const API_URL = "https://telegram-alert-bot.banlyheang849.workers.dev";
+        
+        // Check if already logged in
+        if (localStorage.getItem('admin_logged_in') === 'true') {
+            showDashboard();
         }
         
-        const adminName = localStorage.getItem('admin_username') || 'Admin';
-        document.getElementById('adminName').innerHTML = adminName;
+        async function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+            
+            if (!username || !password) {
+                messageDiv.className = "message error";
+                messageDiv.innerHTML = "❌ Please enter both username and password";
+                return;
+            }
+            
+            messageDiv.className = "message";
+            messageDiv.innerHTML = "🔐 Verifying credentials...";
+            
+            try {
+                const response = await fetch(`${API_URL}/api/verify-login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('admin_logged_in', 'true');
+                    localStorage.setItem('admin_username', username);
+                    localStorage.setItem('admin_data', JSON.stringify(data.admin));
+                    showDashboard();
+                } else {
+                    messageDiv.className = "message error";
+                    messageDiv.innerHTML = "❌ Invalid credentials!";
+                }
+            } catch (error) {
+                messageDiv.className = "message error";
+                messageDiv.innerHTML = "❌ Connection error. Please try again.";
+            }
+        }
+        
+        function showDashboard() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            
+            const username = localStorage.getItem('admin_username') || 'Admin';
+            document.getElementById('adminNameDisplay').innerHTML = `👋 Welcome, ${username}`;
+            
+            loadData();
+        }
         
         function logout() {
             localStorage.removeItem('admin_logged_in');
-            localStorage.removeItem('current_admin');
             localStorage.removeItem('admin_username');
-            window.location.href = "admin-login.html";
+            localStorage.removeItem('admin_data');
+            
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('message').className = 'message';
+            document.getElementById('message').innerHTML = '';
         }
         
-        // Load data from localStorage
         function loadData() {
-            // Load orders
             let orders = JSON.parse(localStorage.getItem('lazy_orders') || '[]');
             let products = JSON.parse(localStorage.getItem('lazy_products') || '[]');
+            let customers = JSON.parse(localStorage.getItem('lazy_customers') || '[]');
             
-            // Calculate revenue
             let revenue = orders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
             document.getElementById('totalRevenue').innerHTML = `$${revenue.toFixed(2)}`;
             document.getElementById('totalOrders').innerHTML = orders.length;
             document.getElementById('totalProducts').innerHTML = products.length;
-            
-            // Load customers count
-            let customers = JSON.parse(localStorage.getItem('lazy_customers') || '[]');
             document.getElementById('totalCustomers').innerHTML = customers.length;
             
-            // Render orders table
             let ordersHtml = '';
             orders.slice(0, 10).forEach(order => {
-                ordersHtml += `
-                    <tr>
-                        <td>${order.order_number}</td>
-                        <td>${order.customer_name}</td>
-                        <td>$${(order.total_amount || 0).toFixed(2)}</td>
-                        <td><span style="background:${order.order_status === 'delivered' ? '#4caf50' : '#ff9800'}; color:white; padding:4px 8px; border-radius:4px;">${order.order_status}</span></td>
-                        <td><button class="btn btn-primary" onclick="viewOrder('${order.order_number}')">View</button></td>
-                    </tr>
-                `;
+                ordersHtml += `<tr>
+                    <td>${order.order_number}</td>
+                    <td>${order.customer_name}</td>
+                    <td>$${(order.total_amount || 0).toFixed(2)}</td>
+                    <td><span style="background:${order.order_status === 'delivered' ? '#4caf50' : '#ff9800'}; color:white; padding:4px 8px; border-radius:4px;">${order.order_status}</span></td>
+                    <td><button class="btn btn-primary" onclick="alert('Order: ${order.order_number}')">View</button></td>
+                </tr>`;
             });
-            if (orders.length === 0) ordersHtml = '<tr><td colspan="5">No orders yet</td></tr>';
-            document.getElementById('ordersTable').innerHTML = ordersHtml;
+            document.getElementById('ordersTable').innerHTML = ordersHtml || '<tr><td colspan="5">No orders yet</td></tr>';
             
-            // Render products table
             let productsHtml = '';
-            products.forEach(product => {
-                productsHtml += `
-                    <tr>
-                        <td>${product.name}</td>
-                        <td>$${product.price}</td>
-                        <td>${product.stock === -1 ? 'Unlimited' : product.stock}</td>
-                        <td>${product.sales || 0}</td>
-                    </tr>
-                `;
+            products.forEach(p => {
+                productsHtml += `<tr><td>${p.name}</td><td>$${p.price}</td><td>${p.stock === -1 ? 'Unlimited' : p.stock}</td><td>${p.sales || 0}</td></tr>`;
             });
-            if (products.length === 0) productsHtml = '<tr><td colspan="4">No products yet</td></tr>';
-            document.getElementById('productsTable').innerHTML = productsHtml;
+            document.getElementById('productsTable').innerHTML = productsHtml || '<tr><td colspan="4">No products yet</td></tr>';
         }
         
-        function viewOrder(orderNumber) {
-            alert(`Viewing order: ${orderNumber}\n\nFull order details would appear here.`);
-        }
-        
-        // Load data on page load
-        loadData();
-        
-        // Refresh every 30 seconds
-        setInterval(loadData, 30000);
+        // Auto-refresh data every 30 seconds
+        setInterval(() => {
+            if (localStorage.getItem('admin_logged_in') === 'true') {
+                loadData();
+            }
+        }, 30000);
     </script>
 </body>
 </html>
