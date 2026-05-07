@@ -28,8 +28,26 @@
             gap: 15px;
         }
         .owner-badge { background: #9C27B0; padding: 5px 15px; border-radius: 30px; font-size: 0.8rem; }
-        .back-link { background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 40px; color: white; text-decoration: none; transition: all 0.3s; }
-        .back-link:hover { background: linear-gradient(135deg, #6366f1, #ec4899); transform: translateY(-2px); }
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .nav-link {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 40px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-link:hover { background: linear-gradient(135deg, #6366f1, #ec4899); transform: translateY(-2px); }
+        .admin-link { background: rgba(16,185,129,0.3); }
+        .admin-link:hover { background: #10b981; }
         .sync-status {
             background: rgba(6,182,212,0.2);
             padding: 5px 12px;
@@ -207,6 +225,7 @@
             .btn { padding: 8px 12px; font-size: 0.7rem; }
             .admin-item { flex-direction: column; text-align: center; }
             .admin-actions { justify-content: center; }
+            .nav-links { justify-content: center; }
         }
     </style>
 </head>
@@ -217,12 +236,13 @@
                 <h1>👑 Owner Dashboard</h1>
                 <p><span class="owner-badge">Owner Only - Full Control</span></p>
             </div>
-            <div>
+            <div class="nav-links">
                 <span id="cloudSyncStatus" class="sync-status synced">
                     <i class="fas fa-cloud"></i> Synced
                 </span>
-                <a href="index.html" class="back-link">← Back to Shop</a>
-                <a href="admin.html" class="back-link">Admin Panel</a>
+                <a href="index.html" class="nav-link">← Back to Shop</a>
+                <a href="admin-login.html" class="nav-link admin-link">🔐 Admin Login</a>
+                <a href="dashboard.html" class="nav-link admin-link">📊 Admin Dashboard</a>
             </div>
         </div>
 
@@ -263,7 +283,7 @@
                 <h2>🤖 Telegram Bot Settings</h2>
                 <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 15px;">Configure bot to send alerts to Owner and Admins</p>
                 <p style="background: rgba(6,182,212,0.2); padding: 8px; border-radius: 12px; margin-bottom: 15px; font-size: 0.7rem;">
-                    <i class="fas fa-link"></i> Webhook URL: https://telegram-alert.banlyheang849.workers.dev/send-alert
+                    <i class="fas fa-link"></i> Webhook URL: https://telegram-alert-bot.banlyheang849.workers.dev/send-alert
                 </p>
                 <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:15px;">
                     <div>
@@ -305,7 +325,7 @@
                     <table style="width:100%">
                         <thead><tr><th>Order #</th><th>Customer</th><th>Phone</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
                         <tbody id="ordersListBody"></tbody>
-                    </table>
+                    </table
                 </div>
             </div>
 
@@ -424,8 +444,9 @@
     <script>
         // ==================== CLOUD API CONFIGURATION ====================
         // IMPORTANT: Replace with your actual Worker URL and Secret Token
-        const API_URL = "https://telegram-alert.banlyheang849.workers.dev";
-        const API_TOKEN = "YOUR_SECRET_TOKEN_HERE"; // MUST match your Worker's SECRET_TOKEN
+        const API_URL = "https://telegram-alert-bot.banlyheang849.workers.dev/";
+        // ⚠️ CHANGE THIS to match your Worker's SECRET_TOKEN value
+        const API_TOKEN = "MySecretKey123";  // <-- CHANGE THIS TO YOUR ACTUAL SECRET_TOKEN!
         
         // ==================== PASSWORD TOGGLE FUNCTION ====================
         function togglePassword(inputId, buttonElement) {
@@ -560,7 +581,7 @@
         }
         
         // ==================== TELEGRAM WEBHOOK ====================
-        const TELEGRAM_WORKER_URL = "https://telegram-alert.banlyheang849.workers.dev/send-alert";
+        const TELEGRAM_WORKER_URL = "https://telegram-alert-bot.banlyheang849.workers.dev/send-alert";
         
         // Owner credentials
         const OWNER_ID = "568280939";
@@ -941,7 +962,7 @@
             let tbody = document.getElementById('ordersListBody');
             if(!tbody) return;
             tbody.innerHTML = orders.map(o => `
-                <tr>
+                <tr
                     <td><strong>${o.order_number}</strong><br><small>${new Date(o.order_date).toLocaleDateString()}</small></td>
                     <td>${o.customer_name}</td><td>${o.customer_phone}</td>
                     <td>$${(o.total_amount || 0).toFixed(2)}</td>
