@@ -243,6 +243,7 @@
                 <a href="index.html" class="nav-link">← Back to Shop</a>
                 <a href="admin-login.html" class="nav-link admin-link">🔐 Admin Login</a>
                 <a href="dashboard.html" class="nav-link admin-link">📊 Admin Dashboard</a>
+                <a href="admin-manager.html" class="nav-link" style="background:#9C27B0;">👑 Admin Manager</a>
             </div>
         </div>
 
@@ -323,9 +324,18 @@
                 <h3>📋 All Orders</h3>
                 <div class="orders-table">
                     <table style="width:100%">
-                        <thead><tr><th>Order #</th><th>Customer</th><th>Phone</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Phone</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
                         <tbody id="ordersListBody"></tbody>
-                    </table
+                    </table>
                 </div>
             </div>
 
@@ -443,10 +453,8 @@
 
     <script>
         // ==================== CLOUD API CONFIGURATION ====================
-        // IMPORTANT: Replace with your actual Worker URL and Secret Token
-        const API_URL = "https://telegram-alert-bot.banlyheang849.workers.dev/";
-        // ⚠️ CHANGE THIS to match your Worker's SECRET_TOKEN value
-        const API_TOKEN = "MySecretKey123";  // <-- CHANGE THIS TO YOUR ACTUAL SECRET_TOKEN!
+        const API_URL = "https://telegram-alert-bot.banlyheang849.workers.dev";
+        const API_TOKEN = "MySecretKey123";  // Must match your Worker's SECRET_TOKEN
         
         // ==================== PASSWORD TOGGLE FUNCTION ====================
         function togglePassword(inputId, buttonElement) {
@@ -962,9 +970,10 @@
             let tbody = document.getElementById('ordersListBody');
             if(!tbody) return;
             tbody.innerHTML = orders.map(o => `
-                <tr
+                <tr>
                     <td><strong>${o.order_number}</strong><br><small>${new Date(o.order_date).toLocaleDateString()}</small></td>
-                    <td>${o.customer_name}</td><td>${o.customer_phone}</td>
+                    <td>${o.customer_name}</td>
+                    <td>${o.customer_phone}</td>
                     <td>$${(o.total_amount || 0).toFixed(2)}</td>
                     <td><span class="status-${o.order_status}">${o.order_status}</span></td>
                     <td><button class="btn btn-primary btn-sm" onclick="openOrderUpdateModal(${o.id})">Update</button></td>
