@@ -3,38 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Admin Manager - L@ZY SHOP</title>
+    <title>Admin Login - L@ZY SHOP</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        /* Login Section */
-        .login-box {
-            max-width: 400px;
-            margin: 100px auto;
+        .login-container {
             background: white;
             border-radius: 20px;
             padding: 40px;
+            width: 400px;
+            max-width: 90%;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
-        .login-box h2 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #333;
-        }
-        .login-box input {
+        h2 { text-align: center; color: #333; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; }
+        input {
             width: 100%;
             padding: 14px;
             margin: 10px 0;
@@ -42,7 +32,7 @@
             border-radius: 8px;
             font-size: 16px;
         }
-        .login-box button {
+        button {
             width: 100%;
             padding: 14px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -54,236 +44,57 @@
             cursor: pointer;
             margin-top: 20px;
         }
-        /* Dashboard Section */
-        .dashboard {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #eee;
-        }
-        h1 {
-            color: #333;
-            font-size: 24px;
-        }
-        .logout-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 10px 20px;
+        button:hover { transform: translateY(-2px); }
+        .message { text-align: center; margin-top: 20px; padding: 10px; border-radius: 8px; }
+        .error { background: #fee; color: #c00; }
+        .success { background: #e8f5e9; color: #2e7d32; }
+        .info { background: #e3f2fd; color: #1565c0; }
+        .demo-credentials {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
             border-radius: 8px;
-            cursor: pointer;
-        }
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .stat-card {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-        }
-        .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #667eea;
-        }
-        .add-admin-form {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-        }
-        .add-admin-form h3 {
-            margin-bottom: 15px;
-            color: #333;
-        }
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        .form-row input, .form-row select {
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-        .btn-primary {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
             font-size: 12px;
-        }
-        .btn-warning {
-            background: #ffc107;
-            color: #333;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        th {
-            background: #f8f9fa;
-            color: #333;
-        }
-        .owner-badge {
-            background: #9C27B0;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 10px;
-            margin-left: 5px;
-        }
-        .message {
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
             text-align: center;
-        }
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
-        .hidden { display: none; }
-        @media (max-width: 768px) {
-            .stats { grid-template-columns: repeat(2, 1fr); }
-            .form-row { grid-template-columns: 1fr; }
-            table { font-size: 12px; }
-            th, td { padding: 8px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Login Section -->
-        <div id="loginSection">
-            <div class="login-box">
-                <h2>👑 Owner Login</h2>
-                <input type="text" id="ownerUsername" placeholder="Username">
-                <input type="password" id="ownerPassword" placeholder="Password">
-                <button onclick="ownerLogin()">Login to Admin Manager</button>
-                <div id="loginMessage" class="message" style="display:none;"></div>
-            </div>
-        </div>
-
-        <!-- Admin Manager Dashboard -->
-        <div id="dashboardSection" class="dashboard hidden">
-            <div class="header">
-                <h1>👑 Global Admin Manager</h1>
-                <button class="logout-btn" onclick="logout()">🚪 Logout</button>
-            </div>
-
-            <div class="stats">
-                <div class="stat-card">
-                    <div class="stat-value" id="totalAdmins">0</div>
-                    <div>Total Admins</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="totalOwners">0</div>
-                    <div>Owners</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="syncStatus">✅</div>
-                    <div>Cloud Sync</div>
-                </div>
-            </div>
-
-            <!-- Add New Admin Form -->
-            <div class="add-admin-form">
-                <h3>➕ Add New Global Admin</h3>
-                <div class="form-row">
-                    <input type="text" id="newUsername" placeholder="Username *">
-                    <input type="password" id="newPassword" placeholder="Password *">
-                    <input type="text" id="newName" placeholder="Full Name">
-                    <input type="text" id="newTelegram" placeholder="Telegram ID (optional)">
-                </div>
-                <div class="form-row">
-                    <label style="display: flex; align-items: center;">
-                        <input type="checkbox" id="isOwner" style="width: auto; margin-right: 10px;">
-                        Grant Owner Privileges
-                    </label>
-                    <label style="display: flex; align-items: center;">
-                        <input type="checkbox" id="fullAccess" style="width: auto; margin-right: 10px;">
-                        Full Access (All Permissions)
-                    </label>
-                </div>
-                <button class="btn-primary" onclick="createAdmin()">➕ Create Global Admin</button>
-                <div id="createMessage" class="message" style="display:none;"></div>
-            </div>
-
-            <!-- Admins List Table -->
-            <h3 style="margin-bottom: 15px;">📋 Existing Global Admins</h3>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Username</th>
-                            <th>Name</th>
-                            <th>Telegram ID</th>
-                            <th>Role</th>
-                            <th>Permissions</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminsTable">
-                        <tr><td colspan="6">Loading admins...</td><tr>
-                    </tbody>
-                </table>
-            </div>
+    <div class="login-container">
+        <h2>🔐 Admin Login</h2>
+        <p class="subtitle">Enter your credentials to access the admin panel</p>
+        
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        
+        <button onclick="login()">Login</button>
+        
+        <div id="message" class="message"></div>
+        
+        <div class="demo-credentials">
+            <strong>Demo Credentials:</strong><br>
+            Username: admin1<br>
+            Password: admin123<br><br>
+            <strong>Owner:</strong> lixing / lixing26
         </div>
     </div>
 
     <script>
-        // ==================== CONFIGURATION ====================
         const API_URL = "https://telegram-alert-bot.banlyheang849.workers.dev";
-        const SECRET_TOKEN = "MySecretKey123";  // Must match your Worker's SECRET_TOKEN
         
-        let currentOwner = null;
-        
-        // ==================== OWNER LOGIN ====================
-        async function ownerLogin() {
-            const username = document.getElementById('ownerUsername').value.trim();
-            const password = document.getElementById('ownerPassword').value;
-            const messageDiv = document.getElementById('loginMessage');
+        async function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
             
             if (!username || !password) {
-                showMessage('loginMessage', 'Please enter username and password', 'error');
+                messageDiv.className = "message error";
+                messageDiv.innerHTML = "❌ Please enter both username and password";
                 return;
             }
             
-            showMessage('loginMessage', 'Verifying credentials...', 'success');
+            messageDiv.className = "message info";
+            messageDiv.innerHTML = "🔐 Verifying credentials with cloud...";
             
             try {
                 const response = await fetch(`${API_URL}/api/verify-login`, {
@@ -294,245 +105,31 @@
                 
                 const data = await response.json();
                 
-                if (data.success && data.admin.isOwner === true) {
-                    currentOwner = data.admin;
-                    localStorage.setItem('owner_logged_in', 'true');
-                    localStorage.setItem('owner_data', JSON.stringify(currentOwner));
-                    
-                    document.getElementById('loginSection').style.display = 'none';
-                    document.getElementById('dashboardSection').classList.remove('hidden');
-                    
-                    loadAllAdmins();
-                    showMessage('loginMessage', '', '');
-                } else {
-                    showMessage('loginMessage', '❌ Owner credentials required!', 'error');
-                }
-            } catch (error) {
-                showMessage('loginMessage', '❌ Connection error', 'error');
-            }
-        }
-        
-        // ==================== LOAD ALL ADMINS FROM CLOUD ====================
-        async function loadAllAdmins() {
-            try {
-                const response = await fetch(`${API_URL}/api/admins`, {
-                    headers: { 'X-API-Token': SECRET_TOKEN }
-                });
-                const data = await response.json();
-                
                 if (data.success) {
-                    const admins = data.admins;
-                    document.getElementById('totalAdmins').innerHTML = admins.length;
-                    document.getElementById('totalOwners').innerHTML = admins.filter(a => a.isOwner).length;
-                    document.getElementById('syncStatus').innerHTML = '✅';
+                    messageDiv.className = "message success";
+                    messageDiv.innerHTML = `✅ Welcome ${data.admin.name || username}! Redirecting...`;
                     
-                    renderAdminsTable(admins);
-                } else {
-                    document.getElementById('syncStatus').innerHTML = '❌';
-                    showToast('Failed to load admins', 'error');
-                }
-            } catch (error) {
-                console.error('Error loading admins:', error);
-                document.getElementById('syncStatus').innerHTML = '❌';
-                showToast('Connection error', 'error');
-            }
-        }
-        
-        // ==================== RENDER ADMINS TABLE ====================
-        function renderAdminsTable(admins) {
-            const tbody = document.getElementById('adminsTable');
-            
-            if (!admins || admins.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6">No admins found</td></tr>';
-                return;
-            }
-            
-            tbody.innerHTML = admins.map(admin => `
-                <tr>
-                    <td><strong>${admin.username}</strong></td>
-                    <td>${admin.name || '-'}</td>
-                    <td>${admin.telegramId || '-'}</td>
-                    <td>
-                        ${admin.isOwner ? '<span style="background:#9C27B0; color:white; padding:2px 8px; border-radius:12px;">👑 OWNER</span>' : 'Admin'}
-                    </td>
-                    <td>
-                        ${admin.permissions?.fullAccess ? '🔓 Full Access' : 
-                          `${admin.permissions?.products ? '📦 ' : ''}${admin.permissions?.orders ? '📋 ' : ''}${admin.permissions?.customers ? '👥 ' : ''}` || 'View Only'}
-                    </td>
-                    <td>
-                        ${!admin.isOwner ? `
-                            <button class="btn-warning" onclick="resetPassword('${admin.username}')">🔑 Reset</button>
-                            <button class="btn-danger" onclick="deleteAdmin('${admin.username}')">🗑️ Delete</button>
-                        ` : '<span style="color:#999;">Protected</span>'}
-                    </td>
-                </tr>
-            `).join('');
-        }
-        
-        // ==================== CREATE NEW ADMIN ====================
-        async function createAdmin() {
-            const username = document.getElementById('newUsername').value.trim();
-            const password = document.getElementById('newPassword').value;
-            const name = document.getElementById('newName').value.trim();
-            const telegramId = document.getElementById('newTelegram').value.trim();
-            const isOwner = document.getElementById('isOwner').checked;
-            const fullAccess = document.getElementById('fullAccess').checked;
-            
-            if (!username || !password) {
-                showMessage('createMessage', 'Username and password required', 'error');
-                return;
-            }
-            
-            const newAdmin = {
-                username,
-                password,
-                name: name || username,
-                telegramId,
-                isOwner,
-                permissions: {
-                    fullAccess: fullAccess,
-                    products: fullAccess || true,
-                    orders: fullAccess || true,
-                    customers: fullAccess || false
-                }
-            };
-            
-            showMessage('createMessage', 'Creating admin...', 'success');
-            
-            try {
-                const response = await fetch(`${API_URL}/api/admins`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-API-Token': SECRET_TOKEN
-                    },
-                    body: JSON.stringify(newAdmin)
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showMessage('createMessage', '✅ Admin created successfully!', 'success');
+                    // Store session
+                    localStorage.setItem('admin_logged_in', 'true');
+                    localStorage.setItem('admin_username', username);
+                    localStorage.setItem('admin_data', JSON.stringify(data.admin));
                     
-                    // Clear form
-                    document.getElementById('newUsername').value = '';
-                    document.getElementById('newPassword').value = '';
-                    document.getElementById('newName').value = '';
-                    document.getElementById('newTelegram').value = '';
-                    document.getElementById('isOwner').checked = false;
-                    document.getElementById('fullAccess').checked = false;
-                    
-                    // Reload list
-                    setTimeout(() => loadAllAdmins(), 1000);
+                    setTimeout(() => {
+                        window.location.href = "dashboard.html";
+                    }, 1500);
                 } else {
-                    showMessage('createMessage', '❌ ' + (data.error || 'Failed to create admin'), 'error');
+                    messageDiv.className = "message error";
+                    messageDiv.innerHTML = "❌ " + (data.error || "Invalid credentials!");
                 }
             } catch (error) {
-                showMessage('createMessage', '❌ Connection error', 'error');
+                messageDiv.className = "message error";
+                messageDiv.innerHTML = "❌ Connection error. Please try again.";
             }
         }
         
-        // ==================== DELETE ADMIN ====================
-        async function deleteAdmin(username) {
-            if (!confirm(`Delete admin "${username}" permanently? This cannot be undone.`)) return;
-            
-            try {
-                const response = await fetch(`${API_URL}/api/admins`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-API-Token': SECRET_TOKEN
-                    },
-                    body: JSON.stringify({ username })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showToast(`✅ Admin ${username} deleted`, 'success');
-                    loadAllAdmins();
-                } else {
-                    showToast('❌ Failed to delete admin', 'error');
-                }
-            } catch (error) {
-                showToast('❌ Connection error', 'error');
-            }
-        }
-        
-        // ==================== RESET PASSWORD ====================
-        async function resetPassword(username) {
-            const newPassword = prompt(`Enter new password for ${username}:`);
-            if (!newPassword || newPassword.length < 4) {
-                showToast('Password must be at least 4 characters', 'error');
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${API_URL}/api/reset-password`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-API-Token': SECRET_TOKEN
-                    },
-                    body: JSON.stringify({ username, newPassword })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showToast(`✅ Password reset for ${username}`, 'success');
-                } else {
-                    showToast('❌ Failed to reset password', 'error');
-                }
-            } catch (error) {
-                showToast('❌ Connection error', 'error');
-            }
-        }
-        
-        // ==================== UTILITIES ====================
-        function showMessage(elementId, message, type) {
-            const el = document.getElementById(elementId);
-            el.style.display = 'block';
-            el.className = `message ${type}`;
-            el.innerHTML = message;
-            
-            if (type === 'success') {
-                setTimeout(() => {
-                    if (el.innerHTML === message) el.style.display = 'none';
-                }, 3000);
-            }
-        }
-        
-        function showToast(message, type) {
-            const toast = document.createElement('div');
-            toast.className = `message ${type}`;
-            toast.style.position = 'fixed';
-            toast.style.bottom = '20px';
-            toast.style.right = '20px';
-            toast.style.maxWidth = '300px';
-            toast.style.zIndex = '9999';
-            toast.innerHTML = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-        
-        function logout() {
-            localStorage.removeItem('owner_logged_in');
-            localStorage.removeItem('owner_data');
-            currentOwner = null;
-            
-            document.getElementById('loginSection').style.display = 'block';
-            document.getElementById('dashboardSection').classList.add('hidden');
-            document.getElementById('ownerUsername').value = '';
-            document.getElementById('ownerPassword').value = '';
-        }
-        
-        // Check for existing session
-        if (localStorage.getItem('owner_logged_in') === 'true') {
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('dashboardSection').classList.remove('hidden');
-            loadAllAdmins();
-        }
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
     </script>
 </body>
 </html>
